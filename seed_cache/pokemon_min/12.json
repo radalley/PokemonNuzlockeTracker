@@ -1,0 +1,16 @@
+{
+  "species_id": 12,
+  "name": "BUTTERFREE",
+  "type1": "bug",
+  "type2": "flying",
+  "ability1": "compound-eyes",
+  "ability2": null,
+  "ability3": "tinted-lens",
+  "bst": 395,
+  "hp": 60,
+  "atk": 45,
+  "def": 50,
+  "spa": 90,
+  "spd": 80,
+  "spe": 70
+}

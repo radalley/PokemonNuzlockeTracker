@@ -1,0 +1,16 @@
+{
+  "species_id": 126,
+  "name": "MAGMAR",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "flame-body",
+  "ability2": null,
+  "ability3": "vital-spirit",
+  "bst": 495,
+  "hp": 65,
+  "atk": 95,
+  "def": 57,
+  "spa": 100,
+  "spd": 85,
+  "spe": 93
+}

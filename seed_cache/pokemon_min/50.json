@@ -1,0 +1,16 @@
+{
+  "species_id": 50,
+  "name": "DIGLETT",
+  "type1": "ground",
+  "type2": null,
+  "ability1": "sand-veil",
+  "ability2": "arena-trap",
+  "ability3": "sand-force",
+  "bst": 265,
+  "hp": 10,
+  "atk": 55,
+  "def": 25,
+  "spa": 35,
+  "spd": 45,
+  "spe": 95
+}

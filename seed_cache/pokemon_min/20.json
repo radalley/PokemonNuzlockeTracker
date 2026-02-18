@@ -1,0 +1,16 @@
+{
+  "species_id": 20,
+  "name": "RATICATE",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "run-away",
+  "ability2": "guts",
+  "ability3": "hustle",
+  "bst": 413,
+  "hp": 55,
+  "atk": 81,
+  "def": 60,
+  "spa": 50,
+  "spd": 70,
+  "spe": 97
+}

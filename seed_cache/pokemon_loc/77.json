@@ -1,0 +1,368 @@
+[
+  {
+    "area_name": "sinnoh-route-206-area",
+    "area_id": 148,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-207-area",
+    "area_id": 149,
+    "version_details": [
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-210-south-towards-solaceon-town",
+    "area_id": 157,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-211-west-towards-eterna-city",
+    "area_id": 159,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-211-east-towards-celestic-town",
+    "area_id": 160,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-214-area",
+    "area_id": 164,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-215-area",
+    "area_id": 165,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-outside",
+    "area_id": 269,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-26-area",
+    "area_id": 287,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-27-area",
+    "area_id": 288,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-28-area",
+    "area_id": 289,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-17-area",
+    "area_id": 310,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-22-area",
+    "area_id": 313,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-1f",
+    "area_id": 341,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-2f",
+    "area_id": 342,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-3f",
+    "area_id": 343,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-b1f",
+    "area_id": 344,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "mt-ember-area",
+    "area_id": 488,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "kindle-road-area",
+    "area_id": 512,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  }
+]

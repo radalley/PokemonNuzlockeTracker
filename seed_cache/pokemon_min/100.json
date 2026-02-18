@@ -1,0 +1,16 @@
+{
+  "species_id": 100,
+  "name": "VOLTORB",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "soundproof",
+  "ability2": "static",
+  "ability3": "aftermath",
+  "bst": 330,
+  "hp": 40,
+  "atk": 30,
+  "def": 50,
+  "spa": 55,
+  "spd": 55,
+  "spe": 100
+}

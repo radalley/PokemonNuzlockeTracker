@@ -1,0 +1,758 @@
+[
+  {
+    "area_name": "mt-coronet-2f",
+    "area_id": 12,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-3f",
+    "area_id": 13,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-exterior-snowfall",
+    "area_id": 14,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-exterior-blizzard",
+    "area_id": 15,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-4f",
+    "area_id": 16,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-4f-small-room",
+    "area_id": 17,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-5f",
+    "area_id": 18,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-6f",
+    "area_id": 19,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-1f-from-exterior",
+    "area_id": 20,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-1f-route-216",
+    "area_id": 21,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-coronet-b1f",
+    "area_id": 23,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-victory-road-1f",
+    "area_id": 48,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-victory-road-b1f",
+    "area_id": 50,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-victory-road-inside-b1f",
+    "area_id": 51,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-victory-road-inside",
+    "area_id": 52,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-victory-road-inside-exit",
+    "area_id": 53,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "stark-mountain-entrance",
+    "area_id": 58,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "stark-mountain-inside",
+    "area_id": 59,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "acuity-lakefront-area",
+    "area_id": 140,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-210-west-towards-celestic-town",
+    "area_id": 158,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-211-east-towards-celestic-town",
+    "area_id": 160,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-216-area",
+    "area_id": 166,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-217-area",
+    "area_id": 167,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-225-area",
+    "area_id": 173,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-sea-route-226-area",
+    "area_id": 182,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "mt-mortar-upper-cave",
+    "area_id": 239,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-2f",
+    "area_id": 263,
+    "version_details": [
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-47-inside-cave",
+    "area_id": 267,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "rock-tunnel-1f",
+    "area_id": 292,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-1-1f",
+    "area_id": 294,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-1-2f",
+    "area_id": 318,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-1-3f",
+    "area_id": 319,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-1f",
+    "area_id": 323,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-2f",
+    "area_id": 324,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-b1f",
+    "area_id": 325,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-2-1f",
+    "area_id": 331,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-2-2f",
+    "area_id": 332,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-victory-road-2-3f",
+    "area_id": 333,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "mt-ember-inside",
+    "area_id": 490,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "mt-ember-1f-cave-behind-team-rocket",
+    "area_id": 491,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-wasteland",
+    "area_id": 822,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "vast-poni-canyon-outside",
+    "area_id": 1153,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "species_id": 108,
+  "name": "LICKITUNG",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "own-tempo",
+  "ability2": "oblivious",
+  "ability3": "cloud-nine",
+  "bst": 385,
+  "hp": 90,
+  "atk": 55,
+  "def": 75,
+  "spa": 60,
+  "spd": 75,
+  "spe": 30
+}

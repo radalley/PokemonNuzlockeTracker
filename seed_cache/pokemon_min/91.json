@@ -1,0 +1,16 @@
+{
+  "species_id": 91,
+  "name": "CLOYSTER",
+  "type1": "water",
+  "type2": "ice",
+  "ability1": "shell-armor",
+  "ability2": "skill-link",
+  "ability3": "overcoat",
+  "bst": 525,
+  "hp": 50,
+  "atk": 95,
+  "def": 180,
+  "spa": 85,
+  "spd": 45,
+  "spe": 70
+}

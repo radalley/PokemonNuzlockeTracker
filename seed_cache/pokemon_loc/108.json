@@ -1,0 +1,238 @@
+[
+  {
+    "area_name": "lake-valor-area",
+    "area_id": 137,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-215-area",
+    "area_id": 165,
+    "version_details": [
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-44-area",
+    "area_id": 243,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-1f",
+    "area_id": 323,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-2f",
+    "area_id": 324,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-b1f",
+    "area_id": 325,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-2-area",
+    "area_id": 624,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "challengers-cave-1f",
+    "area_id": 640,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      }
+    ]
+  },
+  {
+    "area_name": "challengers-cave-b1f",
+    "area_id": 641,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      }
+    ]
+  },
+  {
+    "area_name": "challengers-cave-b2f",
+    "area_id": 642,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-victory-road-unknown-area-322",
+    "area_id": 748,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-victory-road-unknown-area-324",
+    "area_id": 749,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-victory-road-unknown-area-326",
+    "area_id": 750,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-victory-road-unknown-area-328",
+    "area_id": 752,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-mountain",
+    "area_id": 820,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "poni-gauntlet-area",
+    "area_id": 1115,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "species_id": 29,
+  "name": "NIDORAN-F",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "poison-point",
+  "ability2": "rivalry",
+  "ability3": "hustle",
+  "bst": 275,
+  "hp": 55,
+  "atk": 47,
+  "def": 52,
+  "spa": 40,
+  "spd": 40,
+  "spe": 41
+}

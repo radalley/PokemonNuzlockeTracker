@@ -1,0 +1,16 @@
+{
+  "species_id": 130,
+  "name": "GYARADOS",
+  "type1": "water",
+  "type2": "flying",
+  "ability1": "intimidate",
+  "ability2": null,
+  "ability3": "moxie",
+  "bst": 540,
+  "hp": 95,
+  "atk": 125,
+  "def": 79,
+  "spa": 60,
+  "spd": 100,
+  "spe": 81
+}

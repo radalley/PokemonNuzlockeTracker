@@ -1,0 +1,50 @@
+[
+  {
+    "area_name": "cerulean-cave-b1f",
+    "area_id": 325,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "ultra-space-wilds-crag",
+    "area_id": 1149,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

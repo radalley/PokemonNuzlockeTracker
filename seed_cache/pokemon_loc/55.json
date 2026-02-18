@@ -1,0 +1,1020 @@
+[
+  {
+    "area_name": "eterna-city-area",
+    "area_id": 2,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "ravaged-path-area",
+    "area_id": 54,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "oreburgh-gate-b1f",
+    "area_id": 56,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sendoff-spring-area",
+    "area_id": 60,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "lake-verity-before-galactic-intervention",
+    "area_id": 135,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "lake-verity-after-galactic-intervention",
+    "area_id": 136,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "lake-valor-area",
+    "area_id": 137,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "lake-acuity-area",
+    "area_id": 138,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-203-area",
+    "area_id": 143,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-204-south-towards-jubilife-city",
+    "area_id": 144,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-204-north-towards-floaroma-town",
+    "area_id": 145,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-205-east-towards-eterna-city",
+    "area_id": 147,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-208-area",
+    "area_id": 150,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-209-area",
+    "area_id": 151,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-210-west-towards-celestic-town",
+    "area_id": 158,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-212-north-towards-hearthome-city",
+    "area_id": 161,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-214-area",
+    "area_id": 164,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-225-area",
+    "area_id": 173,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "twinleaf-town-area",
+    "area_id": 177,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "celestic-town-area",
+    "area_id": 178,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "resort-area-area",
+    "area_id": 179,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-sea-route-226-area",
+    "area_id": 182,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-sea-route-230-area",
+    "area_id": 183,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "ilex-forest-area",
+    "area_id": 204,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-35-area",
+    "area_id": 206,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "seafoam-islands-1f",
+    "area_id": 258,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "seafoam-islands-b1f",
+    "area_id": 259,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "seafoam-islands-b2f",
+    "area_id": 260,
+    "version_details": [
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "seafoam-islands-b3f",
+    "area_id": 261,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "seafoam-islands-b4f",
+    "area_id": 262,
+    "version_details": [
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-2f",
+    "area_id": 263,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-1f-top",
+    "area_id": 264,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-4f",
+    "area_id": 265,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-mountainside",
+    "area_id": 271,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-3f",
+    "area_id": 272,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "mt-silver-top",
+    "area_id": 273,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-6-area",
+    "area_id": 300,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-1f",
+    "area_id": 323,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-2f",
+    "area_id": 324,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-b1f",
+    "area_id": 325,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-nwmach-bike-area",
+    "area_id": 429,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "berry-forest-area",
+    "area_id": 495,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "cape-brink-area",
+    "area_id": 514,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "village-bridge-area",
+    "area_id": 621,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      },
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-11-area",
+    "area_id": 645,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      },
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-14-area",
+    "area_id": 648,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      },
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "abundant-shrine-area",
+    "area_id": 649,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "seaside-cave-1f",
+    "area_id": 700,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "seaside-cave-b1f",
+    "area_id": 701,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "nature-sanctuary-area",
+    "area_id": 702,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-22-area",
+    "area_id": 705,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-23-area",
+    "area_id": 706,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-wetland",
+    "area_id": 824,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "poni-gauntlet-area",
+    "area_id": 1115,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "vast-poni-canyon-northwest",
+    "area_id": 1152,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

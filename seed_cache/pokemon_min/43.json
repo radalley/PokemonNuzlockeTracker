@@ -1,0 +1,16 @@
+{
+  "species_id": 43,
+  "name": "ODDISH",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "chlorophyll",
+  "ability2": null,
+  "ability3": "run-away",
+  "bst": 320,
+  "hp": 45,
+  "atk": 50,
+  "def": 55,
+  "spa": 75,
+  "spd": 65,
+  "spe": 30
+}

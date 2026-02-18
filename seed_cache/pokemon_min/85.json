@@ -1,0 +1,16 @@
+{
+  "species_id": 85,
+  "name": "DODRIO",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "run-away",
+  "ability2": "early-bird",
+  "ability3": "tangled-feet",
+  "bst": 470,
+  "hp": 60,
+  "atk": 110,
+  "def": 70,
+  "spa": 60,
+  "spd": 60,
+  "spe": 110
+}

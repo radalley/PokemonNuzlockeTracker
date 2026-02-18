@@ -1,0 +1,16 @@
+{
+  "species_id": 96,
+  "name": "DROWZEE",
+  "type1": "psychic",
+  "type2": null,
+  "ability1": "insomnia",
+  "ability2": "forewarn",
+  "ability3": "inner-focus",
+  "bst": 328,
+  "hp": 60,
+  "atk": 48,
+  "def": 45,
+  "spa": 43,
+  "spd": 90,
+  "spe": 42
+}

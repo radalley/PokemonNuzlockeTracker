@@ -1,0 +1,16 @@
+{
+  "species_id": 127,
+  "name": "PINSIR",
+  "type1": "bug",
+  "type2": null,
+  "ability1": "hyper-cutter",
+  "ability2": "mold-breaker",
+  "ability3": "moxie",
+  "bst": 500,
+  "hp": 65,
+  "atk": 125,
+  "def": 100,
+  "spa": 55,
+  "spd": 70,
+  "spe": 85
+}

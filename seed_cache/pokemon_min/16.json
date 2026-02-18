@@ -1,0 +1,16 @@
+{
+  "species_id": 16,
+  "name": "PIDGEY",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": "tangled-feet",
+  "ability3": "big-pecks",
+  "bst": 251,
+  "hp": 40,
+  "atk": 45,
+  "def": 40,
+  "spa": 35,
+  "spd": 35,
+  "spe": 56
+}

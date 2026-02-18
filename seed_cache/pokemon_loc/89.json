@@ -1,0 +1,294 @@
+[
+  {
+    "area_name": "celadon-city-area",
+    "area_id": 283,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-16-area",
+    "area_id": 309,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-17-area",
+    "area_id": 310,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-18-area",
+    "area_id": 311,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "power-plant-area",
+    "area_id": 330,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-1f",
+    "area_id": 341,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-2f",
+    "area_id": 342,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-3f",
+    "area_id": 343,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "pokemon-mansion-b1f",
+    "area_id": 344,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-9-area",
+    "area_id": 639,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "castelia-sewers-area",
+    "area_id": 671,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "castelia-sewers-unknown-area-38",
+    "area_id": 672,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  }
+]

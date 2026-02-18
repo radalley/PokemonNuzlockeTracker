@@ -1,0 +1,16 @@
+{
+  "species_id": 118,
+  "name": "GOLDEEN",
+  "type1": "water",
+  "type2": null,
+  "ability1": "swift-swim",
+  "ability2": "water-veil",
+  "ability3": "lightning-rod",
+  "bst": 320,
+  "hp": 45,
+  "atk": 67,
+  "def": 60,
+  "spa": 35,
+  "spd": 50,
+  "spe": 63
+}

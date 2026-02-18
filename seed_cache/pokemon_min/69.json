@@ -1,0 +1,16 @@
+{
+  "species_id": 69,
+  "name": "BELLSPROUT",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "chlorophyll",
+  "ability2": null,
+  "ability3": "gluttony",
+  "bst": 300,
+  "hp": 50,
+  "atk": 75,
+  "def": 35,
+  "spa": 70,
+  "spd": 30,
+  "spe": 40
+}

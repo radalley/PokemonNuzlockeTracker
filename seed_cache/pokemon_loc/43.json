@@ -1,0 +1,650 @@
+[
+  {
+    "area_name": "sinnoh-route-224-area",
+    "area_id": 172,
+    "version_details": [
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-229-area",
+    "area_id": 176,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-sea-route-230-area",
+    "area_id": 183,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "ilex-forest-area",
+    "area_id": 204,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-12-area",
+    "area_id": 276,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-1-area",
+    "area_id": 295,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-2-south-towards-viridian-city",
+    "area_id": 296,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-5-area",
+    "area_id": 299,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-6-area",
+    "area_id": 300,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-7-area",
+    "area_id": 301,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-13-area",
+    "area_id": 306,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-14-area",
+    "area_id": 307,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-15-area",
+    "area_id": 308,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-sea-route-21-area",
+    "area_id": 312,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-24-area",
+    "area_id": 314,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-25-area",
+    "area_id": 315,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-2-north-towards-pewter-city",
+    "area_id": 320,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "viridian-forest-area",
+    "area_id": 321,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-110-area",
+    "area_id": 402,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-117-area",
+    "area_id": 409,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-119-area",
+    "area_id": 411,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-120-area",
+    "area_id": 412,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-121-area",
+    "area_id": 413,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-route-123-area",
+    "area_id": 415,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-nwmach-bike-area",
+    "area_id": 429,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-neacro-bike-area",
+    "area_id": 430,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-sw",
+    "area_id": 431,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-se",
+    "area_id": 432,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "berry-forest-area",
+    "area_id": 495,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "cape-brink-area",
+    "area_id": 514,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "bond-bridge-area",
+    "area_id": 515,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "water-path-area",
+    "area_id": 523,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-route-6-area",
+    "area_id": 717,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-marshland",
+    "area_id": 819,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  }
+]

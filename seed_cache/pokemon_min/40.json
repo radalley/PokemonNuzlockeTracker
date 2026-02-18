@@ -1,0 +1,16 @@
+{
+  "species_id": 40,
+  "name": "WIGGLYTUFF",
+  "type1": "normal",
+  "type2": "fairy",
+  "ability1": "cute-charm",
+  "ability2": "competitive",
+  "ability3": "frisk",
+  "bst": 435,
+  "hp": 140,
+  "atk": 70,
+  "def": 45,
+  "spa": 85,
+  "spd": 50,
+  "spe": 45
+}

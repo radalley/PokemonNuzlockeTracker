@@ -1,0 +1,16 @@
+{
+  "species_id": 10,
+  "name": "CATERPIE",
+  "type1": "bug",
+  "type2": null,
+  "ability1": "shield-dust",
+  "ability2": null,
+  "ability3": "run-away",
+  "bst": 195,
+  "hp": 45,
+  "atk": 30,
+  "def": 35,
+  "spa": 20,
+  "spd": 20,
+  "spe": 45
+}

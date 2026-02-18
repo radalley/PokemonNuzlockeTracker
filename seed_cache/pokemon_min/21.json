@@ -1,0 +1,16 @@
+{
+  "species_id": 21,
+  "name": "SPEAROW",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": null,
+  "ability3": "sniper",
+  "bst": 262,
+  "hp": 40,
+  "atk": 60,
+  "def": 30,
+  "spa": 31,
+  "spd": 31,
+  "spe": 70
+}

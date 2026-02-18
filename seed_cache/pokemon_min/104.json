@@ -1,0 +1,16 @@
+{
+  "species_id": 104,
+  "name": "CUBONE",
+  "type1": "ground",
+  "type2": null,
+  "ability1": "rock-head",
+  "ability2": "lightning-rod",
+  "ability3": "battle-armor",
+  "bst": 320,
+  "hp": 50,
+  "atk": 50,
+  "def": 95,
+  "spa": 40,
+  "spd": 50,
+  "spe": 35
+}

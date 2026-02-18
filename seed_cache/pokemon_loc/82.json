@@ -1,0 +1,220 @@
+[
+  {
+    "area_name": "sinnoh-victory-road-2f",
+    "area_id": 49,
+    "version_details": [
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "sinnoh-route-222-area",
+    "area_id": 171,
+    "version_details": [
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-1f",
+    "area_id": 323,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-2f",
+    "area_id": 324,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "cerulean-cave-b1f",
+    "area_id": 325,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "power-plant-area",
+    "area_id": 330,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "new-mauville-area",
+    "area_id": 388,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "p2-laboratory-area",
+    "area_id": 618,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "lost-hotel-area",
+    "area_id": 759,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-peak",
+    "area_id": 813,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  },
+  {
+    "area_name": "johto-safari-zone-zone-mountain",
+    "area_id": 820,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      }
+    ]
+  }
+]

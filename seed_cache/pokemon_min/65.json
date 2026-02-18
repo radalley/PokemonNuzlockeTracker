@@ -1,0 +1,16 @@
+{
+  "species_id": 65,
+  "name": "ALAKAZAM",
+  "type1": "psychic",
+  "type2": null,
+  "ability1": "synchronize",
+  "ability2": "inner-focus",
+  "ability3": "magic-guard",
+  "bst": 500,
+  "hp": 55,
+  "atk": 50,
+  "def": 45,
+  "spa": 135,
+  "spd": 95,
+  "spe": 120
+}

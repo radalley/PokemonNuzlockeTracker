@@ -1,0 +1,16 @@
+{
+  "species_id": 56,
+  "name": "MANKEY",
+  "type1": "fighting",
+  "type2": null,
+  "ability1": "vital-spirit",
+  "ability2": "anger-point",
+  "ability3": "defiant",
+  "bst": 305,
+  "hp": 40,
+  "atk": 80,
+  "def": 35,
+  "spa": 35,
+  "spd": 45,
+  "spe": 70
+}

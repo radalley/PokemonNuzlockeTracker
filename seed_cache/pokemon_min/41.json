@@ -1,0 +1,16 @@
+{
+  "species_id": 41,
+  "name": "ZUBAT",
+  "type1": "poison",
+  "type2": "flying",
+  "ability1": "inner-focus",
+  "ability2": null,
+  "ability3": "infiltrator",
+  "bst": 245,
+  "hp": 40,
+  "atk": 45,
+  "def": 35,
+  "spa": 30,
+  "spd": 40,
+  "spe": 55
+}

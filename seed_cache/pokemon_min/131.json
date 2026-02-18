@@ -1,0 +1,16 @@
+{
+  "species_id": 131,
+  "name": "LAPRAS",
+  "type1": "water",
+  "type2": "ice",
+  "ability1": "water-absorb",
+  "ability2": "shell-armor",
+  "ability3": "hydration",
+  "bst": 535,
+  "hp": 130,
+  "atk": 85,
+  "def": 80,
+  "spa": 85,
+  "spd": 95,
+  "spe": 60
+}

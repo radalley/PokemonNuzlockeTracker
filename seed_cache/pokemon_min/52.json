@@ -1,0 +1,16 @@
+{
+  "species_id": 52,
+  "name": "MEOWTH",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "pickup",
+  "ability2": "technician",
+  "ability3": "unnerve",
+  "bst": 290,
+  "hp": 40,
+  "atk": 45,
+  "def": 35,
+  "spa": 40,
+  "spd": 40,
+  "spe": 90
+}

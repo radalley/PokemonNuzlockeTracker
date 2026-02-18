@@ -1,0 +1,16 @@
+{
+  "species_id": 18,
+  "name": "PIDGEOT",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": "tangled-feet",
+  "ability3": "big-pecks",
+  "bst": 479,
+  "hp": 83,
+  "atk": 80,
+  "def": 75,
+  "spa": 70,
+  "spd": 70,
+  "spe": 101
+}

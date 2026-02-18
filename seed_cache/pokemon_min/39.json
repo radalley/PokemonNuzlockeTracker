@@ -1,0 +1,16 @@
+{
+  "species_id": 39,
+  "name": "JIGGLYPUFF",
+  "type1": "normal",
+  "type2": "fairy",
+  "ability1": "cute-charm",
+  "ability2": "competitive",
+  "ability3": "friend-guard",
+  "bst": 270,
+  "hp": 115,
+  "atk": 45,
+  "def": 20,
+  "spa": 45,
+  "spd": 25,
+  "spe": 20
+}

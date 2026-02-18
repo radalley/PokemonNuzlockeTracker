@@ -1,0 +1,16 @@
+{
+  "species_id": 58,
+  "name": "GROWLITHE",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "intimidate",
+  "ability2": "flash-fire",
+  "ability3": "justified",
+  "bst": 350,
+  "hp": 55,
+  "atk": 70,
+  "def": 45,
+  "spa": 70,
+  "spd": 50,
+  "spe": 60
+}

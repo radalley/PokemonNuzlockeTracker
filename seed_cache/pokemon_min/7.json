@@ -1,0 +1,16 @@
+{
+  "species_id": 7,
+  "name": "SQUIRTLE",
+  "type1": "water",
+  "type2": null,
+  "ability1": "torrent",
+  "ability2": null,
+  "ability3": "rain-dish",
+  "bst": 314,
+  "hp": 44,
+  "atk": 48,
+  "def": 65,
+  "spa": 50,
+  "spd": 64,
+  "spe": 43
+}

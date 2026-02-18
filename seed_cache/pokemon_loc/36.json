@@ -1,0 +1,66 @@
+[
+  {
+    "area_name": "mt-moon-b2f",
+    "area_id": 327,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "giant-chasm-outside",
+    "area_id": 614,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "giant-chasm-forest",
+    "area_id": 616,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      },
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "giant-chasm-forest-cave",
+    "area_id": 617,
+    "version_details": [
+      {
+        "version_name": "black-2",
+        "version_id": 21
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  }
+]

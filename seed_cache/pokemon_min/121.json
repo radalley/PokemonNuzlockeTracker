@@ -1,0 +1,16 @@
+{
+  "species_id": 121,
+  "name": "STARMIE",
+  "type1": "water",
+  "type2": "psychic",
+  "ability1": "illuminate",
+  "ability2": "natural-cure",
+  "ability3": "analytic",
+  "bst": 520,
+  "hp": 60,
+  "atk": 75,
+  "def": 85,
+  "spa": 100,
+  "spd": 85,
+  "spe": 115
+}

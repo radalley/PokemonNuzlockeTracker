@@ -1,0 +1,16 @@
+{
+  "species_id": 17,
+  "name": "PIDGEOTTO",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": "tangled-feet",
+  "ability3": "big-pecks",
+  "bst": 349,
+  "hp": 63,
+  "atk": 60,
+  "def": 55,
+  "spa": 50,
+  "spd": 50,
+  "spe": 71
+}

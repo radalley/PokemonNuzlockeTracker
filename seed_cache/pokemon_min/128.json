@@ -1,0 +1,16 @@
+{
+  "species_id": 128,
+  "name": "TAUROS",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "intimidate",
+  "ability2": "anger-point",
+  "ability3": "sheer-force",
+  "bst": 490,
+  "hp": 75,
+  "atk": 100,
+  "def": 95,
+  "spa": 40,
+  "spd": 70,
+  "spe": 110
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 1,
+  "name": "BULBASAUR",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "overgrow",
+  "ability2": null,
+  "ability3": "chlorophyll",
+  "bst": 318,
+  "hp": 45,
+  "atk": 49,
+  "def": 49,
+  "spa": 65,
+  "spd": 65,
+  "spe": 45
+}

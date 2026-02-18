@@ -1,0 +1,16 @@
+{
+  "species_id": 27,
+  "name": "SANDSHREW",
+  "type1": "ground",
+  "type2": null,
+  "ability1": "sand-veil",
+  "ability2": null,
+  "ability3": "sand-rush",
+  "bst": 300,
+  "hp": 50,
+  "atk": 75,
+  "def": 85,
+  "spa": 20,
+  "spd": 30,
+  "spe": 40
+}

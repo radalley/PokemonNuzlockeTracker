@@ -1,0 +1,16 @@
+{
+  "species_id": 87,
+  "name": "DEWGONG",
+  "type1": "water",
+  "type2": "ice",
+  "ability1": "thick-fat",
+  "ability2": "hydration",
+  "ability3": "ice-body",
+  "bst": 475,
+  "hp": 90,
+  "atk": 70,
+  "def": 80,
+  "spa": 70,
+  "spd": 95,
+  "spe": 70
+}

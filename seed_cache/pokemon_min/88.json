@@ -1,0 +1,16 @@
+{
+  "species_id": 88,
+  "name": "GRIMER",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "stench",
+  "ability2": "sticky-hold",
+  "ability3": "poison-touch",
+  "bst": 325,
+  "hp": 80,
+  "atk": 80,
+  "def": 50,
+  "spa": 40,
+  "spd": 50,
+  "spe": 25
+}

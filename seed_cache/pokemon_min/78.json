@@ -1,0 +1,16 @@
+{
+  "species_id": 78,
+  "name": "RAPIDASH",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "run-away",
+  "ability2": "flash-fire",
+  "ability3": "flame-body",
+  "bst": 500,
+  "hp": 65,
+  "atk": 100,
+  "def": 70,
+  "spa": 80,
+  "spd": 80,
+  "spe": 105
+}

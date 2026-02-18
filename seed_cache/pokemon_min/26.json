@@ -1,0 +1,16 @@
+{
+  "species_id": 26,
+  "name": "RAICHU",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "static",
+  "ability2": null,
+  "ability3": "lightning-rod",
+  "bst": 485,
+  "hp": 60,
+  "atk": 90,
+  "def": 55,
+  "spa": 90,
+  "spd": 80,
+  "spe": 110
+}

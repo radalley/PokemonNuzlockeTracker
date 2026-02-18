@@ -1,0 +1,16 @@
+{
+  "species_id": 136,
+  "name": "FLAREON",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "flash-fire",
+  "ability2": null,
+  "ability3": "guts",
+  "bst": 525,
+  "hp": 65,
+  "atk": 130,
+  "def": 60,
+  "spa": 95,
+  "spd": 110,
+  "spe": 65
+}

@@ -1,0 +1,300 @@
+[
+  {
+    "area_name": "sinnoh-route-229-area",
+    "area_id": 176,
+    "version_details": [
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-14-area",
+    "area_id": 307,
+    "version_details": [
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-15-area",
+    "area_id": 308,
+    "version_details": [
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-safari-zone-middle",
+    "area_id": 345,
+    "version_details": [
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-safari-zone-area-1-east",
+    "area_id": 346,
+    "version_details": [
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-safari-zone-area-2-north",
+    "area_id": 347,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-safari-zone-area-3-west",
+    "area_id": 348,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-nwmach-bike-area",
+    "area_id": 429,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-12-area",
+    "area_id": 646,
+    "version_details": [
+      {
+        "version_name": "black",
+        "version_id": 17
+      },
+      {
+        "version_name": "white",
+        "version_id": 18
+      },
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "lostlorn-forest-area",
+    "area_id": 652,
+    "version_details": [
+      {
+        "version_name": "white-2",
+        "version_id": 22
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-route-12-area",
+    "area_id": 723,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      }
+    ]
+  },
+  {
+    "area_name": "exeggutor-island-area",
+    "area_id": 1080,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-north",
+    "area_id": 1095,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-south",
+    "area_id": 1096,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-west",
+    "area_id": 1097,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "poni-grove-area",
+    "area_id": 1116,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "poke-pelago-poni-island-reached",
+    "area_id": 1158,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "poke-pelago-ulaula-island-reached",
+    "area_id": 1159,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "poke-pelago-elite-four-defeated",
+    "area_id": 1160,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

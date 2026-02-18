@@ -1,0 +1,16 @@
+{
+  "species_id": 49,
+  "name": "VENOMOTH",
+  "type1": "bug",
+  "type2": "poison",
+  "ability1": "shield-dust",
+  "ability2": "tinted-lens",
+  "ability3": "wonder-skin",
+  "bst": 450,
+  "hp": 70,
+  "atk": 65,
+  "def": 60,
+  "spa": 90,
+  "spd": 75,
+  "spe": 90
+}

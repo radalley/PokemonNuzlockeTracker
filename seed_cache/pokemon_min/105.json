@@ -1,0 +1,16 @@
+{
+  "species_id": 105,
+  "name": "MAROWAK",
+  "type1": "ground",
+  "type2": null,
+  "ability1": "rock-head",
+  "ability2": "lightning-rod",
+  "ability3": "battle-armor",
+  "bst": 425,
+  "hp": 60,
+  "atk": 80,
+  "def": 110,
+  "spa": 50,
+  "spd": 80,
+  "spe": 45
+}

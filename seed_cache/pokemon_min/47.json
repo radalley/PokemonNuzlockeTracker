@@ -1,0 +1,16 @@
+{
+  "species_id": 47,
+  "name": "PARASECT",
+  "type1": "bug",
+  "type2": "grass",
+  "ability1": "effect-spore",
+  "ability2": "dry-skin",
+  "ability3": "damp",
+  "bst": 405,
+  "hp": 60,
+  "atk": 95,
+  "def": 80,
+  "spa": 60,
+  "spd": 80,
+  "spe": 30
+}

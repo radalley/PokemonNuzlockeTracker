@@ -1,0 +1,16 @@
+{
+  "species_id": 9,
+  "name": "BLASTOISE",
+  "type1": "water",
+  "type2": null,
+  "ability1": "torrent",
+  "ability2": null,
+  "ability3": "rain-dish",
+  "bst": 530,
+  "hp": 79,
+  "atk": 83,
+  "def": 100,
+  "spa": 85,
+  "spd": 105,
+  "spe": 78
+}

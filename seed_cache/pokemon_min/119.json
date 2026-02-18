@@ -1,0 +1,16 @@
+{
+  "species_id": 119,
+  "name": "SEAKING",
+  "type1": "water",
+  "type2": null,
+  "ability1": "swift-swim",
+  "ability2": "water-veil",
+  "ability3": "lightning-rod",
+  "bst": 450,
+  "hp": 80,
+  "atk": 92,
+  "def": 65,
+  "spa": 65,
+  "spd": 80,
+  "spe": 68
+}

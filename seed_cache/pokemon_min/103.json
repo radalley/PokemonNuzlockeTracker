@@ -1,0 +1,16 @@
+{
+  "species_id": 103,
+  "name": "EXEGGUTOR",
+  "type1": "grass",
+  "type2": "psychic",
+  "ability1": "chlorophyll",
+  "ability2": null,
+  "ability3": "harvest",
+  "bst": 530,
+  "hp": 95,
+  "atk": 95,
+  "def": 85,
+  "spa": 125,
+  "spd": 75,
+  "spe": 55
+}

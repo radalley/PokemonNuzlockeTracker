@@ -1,0 +1,438 @@
+[
+  {
+    "area_name": "eterna-forest-area",
+    "area_id": 9,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-30-area",
+    "area_id": 187,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-31-area",
+    "area_id": 188,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "ilex-forest-area",
+    "area_id": 204,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-34-area",
+    "area_id": 205,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-35-area",
+    "area_id": 206,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "national-park-area",
+    "area_id": 207,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-36-area",
+    "area_id": 209,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-37-area",
+    "area_id": 210,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-38-area",
+    "area_id": 222,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "johto-route-39-area",
+    "area_id": 223,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "lake-of-rage-area",
+    "area_id": 242,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-26-area",
+    "area_id": 287,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-27-area",
+    "area_id": 288,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-2-south-towards-viridian-city",
+    "area_id": 296,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-24-area",
+    "area_id": 314,
+    "version_details": [
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-25-area",
+    "area_id": 315,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-2-north-towards-pewter-city",
+    "area_id": 320,
+    "version_details": [
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "viridian-forest-area",
+    "area_id": 321,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      }
+    ]
+  },
+  {
+    "area_name": "pattern-bush-area",
+    "area_id": 500,
+    "version_details": [
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      }
+    ]
+  },
+  {
+    "area_name": "unova-route-12-area",
+    "area_id": 646,
+    "version_details": [
+      {
+        "version_name": "white",
+        "version_id": 18
+      }
+    ]
+  },
+  {
+    "area_name": "santalune-forest-area",
+    "area_id": 734,
+    "version_details": [
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "azalea-town-area",
+    "area_id": 798,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      }
+    ]
+  },
+  {
+    "area_name": "alola-route-1-south",
+    "area_id": 1037,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      }
+    ]
+  },
+  {
+    "area_name": "alola-route-1-west",
+    "area_id": 1039,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      }
+    ]
+  },
+  {
+    "area_name": "alola-route-5-area",
+    "area_id": 1047,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-north",
+    "area_id": 1095,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-south",
+    "area_id": 1096,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "lush-jungle-west",
+    "area_id": 1097,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "melemele-meadow-area",
+    "area_id": 1102,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      },
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

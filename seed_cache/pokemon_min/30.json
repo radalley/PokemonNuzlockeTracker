@@ -1,0 +1,16 @@
+{
+  "species_id": 30,
+  "name": "NIDORINA",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "poison-point",
+  "ability2": "rivalry",
+  "ability3": "hustle",
+  "bst": 365,
+  "hp": 70,
+  "atk": 62,
+  "def": 67,
+  "spa": 55,
+  "spd": 55,
+  "spe": 56
+}

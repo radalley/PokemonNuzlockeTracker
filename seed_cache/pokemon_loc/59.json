@@ -1,0 +1,32 @@
+[
+  {
+    "area_name": "vermilion-city-area",
+    "area_id": 282,
+    "version_details": [
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-7-area",
+    "area_id": 301,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-8-area",
+    "area_id": 302,
+    "version_details": [
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  }
+]

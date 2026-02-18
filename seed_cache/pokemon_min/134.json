@@ -1,0 +1,16 @@
+{
+  "species_id": 134,
+  "name": "VAPOREON",
+  "type1": "water",
+  "type2": null,
+  "ability1": "water-absorb",
+  "ability2": null,
+  "ability3": "hydration",
+  "bst": 525,
+  "hp": 130,
+  "atk": 65,
+  "def": 60,
+  "spa": 110,
+  "spd": 95,
+  "spe": 65
+}

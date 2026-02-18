@@ -1,0 +1,16 @@
+{
+  "species_id": 66,
+  "name": "MACHOP",
+  "type1": "fighting",
+  "type2": null,
+  "ability1": "guts",
+  "ability2": "no-guard",
+  "ability3": "steadfast",
+  "bst": 305,
+  "hp": 70,
+  "atk": 80,
+  "def": 50,
+  "spa": 35,
+  "spd": 35,
+  "spe": 35
+}

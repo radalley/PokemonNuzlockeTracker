@@ -1,0 +1,16 @@
+{
+  "species_id": 14,
+  "name": "KAKUNA",
+  "type1": "bug",
+  "type2": "poison",
+  "ability1": "shed-skin",
+  "ability2": null,
+  "ability3": null,
+  "bst": 205,
+  "hp": 45,
+  "atk": 25,
+  "def": 50,
+  "spa": 25,
+  "spd": 25,
+  "spe": 35
+}

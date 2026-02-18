@@ -1,0 +1,16 @@
+{
+  "species_id": 67,
+  "name": "MACHOKE",
+  "type1": "fighting",
+  "type2": null,
+  "ability1": "guts",
+  "ability2": "no-guard",
+  "ability3": "steadfast",
+  "bst": 405,
+  "hp": 80,
+  "atk": 100,
+  "def": 70,
+  "spa": 50,
+  "spd": 60,
+  "spe": 45
+}

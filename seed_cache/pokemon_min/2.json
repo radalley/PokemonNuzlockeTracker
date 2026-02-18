@@ -1,0 +1,16 @@
+{
+  "species_id": 2,
+  "name": "IVYSAUR",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "overgrow",
+  "ability2": null,
+  "ability3": "chlorophyll",
+  "bst": 405,
+  "hp": 60,
+  "atk": 62,
+  "def": 63,
+  "spa": 80,
+  "spd": 80,
+  "spe": 60
+}

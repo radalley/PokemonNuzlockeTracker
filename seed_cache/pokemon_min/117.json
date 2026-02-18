@@ -1,0 +1,16 @@
+{
+  "species_id": 117,
+  "name": "SEADRA",
+  "type1": "water",
+  "type2": null,
+  "ability1": "poison-point",
+  "ability2": "sniper",
+  "ability3": "damp",
+  "bst": 440,
+  "hp": 55,
+  "atk": 65,
+  "def": 95,
+  "spa": 95,
+  "spd": 45,
+  "spe": 85
+}

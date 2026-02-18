@@ -1,0 +1,16 @@
+{
+  "species_id": 89,
+  "name": "MUK",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "stench",
+  "ability2": "sticky-hold",
+  "ability3": "poison-touch",
+  "bst": 500,
+  "hp": 105,
+  "atk": 105,
+  "def": 75,
+  "spa": 65,
+  "spd": 100,
+  "spe": 50
+}

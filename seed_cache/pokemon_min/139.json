@@ -1,0 +1,16 @@
+{
+  "species_id": 139,
+  "name": "OMASTAR",
+  "type1": "rock",
+  "type2": "water",
+  "ability1": "swift-swim",
+  "ability2": "shell-armor",
+  "ability3": "weak-armor",
+  "bst": 495,
+  "hp": 70,
+  "atk": 60,
+  "def": 125,
+  "spa": 115,
+  "spd": 70,
+  "spe": 55
+}

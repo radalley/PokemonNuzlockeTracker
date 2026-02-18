@@ -1,0 +1,16 @@
+{
+  "species_id": 92,
+  "name": "GASTLY",
+  "type1": "ghost",
+  "type2": "poison",
+  "ability1": "levitate",
+  "ability2": null,
+  "ability3": null,
+  "bst": 310,
+  "hp": 30,
+  "atk": 35,
+  "def": 30,
+  "spa": 100,
+  "spd": 35,
+  "spe": 80
+}

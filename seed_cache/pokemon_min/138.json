@@ -1,0 +1,16 @@
+{
+  "species_id": 138,
+  "name": "OMANYTE",
+  "type1": "rock",
+  "type2": "water",
+  "ability1": "swift-swim",
+  "ability2": "shell-armor",
+  "ability3": "weak-armor",
+  "bst": 355,
+  "hp": 35,
+  "atk": 40,
+  "def": 100,
+  "spa": 90,
+  "spd": 55,
+  "spe": 35
+}

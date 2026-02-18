@@ -1,0 +1,16 @@
+{
+  "species_id": 75,
+  "name": "GRAVELER",
+  "type1": "rock",
+  "type2": "ground",
+  "ability1": "rock-head",
+  "ability2": "sturdy",
+  "ability3": "sand-veil",
+  "bst": 390,
+  "hp": 55,
+  "atk": 95,
+  "def": 115,
+  "spa": 45,
+  "spd": 45,
+  "spe": 35
+}

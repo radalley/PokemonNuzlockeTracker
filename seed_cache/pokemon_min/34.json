@@ -1,0 +1,16 @@
+{
+  "species_id": 34,
+  "name": "NIDOKING",
+  "type1": "poison",
+  "type2": "ground",
+  "ability1": "poison-point",
+  "ability2": "rivalry",
+  "ability3": "sheer-force",
+  "bst": 505,
+  "hp": 81,
+  "atk": 102,
+  "def": 77,
+  "spa": 85,
+  "spd": 75,
+  "spe": 85
+}

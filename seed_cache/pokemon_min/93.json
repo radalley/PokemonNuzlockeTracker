@@ -1,0 +1,16 @@
+{
+  "species_id": 93,
+  "name": "HAUNTER",
+  "type1": "ghost",
+  "type2": "poison",
+  "ability1": "levitate",
+  "ability2": null,
+  "ability3": null,
+  "bst": 405,
+  "hp": 45,
+  "atk": 50,
+  "def": 45,
+  "spa": 115,
+  "spd": 55,
+  "spe": 95
+}

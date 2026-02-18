@@ -1,0 +1,16 @@
+{
+  "species_id": 25,
+  "name": "PIKACHU",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "static",
+  "ability2": null,
+  "ability3": "lightning-rod",
+  "bst": 320,
+  "hp": 35,
+  "atk": 55,
+  "def": 40,
+  "spa": 50,
+  "spd": 50,
+  "spe": 90
+}

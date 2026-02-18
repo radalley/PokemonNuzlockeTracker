@@ -1,0 +1,16 @@
+{
+  "species_id": 146,
+  "name": "MOLTRES",
+  "type1": "fire",
+  "type2": "flying",
+  "ability1": "pressure",
+  "ability2": null,
+  "ability3": "flame-body",
+  "bst": 580,
+  "hp": 90,
+  "atk": 100,
+  "def": 90,
+  "spa": 125,
+  "spd": 85,
+  "spe": 90
+}

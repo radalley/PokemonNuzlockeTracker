@@ -1,0 +1,16 @@
+{
+  "species_id": 19,
+  "name": "RATTATA",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "run-away",
+  "ability2": "guts",
+  "ability3": "hustle",
+  "bst": 253,
+  "hp": 30,
+  "atk": 56,
+  "def": 35,
+  "spa": 25,
+  "spd": 35,
+  "spe": 72
+}

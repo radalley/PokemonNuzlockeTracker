@@ -1,0 +1,16 @@
+{
+  "species_id": 68,
+  "name": "MACHAMP",
+  "type1": "fighting",
+  "type2": null,
+  "ability1": "guts",
+  "ability2": "no-guard",
+  "ability3": "steadfast",
+  "bst": 505,
+  "hp": 90,
+  "atk": 130,
+  "def": 80,
+  "spa": 65,
+  "spd": 85,
+  "spe": 55
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 125,
+  "name": "ELECTABUZZ",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "static",
+  "ability2": null,
+  "ability3": "vital-spirit",
+  "bst": 490,
+  "hp": 65,
+  "atk": 83,
+  "def": 57,
+  "spa": 95,
+  "spd": 85,
+  "spe": 105
+}

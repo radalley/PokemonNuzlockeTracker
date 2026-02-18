@@ -1,0 +1,16 @@
+{
+  "species_id": 24,
+  "name": "ARBOK",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "intimidate",
+  "ability2": "shed-skin",
+  "ability3": "unnerve",
+  "bst": 448,
+  "hp": 60,
+  "atk": 95,
+  "def": 69,
+  "spa": 65,
+  "spd": 79,
+  "spe": 80
+}

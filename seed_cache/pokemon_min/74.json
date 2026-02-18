@@ -1,0 +1,16 @@
+{
+  "species_id": 74,
+  "name": "GEODUDE",
+  "type1": "rock",
+  "type2": "ground",
+  "ability1": "rock-head",
+  "ability2": "sturdy",
+  "ability3": "sand-veil",
+  "bst": 300,
+  "hp": 40,
+  "atk": 80,
+  "def": 100,
+  "spa": 30,
+  "spd": 30,
+  "spe": 20
+}

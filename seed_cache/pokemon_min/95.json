@@ -1,0 +1,16 @@
+{
+  "species_id": 95,
+  "name": "ONIX",
+  "type1": "rock",
+  "type2": "ground",
+  "ability1": "rock-head",
+  "ability2": "sturdy",
+  "ability3": "weak-armor",
+  "bst": 385,
+  "hp": 35,
+  "atk": 45,
+  "def": 160,
+  "spa": 30,
+  "spd": 45,
+  "spe": 70
+}

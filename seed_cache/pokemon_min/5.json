@@ -1,0 +1,16 @@
+{
+  "species_id": 5,
+  "name": "CHARMELEON",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "blaze",
+  "ability2": null,
+  "ability3": "solar-power",
+  "bst": 405,
+  "hp": 58,
+  "atk": 64,
+  "def": 58,
+  "spa": 80,
+  "spd": 65,
+  "spe": 80
+}

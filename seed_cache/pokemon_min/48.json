@@ -1,0 +1,16 @@
+{
+  "species_id": 48,
+  "name": "VENONAT",
+  "type1": "bug",
+  "type2": "poison",
+  "ability1": "compound-eyes",
+  "ability2": "tinted-lens",
+  "ability3": "run-away",
+  "bst": 305,
+  "hp": 60,
+  "atk": 55,
+  "def": 50,
+  "spa": 40,
+  "spd": 55,
+  "spe": 45
+}

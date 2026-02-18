@@ -1,0 +1,16 @@
+{
+  "species_id": 73,
+  "name": "TENTACRUEL",
+  "type1": "water",
+  "type2": "poison",
+  "ability1": "clear-body",
+  "ability2": "liquid-ooze",
+  "ability3": "rain-dish",
+  "bst": 515,
+  "hp": 80,
+  "atk": 70,
+  "def": 65,
+  "spa": 80,
+  "spd": 120,
+  "spe": 100
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 97,
+  "name": "HYPNO",
+  "type1": "psychic",
+  "type2": null,
+  "ability1": "insomnia",
+  "ability2": "forewarn",
+  "ability3": "inner-focus",
+  "bst": 483,
+  "hp": 85,
+  "atk": 73,
+  "def": 70,
+  "spa": 73,
+  "spd": 115,
+  "spe": 67
+}

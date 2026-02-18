@@ -1,0 +1,16 @@
+{
+  "species_id": 33,
+  "name": "NIDORINO",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "poison-point",
+  "ability2": "rivalry",
+  "ability3": "hustle",
+  "bst": 365,
+  "hp": 61,
+  "atk": 72,
+  "def": 57,
+  "spa": 55,
+  "spd": 55,
+  "spe": 65
+}

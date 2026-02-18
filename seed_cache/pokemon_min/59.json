@@ -1,0 +1,16 @@
+{
+  "species_id": 59,
+  "name": "ARCANINE",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "intimidate",
+  "ability2": "flash-fire",
+  "ability3": "justified",
+  "bst": 555,
+  "hp": 90,
+  "atk": 110,
+  "def": 80,
+  "spa": 100,
+  "spd": 80,
+  "spe": 95
+}

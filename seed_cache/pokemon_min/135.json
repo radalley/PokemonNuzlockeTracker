@@ -1,0 +1,16 @@
+{
+  "species_id": 135,
+  "name": "JOLTEON",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "volt-absorb",
+  "ability2": null,
+  "ability3": "quick-feet",
+  "bst": 525,
+  "hp": 65,
+  "atk": 65,
+  "def": 60,
+  "spa": 110,
+  "spd": 95,
+  "spe": 130
+}

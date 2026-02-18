@@ -1,0 +1,16 @@
+{
+  "species_id": 111,
+  "name": "RHYHORN",
+  "type1": "ground",
+  "type2": "rock",
+  "ability1": "lightning-rod",
+  "ability2": "rock-head",
+  "ability3": "reckless",
+  "bst": 345,
+  "hp": 80,
+  "atk": 85,
+  "def": 95,
+  "spa": 30,
+  "spd": 30,
+  "spe": 25
+}

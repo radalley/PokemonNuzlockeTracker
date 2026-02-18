@@ -1,0 +1,16 @@
+{
+  "species_id": 79,
+  "name": "SLOWPOKE",
+  "type1": "water",
+  "type2": "psychic",
+  "ability1": "oblivious",
+  "ability2": "own-tempo",
+  "ability3": "regenerator",
+  "bst": 315,
+  "hp": 90,
+  "atk": 65,
+  "def": 65,
+  "spa": 40,
+  "spd": 40,
+  "spe": 15
+}

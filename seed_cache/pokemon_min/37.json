@@ -1,0 +1,16 @@
+{
+  "species_id": 37,
+  "name": "VULPIX",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "flash-fire",
+  "ability2": null,
+  "ability3": "drought",
+  "bst": 299,
+  "hp": 38,
+  "atk": 41,
+  "def": 40,
+  "spa": 50,
+  "spd": 65,
+  "spe": 65
+}

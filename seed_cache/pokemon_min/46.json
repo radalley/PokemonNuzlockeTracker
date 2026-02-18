@@ -1,0 +1,16 @@
+{
+  "species_id": 46,
+  "name": "PARAS",
+  "type1": "bug",
+  "type2": "grass",
+  "ability1": "effect-spore",
+  "ability2": "dry-skin",
+  "ability3": "damp",
+  "bst": 285,
+  "hp": 35,
+  "atk": 70,
+  "def": 55,
+  "spa": 45,
+  "spd": 55,
+  "spe": 25
+}

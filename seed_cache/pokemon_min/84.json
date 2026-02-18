@@ -1,0 +1,16 @@
+{
+  "species_id": 84,
+  "name": "DODUO",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "run-away",
+  "ability2": "early-bird",
+  "ability3": "tangled-feet",
+  "bst": 310,
+  "hp": 35,
+  "atk": 85,
+  "def": 45,
+  "spa": 35,
+  "spd": 35,
+  "spe": 75
+}

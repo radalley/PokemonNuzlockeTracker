@@ -1,0 +1,16 @@
+{
+  "species_id": 76,
+  "name": "GOLEM",
+  "type1": "rock",
+  "type2": "ground",
+  "ability1": "rock-head",
+  "ability2": "sturdy",
+  "ability3": "sand-veil",
+  "bst": 495,
+  "hp": 80,
+  "atk": 120,
+  "def": 130,
+  "spa": 55,
+  "spd": 65,
+  "spe": 45
+}

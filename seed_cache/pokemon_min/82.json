@@ -1,0 +1,16 @@
+{
+  "species_id": 82,
+  "name": "MAGNETON",
+  "type1": "electric",
+  "type2": "steel",
+  "ability1": "magnet-pull",
+  "ability2": "sturdy",
+  "ability3": "analytic",
+  "bst": 465,
+  "hp": 50,
+  "atk": 60,
+  "def": 95,
+  "spa": 120,
+  "spd": 70,
+  "spe": 70
+}

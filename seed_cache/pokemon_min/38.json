@@ -1,0 +1,16 @@
+{
+  "species_id": 38,
+  "name": "NINETALES",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "flash-fire",
+  "ability2": null,
+  "ability3": "drought",
+  "bst": 505,
+  "hp": 73,
+  "atk": 76,
+  "def": 75,
+  "spa": 81,
+  "spd": 100,
+  "spe": 100
+}

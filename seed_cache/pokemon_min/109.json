@@ -1,0 +1,16 @@
+{
+  "species_id": 109,
+  "name": "KOFFING",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "levitate",
+  "ability2": "neutralizing-gas",
+  "ability3": "stench",
+  "bst": 340,
+  "hp": 40,
+  "atk": 65,
+  "def": 95,
+  "spa": 60,
+  "spd": 45,
+  "spe": 35
+}

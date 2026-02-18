@@ -1,0 +1,16 @@
+{
+  "species_id": 129,
+  "name": "MAGIKARP",
+  "type1": "water",
+  "type2": null,
+  "ability1": "swift-swim",
+  "ability2": null,
+  "ability3": "rattled",
+  "bst": 200,
+  "hp": 20,
+  "atk": 10,
+  "def": 55,
+  "spa": 15,
+  "spd": 20,
+  "spe": 80
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 77,
+  "name": "PONYTA",
+  "type1": "fire",
+  "type2": null,
+  "ability1": "run-away",
+  "ability2": "flash-fire",
+  "ability3": "flame-body",
+  "bst": 410,
+  "hp": 50,
+  "atk": 85,
+  "def": 55,
+  "spa": 65,
+  "spd": 65,
+  "spe": 90
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 61,
+  "name": "POLIWHIRL",
+  "type1": "water",
+  "type2": null,
+  "ability1": "water-absorb",
+  "ability2": "damp",
+  "ability3": "swift-swim",
+  "bst": 385,
+  "hp": 65,
+  "atk": 65,
+  "def": 65,
+  "spa": 50,
+  "spd": 50,
+  "spe": 90
+}

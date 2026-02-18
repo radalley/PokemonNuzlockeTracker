@@ -1,0 +1,16 @@
+{
+  "species_id": 81,
+  "name": "MAGNEMITE",
+  "type1": "electric",
+  "type2": "steel",
+  "ability1": "magnet-pull",
+  "ability2": "sturdy",
+  "ability3": "analytic",
+  "bst": 325,
+  "hp": 25,
+  "atk": 35,
+  "def": 70,
+  "spa": 95,
+  "spd": 55,
+  "spe": 45
+}

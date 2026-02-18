@@ -1,0 +1,16 @@
+{
+  "species_id": 116,
+  "name": "HORSEA",
+  "type1": "water",
+  "type2": null,
+  "ability1": "swift-swim",
+  "ability2": "sniper",
+  "ability3": "damp",
+  "bst": 295,
+  "hp": 30,
+  "atk": 40,
+  "def": 70,
+  "spa": 70,
+  "spd": 25,
+  "spe": 60
+}

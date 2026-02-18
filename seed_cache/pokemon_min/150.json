@@ -1,0 +1,16 @@
+{
+  "species_id": 150,
+  "name": "MEWTWO",
+  "type1": "psychic",
+  "type2": null,
+  "ability1": "pressure",
+  "ability2": null,
+  "ability3": "unnerve",
+  "bst": 680,
+  "hp": 106,
+  "atk": 110,
+  "def": 90,
+  "spa": 154,
+  "spd": 90,
+  "spe": 130
+}

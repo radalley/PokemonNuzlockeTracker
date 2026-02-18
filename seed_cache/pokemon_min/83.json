@@ -1,0 +1,16 @@
+{
+  "species_id": 83,
+  "name": "FARFETCHD",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": "inner-focus",
+  "ability3": "defiant",
+  "bst": 377,
+  "hp": 52,
+  "atk": 90,
+  "def": 55,
+  "spa": 58,
+  "spd": 62,
+  "spe": 60
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 86,
+  "name": "SEEL",
+  "type1": "water",
+  "type2": null,
+  "ability1": "thick-fat",
+  "ability2": "hydration",
+  "ability3": "ice-body",
+  "bst": 325,
+  "hp": 65,
+  "atk": 45,
+  "def": 55,
+  "spa": 45,
+  "spd": 70,
+  "spe": 45
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 35,
+  "name": "CLEFAIRY",
+  "type1": "fairy",
+  "type2": null,
+  "ability1": "cute-charm",
+  "ability2": "magic-guard",
+  "ability3": "friend-guard",
+  "bst": 323,
+  "hp": 70,
+  "atk": 45,
+  "def": 48,
+  "spa": 60,
+  "spd": 65,
+  "spe": 35
+}

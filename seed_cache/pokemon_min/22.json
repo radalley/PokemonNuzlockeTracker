@@ -1,0 +1,16 @@
+{
+  "species_id": 22,
+  "name": "FEAROW",
+  "type1": "normal",
+  "type2": "flying",
+  "ability1": "keen-eye",
+  "ability2": null,
+  "ability3": "sniper",
+  "bst": 442,
+  "hp": 65,
+  "atk": 90,
+  "def": 65,
+  "spa": 61,
+  "spd": 61,
+  "spe": 100
+}

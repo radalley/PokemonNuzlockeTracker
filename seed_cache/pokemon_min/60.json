@@ -1,0 +1,16 @@
+{
+  "species_id": 60,
+  "name": "POLIWAG",
+  "type1": "water",
+  "type2": null,
+  "ability1": "water-absorb",
+  "ability2": "damp",
+  "ability3": "swift-swim",
+  "bst": 300,
+  "hp": 40,
+  "atk": 50,
+  "def": 40,
+  "spa": 40,
+  "spd": 40,
+  "spe": 90
+}

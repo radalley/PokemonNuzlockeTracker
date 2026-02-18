@@ -1,0 +1,16 @@
+{
+  "species_id": 149,
+  "name": "DRAGONITE",
+  "type1": "dragon",
+  "type2": "flying",
+  "ability1": "inner-focus",
+  "ability2": null,
+  "ability3": "multiscale",
+  "bst": 600,
+  "hp": 91,
+  "atk": 134,
+  "def": 95,
+  "spa": 100,
+  "spd": 100,
+  "spe": 80
+}

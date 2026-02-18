@@ -1,0 +1,16 @@
+{
+  "species_id": 101,
+  "name": "ELECTRODE",
+  "type1": "electric",
+  "type2": null,
+  "ability1": "soundproof",
+  "ability2": "static",
+  "ability3": "aftermath",
+  "bst": 490,
+  "hp": 60,
+  "atk": 50,
+  "def": 70,
+  "spa": 80,
+  "spd": 80,
+  "spe": 150
+}

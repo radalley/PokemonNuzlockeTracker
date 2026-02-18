@@ -1,0 +1,16 @@
+{
+  "species_id": 51,
+  "name": "DUGTRIO",
+  "type1": "ground",
+  "type2": null,
+  "ability1": "sand-veil",
+  "ability2": "arena-trap",
+  "ability3": "sand-force",
+  "bst": 425,
+  "hp": 35,
+  "atk": 100,
+  "def": 50,
+  "spa": 50,
+  "spd": 70,
+  "spe": 120
+}

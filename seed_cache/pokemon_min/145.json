@@ -1,0 +1,16 @@
+{
+  "species_id": 145,
+  "name": "ZAPDOS",
+  "type1": "electric",
+  "type2": "flying",
+  "ability1": "pressure",
+  "ability2": null,
+  "ability3": "static",
+  "bst": 580,
+  "hp": 90,
+  "atk": 90,
+  "def": 85,
+  "spa": 125,
+  "spd": 90,
+  "spe": 100
+}

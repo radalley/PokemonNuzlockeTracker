@@ -1,0 +1,16 @@
+{
+  "species_id": 6,
+  "name": "CHARIZARD",
+  "type1": "fire",
+  "type2": "flying",
+  "ability1": "blaze",
+  "ability2": null,
+  "ability3": "solar-power",
+  "bst": 534,
+  "hp": 78,
+  "atk": 84,
+  "def": 78,
+  "spa": 109,
+  "spd": 85,
+  "spe": 100
+}

@@ -1,0 +1,16 @@
+{
+  "species_id": 80,
+  "name": "SLOWBRO",
+  "type1": "water",
+  "type2": "psychic",
+  "ability1": "oblivious",
+  "ability2": "own-tempo",
+  "ability3": "regenerator",
+  "bst": 490,
+  "hp": 95,
+  "atk": 75,
+  "def": 110,
+  "spa": 100,
+  "spd": 80,
+  "spe": 30
+}

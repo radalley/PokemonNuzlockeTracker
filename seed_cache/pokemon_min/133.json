@@ -1,0 +1,16 @@
+{
+  "species_id": 133,
+  "name": "EEVEE",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "run-away",
+  "ability2": "adaptability",
+  "ability3": "anticipation",
+  "bst": 325,
+  "hp": 55,
+  "atk": 55,
+  "def": 50,
+  "spa": 45,
+  "spd": 65,
+  "spe": 55
+}

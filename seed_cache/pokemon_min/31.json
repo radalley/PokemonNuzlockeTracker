@@ -1,0 +1,16 @@
+{
+  "species_id": 31,
+  "name": "NIDOQUEEN",
+  "type1": "poison",
+  "type2": "ground",
+  "ability1": "poison-point",
+  "ability2": "rivalry",
+  "ability3": "sheer-force",
+  "bst": 505,
+  "hp": 90,
+  "atk": 92,
+  "def": 87,
+  "spa": 75,
+  "spd": 85,
+  "spe": 76
+}

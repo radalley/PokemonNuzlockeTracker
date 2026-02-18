@@ -1,0 +1,16 @@
+{
+  "species_id": 8,
+  "name": "WARTORTLE",
+  "type1": "water",
+  "type2": null,
+  "ability1": "torrent",
+  "ability2": null,
+  "ability3": "rain-dish",
+  "bst": 405,
+  "hp": 59,
+  "atk": 63,
+  "def": 80,
+  "spa": 65,
+  "spd": 80,
+  "spe": 58
+}

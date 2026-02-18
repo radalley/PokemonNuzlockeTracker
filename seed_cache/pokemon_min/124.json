@@ -1,0 +1,16 @@
+{
+  "species_id": 124,
+  "name": "JYNX",
+  "type1": "ice",
+  "type2": "psychic",
+  "ability1": "oblivious",
+  "ability2": "forewarn",
+  "ability3": "dry-skin",
+  "bst": 455,
+  "hp": 65,
+  "atk": 50,
+  "def": 35,
+  "spa": 115,
+  "spd": 95,
+  "spe": 95
+}

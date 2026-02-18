@@ -1,0 +1,16 @@
+{
+  "species_id": 143,
+  "name": "SNORLAX",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "immunity",
+  "ability2": "thick-fat",
+  "ability3": "gluttony",
+  "bst": 540,
+  "hp": 160,
+  "atk": 110,
+  "def": 65,
+  "spa": 65,
+  "spd": 110,
+  "spe": 30
+}

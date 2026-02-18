@@ -1,0 +1,16 @@
+{
+  "species_id": 151,
+  "name": "MEW",
+  "type1": "psychic",
+  "type2": null,
+  "ability1": "synchronize",
+  "ability2": null,
+  "ability3": null,
+  "bst": 600,
+  "hp": 100,
+  "atk": 100,
+  "def": 100,
+  "spa": 100,
+  "spd": 100,
+  "spe": 100
+}

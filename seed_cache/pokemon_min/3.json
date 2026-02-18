@@ -1,0 +1,16 @@
+{
+  "species_id": 3,
+  "name": "VENUSAUR",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "overgrow",
+  "ability2": null,
+  "ability3": "chlorophyll",
+  "bst": 525,
+  "hp": 80,
+  "atk": 82,
+  "def": 83,
+  "spa": 100,
+  "spd": 100,
+  "spe": 80
+}

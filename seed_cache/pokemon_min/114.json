@@ -1,0 +1,16 @@
+{
+  "species_id": 114,
+  "name": "TANGELA",
+  "type1": "grass",
+  "type2": null,
+  "ability1": "chlorophyll",
+  "ability2": "leaf-guard",
+  "ability3": "regenerator",
+  "bst": 435,
+  "hp": 65,
+  "atk": 55,
+  "def": 115,
+  "spa": 100,
+  "spd": 40,
+  "spe": 60
+}

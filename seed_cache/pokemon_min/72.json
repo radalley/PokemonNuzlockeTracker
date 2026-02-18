@@ -1,0 +1,16 @@
+{
+  "species_id": 72,
+  "name": "TENTACOOL",
+  "type1": "water",
+  "type2": "poison",
+  "ability1": "clear-body",
+  "ability2": "liquid-ooze",
+  "ability3": "rain-dish",
+  "bst": 335,
+  "hp": 40,
+  "atk": 40,
+  "def": 35,
+  "spa": 50,
+  "spd": 100,
+  "spe": 70
+}

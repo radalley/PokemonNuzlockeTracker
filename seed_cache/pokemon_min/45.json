@@ -1,0 +1,16 @@
+{
+  "species_id": 45,
+  "name": "VILEPLUME",
+  "type1": "grass",
+  "type2": "poison",
+  "ability1": "chlorophyll",
+  "ability2": null,
+  "ability3": "effect-spore",
+  "bst": 490,
+  "hp": 75,
+  "atk": 80,
+  "def": 85,
+  "spa": 110,
+  "spd": 90,
+  "spe": 50
+}

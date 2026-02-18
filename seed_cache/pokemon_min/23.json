@@ -1,0 +1,16 @@
+{
+  "species_id": 23,
+  "name": "EKANS",
+  "type1": "poison",
+  "type2": null,
+  "ability1": "intimidate",
+  "ability2": "shed-skin",
+  "ability3": "unnerve",
+  "bst": 288,
+  "hp": 35,
+  "atk": 60,
+  "def": 44,
+  "spa": 40,
+  "spd": 54,
+  "spe": 55
+}

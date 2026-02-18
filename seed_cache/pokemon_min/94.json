@@ -1,0 +1,16 @@
+{
+  "species_id": 94,
+  "name": "GENGAR",
+  "type1": "ghost",
+  "type2": "poison",
+  "ability1": "cursed-body",
+  "ability2": null,
+  "ability3": null,
+  "bst": 500,
+  "hp": 60,
+  "atk": 65,
+  "def": 60,
+  "spa": 130,
+  "spd": 75,
+  "spe": 110
+}

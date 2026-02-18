@@ -1,0 +1,16 @@
+{
+  "species_id": 140,
+  "name": "KABUTO",
+  "type1": "rock",
+  "type2": "water",
+  "ability1": "swift-swim",
+  "ability2": "battle-armor",
+  "ability3": "weak-armor",
+  "bst": 355,
+  "hp": 30,
+  "atk": 80,
+  "def": 90,
+  "spa": 55,
+  "spd": 45,
+  "spe": 55
+}

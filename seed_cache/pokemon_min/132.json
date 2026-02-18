@@ -1,0 +1,16 @@
+{
+  "species_id": 132,
+  "name": "DITTO",
+  "type1": "normal",
+  "type2": null,
+  "ability1": "limber",
+  "ability2": null,
+  "ability3": "imposter",
+  "bst": 288,
+  "hp": 48,
+  "atk": 48,
+  "def": 48,
+  "spa": 48,
+  "spd": 48,
+  "spe": 48
+}

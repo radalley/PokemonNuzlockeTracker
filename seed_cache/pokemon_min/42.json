@@ -1,0 +1,16 @@
+{
+  "species_id": 42,
+  "name": "GOLBAT",
+  "type1": "poison",
+  "type2": "flying",
+  "ability1": "inner-focus",
+  "ability2": null,
+  "ability3": "infiltrator",
+  "bst": 455,
+  "hp": 75,
+  "atk": 80,
+  "def": 70,
+  "spa": 65,
+  "spd": 75,
+  "spe": 90
+}

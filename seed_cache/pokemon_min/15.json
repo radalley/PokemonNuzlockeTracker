@@ -1,0 +1,16 @@
+{
+  "species_id": 15,
+  "name": "BEEDRILL",
+  "type1": "bug",
+  "type2": "poison",
+  "ability1": "swarm",
+  "ability2": null,
+  "ability3": "sniper",
+  "bst": 395,
+  "hp": 65,
+  "atk": 90,
+  "def": 40,
+  "spa": 45,
+  "spd": 80,
+  "spe": 75
+}

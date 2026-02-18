@@ -1,0 +1,304 @@
+[
+  {
+    "area_name": "trophy-garden-area",
+    "area_id": 118,
+    "version_details": [
+      {
+        "version_name": "diamond",
+        "version_id": 12
+      },
+      {
+        "version_name": "pearl",
+        "version_id": 13
+      },
+      {
+        "version_name": "platinum",
+        "version_id": 14
+      }
+    ]
+  },
+  {
+    "area_name": "pallet-town-area",
+    "area_id": 285,
+    "version_details": [
+      {
+        "version_name": "yellow",
+        "version_id": 3
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      }
+    ]
+  },
+  {
+    "area_name": "kanto-route-2-south-towards-viridian-city",
+    "area_id": 296,
+    "version_details": [
+      {
+        "version_name": "gold",
+        "version_id": 4
+      },
+      {
+        "version_name": "silver",
+        "version_id": 5
+      },
+      {
+        "version_name": "crystal",
+        "version_id": 6
+      }
+    ]
+  },
+  {
+    "area_name": "viridian-forest-area",
+    "area_id": 321,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": "heartgold",
+        "version_id": 15
+      },
+      {
+        "version_name": "soulsilver",
+        "version_id": 16
+      },
+      {
+        "version_name": "lets-go-pikachu",
+        "version_id": 31
+      },
+      {
+        "version_name": "lets-go-eevee",
+        "version_id": 32
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "power-plant-area",
+    "area_id": 330,
+    "version_details": [
+      {
+        "version_name": "red",
+        "version_id": 1
+      },
+      {
+        "version_name": "blue",
+        "version_id": 2
+      },
+      {
+        "version_name": "firered",
+        "version_id": 10
+      },
+      {
+        "version_name": "leafgreen",
+        "version_id": 11
+      },
+      {
+        "version_name": null,
+        "version_id": 44
+      },
+      {
+        "version_name": null,
+        "version_id": 45
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-sw",
+    "area_id": 431,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "hoenn-safari-zone-se",
+    "area_id": 432,
+    "version_details": [
+      {
+        "version_name": "ruby",
+        "version_id": 7
+      },
+      {
+        "version_name": "sapphire",
+        "version_id": 8
+      },
+      {
+        "version_name": "emerald",
+        "version_id": 9
+      }
+    ]
+  },
+  {
+    "area_name": "kalos-route-3-area",
+    "area_id": 714,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "santalune-forest-area",
+    "area_id": 734,
+    "version_details": [
+      {
+        "version_name": "x",
+        "version_id": 23
+      },
+      {
+        "version_name": "y",
+        "version_id": 24
+      }
+    ]
+  },
+  {
+    "area_name": "slateport-city-contest-hall",
+    "area_id": 781,
+    "version_details": [
+      {
+        "version_name": "omega-ruby",
+        "version_id": 25
+      },
+      {
+        "version_name": "alpha-sapphire",
+        "version_id": 26
+      }
+    ]
+  },
+  {
+    "area_name": "verdanturf-town-contest-hall",
+    "area_id": 782,
+    "version_details": [
+      {
+        "version_name": "omega-ruby",
+        "version_id": 25
+      },
+      {
+        "version_name": "alpha-sapphire",
+        "version_id": 26
+      }
+    ]
+  },
+  {
+    "area_name": "fallarbor-town-contest-hall",
+    "area_id": 783,
+    "version_details": [
+      {
+        "version_name": "omega-ruby",
+        "version_id": 25
+      },
+      {
+        "version_name": "alpha-sapphire",
+        "version_id": 26
+      }
+    ]
+  },
+  {
+    "area_name": "lilycove-city-contest-hall",
+    "area_id": 784,
+    "version_details": [
+      {
+        "version_name": "omega-ruby",
+        "version_id": 25
+      },
+      {
+        "version_name": "alpha-sapphire",
+        "version_id": 26
+      }
+    ]
+  },
+  {
+    "area_name": "alola-route-1-east",
+    "area_id": 1035,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  },
+  {
+    "area_name": "alola-route-1-west",
+    "area_id": 1039,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      }
+    ]
+  },
+  {
+    "area_name": "hauoli-city-shopping-district",
+    "area_id": 1085,
+    "version_details": [
+      {
+        "version_name": "sun",
+        "version_id": 27
+      },
+      {
+        "version_name": "moon",
+        "version_id": 28
+      }
+    ]
+  },
+  {
+    "area_name": "heahea-city-surf-association",
+    "area_id": 1088,
+    "version_details": [
+      {
+        "version_name": "ultra-sun",
+        "version_id": 29
+      },
+      {
+        "version_name": "ultra-moon",
+        "version_id": 30
+      }
+    ]
+  }
+]

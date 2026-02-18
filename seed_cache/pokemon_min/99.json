@@ -1,0 +1,16 @@
+{
+  "species_id": 99,
+  "name": "KINGLER",
+  "type1": "water",
+  "type2": null,
+  "ability1": "hyper-cutter",
+  "ability2": "shell-armor",
+  "ability3": "sheer-force",
+  "bst": 475,
+  "hp": 55,
+  "atk": 130,
+  "def": 115,
+  "spa": 50,
+  "spd": 50,
+  "spe": 75
+}
