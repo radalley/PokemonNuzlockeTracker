@@ -57,7 +57,7 @@ def pokemon_get_loc(identifier: str | int, *, use_cache: bool = True) -> Dict[st
             version_name = ver.version.name
             version_id = ver.version.id_
             version_details.append({
-                'version_name': version_name,
+                'version_name': version_name.capitalize(),
                 'version_id': version_id})
         data.append({
             'area_name': area_name,
@@ -91,22 +91,22 @@ def upsert_location(conn: sqlite3.Connection, row: Dict[str, Any]) -> None:
 
 
     for loc in row['data']:
-        conn.execute(
-        "INSERT OR IGNORE INTO locations (location_name, location_id) VALUES (?,?);",
-        (loc["area_name"], loc["area_id"]),
-        )
+        # conn.execute(
+        # "INSERT OR IGNORE INTO locations (location_name, location_id) VALUES (?,?);",
+        # (loc["area_name"], loc["area_id"]),
+        # )
         for ver in loc['version_details']:
             conn.execute(
                 "INSERT OR IGNORE into games (game_id, name) VALUES (?, ?); ",
                 (ver['version_id'], ver['version_name']),
             )
-            conn.execute(
-        """
-            INSERT OR IGNORE INTO encounter_pool (species_id, location_id, game_id)
-            VALUES (?, ?, ?);
-            """,
-            (row["dex_id"], loc['area_id'], ver["version_id"]),
-            )
+        #     conn.execute(
+        # """
+        #     INSERT OR IGNORE INTO encounter_pool (species_id, location_id, game_id)
+        #     VALUES (?, ?, ?);
+        #     """,
+        #     (row["dex_id"], loc['area_id'], ver["version_id"]),
+        #     )
         conn.commit()
 
 
