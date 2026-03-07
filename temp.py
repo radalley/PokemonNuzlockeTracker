@@ -1,4 +1,4 @@
-from pathlib import Path
+'''from pathlib import Path
 import sqlite3
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -32,3 +32,8 @@ tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetc
 print("Tables now:", tables)
 
 conn.close()
+'''
+
+lst = [1,2,2,3,4,5,6,6,6,7,8,8]
+
+pass

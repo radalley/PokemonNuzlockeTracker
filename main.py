@@ -1,35 +1,32 @@
 
-
-
-
-#this is the mioan file for running the pokemon nuzlocke tracker
+#this is the main file for running the pokemon nuzlocke tracker
 
 #upon launch
 import sqlite3
 import time
 import uuid
 
-
-
 conn = sqlite3.connect('identifier.sqlite')
 cur = conn.cursor()
 
+state = {'active_run_id' : None, 'active_attempt_id': None}
+
 def app():
     #start state is empty
-    state = {'active_run_id' : None, 'active_attempt_id': None}
     while True:
         if state['active_attempt_id']:
-            attempt(state)
+            attempt()
         elif state['active_run_id']:
-            run(state)
+            run()
         else:
-            home(state)
+            home()
+    pass #new additon
 
 def get_games():
     games = cur.execute(f'SELECT game_id, name, game_tag, generation from games where valid_game = "valid"').fetchall()
     return games
 
-def new_game(state):
+def new_game():
     #list games
     #create run
     #for each generation
@@ -72,7 +69,7 @@ def new_game(state):
         else:
             print('Invalid: Please enter game id')
 
-def load_game(state):
+def load_game():
     #display runs
     runs = cur.execute('SELECT run_id, games.name, runs.name, runs.created_at from runs LEFT JOIN games on runs.run_id=games.game_id').fetchall()
     print('Please select by entering run id:')
@@ -90,7 +87,7 @@ def load_game(state):
 
     state['active_run_id'] = int(selection)
 
-def new_attempt(state):
+def new_attempt():
     attempts = cur.execute(f'select attempt_id, attempt_number, is_active from attempts where run_id = {state["active_run_id"]}').fetchall()
     if len(attempts) == 0:
         #create new attempt on run with id = 1
@@ -101,14 +98,11 @@ def new_attempt(state):
         pass
     conn.commit()
 
-
-
-
-def run(state):
+def run():
     #load current attempt
     attempts = cur.execute(f'select attempt_id, attempt_number, is_active from attempts where run_id = {state["active_run_id"]}').fetchall()
     if len(attempts) == 0:
-        new_attempt(state)
+        new_attempt()
     else:
         state['active_attempt_id'] = attempts[-1][0]
 
@@ -116,10 +110,10 @@ def run(state):
 
     #view total pokemon
 
-def attempt(state):
+def attempt():
     pass
 
-def home(state):
+def home():
     print("""
                 Welcome to the Pokemon Nuzlocke Tracker
                 ~ this project is created by Riley Dalley and is a WIP ~
@@ -136,9 +130,9 @@ def home(state):
         #exit and save
         raise SystemExit
     elif choice == '1':
-        new_game(state)
+        new_game()
     elif choice == '2':
-        load_game(state)
+        load_game()
     else:
         print('Invalid entry')
 
