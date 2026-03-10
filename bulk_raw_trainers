@@ -702,7 +702,7 @@
         .aiFlags = AI_SCRIPT_CHECK_BAD_MOVE,
         .party = NO_ITEM_DEFAULT_MOVES(sParty_MagmaGruntM),
     },
-    [TRAINER_MAMGA_GRUNT_F] = {
+    [TRAINER_MAGMA_GRUNT_F] = {
         .trainerClass = TRAINER_CLASS_TEAM_MAGMA,
         .encounterMusic_gender = TRAINER_ENCOUNTER_MUSIC_MAGMA,
         .trainerPic = TRAINER_PIC_MAGMA_GRUNT_F,
