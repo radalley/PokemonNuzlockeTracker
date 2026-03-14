@@ -3,9 +3,11 @@ import sqlite3
 conn = sqlite3.connect('identifier.sqlite')
 cur = conn.cursor()
 
-tSql = cur.execute(f'select encounter_name from trainer_pool').fetchall()
+# tSql = cur.execute(f'select encounter_name from trainer_pool').fetchall()
 import re
-if __name__ == '__main__':
+a1 = False
+
+if a1:
     #file handler
     raw = []
     trainers = []
@@ -54,7 +56,6 @@ if __name__ == '__main__':
             if line[:6] == '.moves':
                 moves = line.split('{')[1].split('}')[0]
 
-
             if line == '},':
                 #end of pokemon
                 conn.execute(
@@ -78,8 +79,10 @@ if __name__ == '__main__':
             #     species = ''
             #     moves = ''
 
-
-
-
-
+a2 = True
+#check for missing trainers
+if a2:
+    tSql = cur.execute(f'select encounter_name from trainer_pool').fetchall()
+    # tSql = cur.execute(f'select encounter_name from trainer_pokemon left join trainer_pool on trainer_pokemon.enocunter_name = trainer_pool.encounter_name where trainer_pool.location_id is null').fetchall()
+    # tSql = cur.execute(f'select trainer_pool.encounter_name from trainer_pokemon left join trainer_pool on trainer_pokemon.encounter_name = trainer_pool.encounter_name where trainer_pool.location_id is null').fetchall()
 print("done")
