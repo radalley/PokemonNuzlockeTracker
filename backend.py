@@ -13,108 +13,73 @@ def get_games():
     games = conn.execute(f'SELECT game_id, name, game_tag, generation from games where valid_game = "valid"').fetchall()
     return games
 
+def set_active_game(game):
+    state['active_game_id'] = game
+
 # Runs
 
-# create_runs()
 def create_run(name):
-    cur.execute("INSERT into runs (game_id, name) values (?,?)",
+    cur.execute("insert into runs (game_id, name) values (?,?)",
                 (state['active_game_id'], name)
                 )
-    state['active_run_id'] = created_id
     conn.commit()
+    #get latest run and set
+    set_active_run(conn.execute('select run_id from runs order by run_id desc limit 1').fetchone()['run_id'])
 
-def new_run():
-    #list games
-    #create run
-    #for each generation
-    games = get_games()
-    game_dict = {}
-    for i in games:
-        gen = f'Generation {i[3]}'
-        game_dict[gen] = game_dict.get(gen, [])
-        game_dict[gen].append((i[0], i[1], i[2]))
-    '''
-    {'gen 1': [(1,'red'), (2, 'blue')]
-    '''
-    print('Please Choose by entering its Game Id:\n=========================================')
-    print('Game ID | Name')
-    valid_ids = []
-    for key, value in game_dict.items():
-        print(key)
-        for item in value:
-            valid_ids.append(str(item[0]))
-            print(f'{item[0]} | Pokemon {item[1]}')
+def get_runs():
+    return conn.execute('select run_id, game_id, name, created_at from runs order by run_id').fetchall()
 
-    while state['active_run_id'] is None:
-        created_game_id = input('> ')
-        if created_game_id in valid_ids:
-            #create run off id
-            created_id = cur.execute('select run_id from runs order by run_id desc limit 1').fetchone()
-            if not created_id:
-                created_id = 1
-            else:
-                created_id = created_id[0] + 1
-            created_name = ''
-            while len(created_name) == 0:
-                created_name = input('Please Enter Name for Run > ')
-            cur.execute("INSERT into runs (run_id, game_id, name, created_at) values (?,?,?,?)",
-                (created_id, created_game_id, created_name, time.strftime(f'%m-%d-%Y at %I:%M %p', time.localtime()))
-            )
-            conn.commit()
-            state['active_run_id'] = created_id
-            #open run
-        else:
-            print('Invalid: Please enter game id')
-
-#load_runs()
-def load_game():
-    #display runs
-    runs = cur.execute('SELECT run_id, games.name, runs.name, runs.created_at from runs LEFT JOIN games on runs.run_id=games.game_id').fetchall()
-    print('Please select by entering run id:')
-    # print('Run ID | Name | Version | Date Created')
-    print(f' \n{"ID":<3} | {"Run Name":<20} | {"Game":<10} | {"Created"}\n{"=" * 60}')
-    run_ids = []
-    for i in runs:
-        # print(f'{i[0]:<3} | {i[2]} | {i[1]} | {i[3]}')
-        run_ids.append(str(i[0]))
-        print(f'{i[0]:<3} | {i[2]:<20} | {i[1]:<10} | {i[3]}')
-
-    selection = ''
-    while selection not in run_ids:
-        selection = input('> ').strip().lower()
-
-    state['active_run_id'] = int(selection)
-
-#get_runs()
+def set_active_run(run_id):
+    state['active_run_id'] = run_id
 
 # Attempts
 
 # create_attempt()
 def new_attempt():
-    attempts = cur.execute(f'select attempt_id, attempt_number, is_active from attempts where run_id = {state["active_run_id"]}').fetchall()
+    attempts = cur.execute(f'select attempt_number, is_active from attempts where run_id = {state["active_run_id"]}').fetchall()
     if len(attempts) == 0:
         #create new attempt on run with id = 1
         cur.execute("insert into attempts (run_id, attempt_number) values (?,?)",
                     (state['active_run_id'], 1) )
         state['active_attempt_id'] = 1
     else:
-        pass
+        new_attempt_number = attempts[::-1][0][0] + 1
+        #create new attempt on run with id = 1
+        cur.execute("insert into attempts (run_id, attempt_number) values (?,?)",
+                    (state['active_run_id'], new_attempt_number) )
+        set_active_attempt(new_attempt_number)
     conn.commit()
 
-# get_attempts()
+def get_attempts():
+    return conn.execute(f'select attempt_number from attempts where run_id = {state["active_run_id"]}').fetchall()
 
-# get_latest_attempt()
+def get_latest_attempt():
+    return conn.execute(f'select attempt_id from attempts where run_id = {state["active_run_id"]} order by attempt_id desc limit 1').fetchone()
+
+def set_active_attempt(attempt):
+    state['active_attempt_id'] = attempt
 
 # Pokebank
 
 # get_pokebank()
-# add_pokemon()
-# drop_pokemon()
+def get_pokebank():
+    return conn.execute(f'select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank').fetchall()
+
+def add_pokemon(species_id, location_id, nickname, status, shiny):
+    conn.execute('insert into pokebank (run_id, attempt_id, species_id, location_id, nickname, status, shiny) values (?,?,?,?,?,?,?)', (state['active_run_id'],state['active_attempt_id'],species_id, location_id, nickname, status, shiny))
+    conn.commit()
+
+def drop_pokemon(pokemon_id):
+    conn.execute(f'delete from pokebank where pokemon_id = {pokemon_id}')
+    conn.commit()
 # update_pokemon()
 
 # Locations
 
 # get_locations()
+def get_locations():
+    conn.execute()
+
 # get_encounter_pool()
 # get_trainers()
 
@@ -122,4 +87,12 @@ def new_attempt():
 
 # get_trainer_pokemon()
 if __name__ == '__main__':
-    print('hello')
+    state['active_run_id'] = 1
+    m_species_id = 1
+    m_location_id = 3
+    m_nickname = 'Arbithor'
+    m_status = 'Captured'
+    m_shiny = 'False'    
+    state['active_run_id'] = 1
+    state['active_attempt_id'] = 2
+    get_latest_attempt()
