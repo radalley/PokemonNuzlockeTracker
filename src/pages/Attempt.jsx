@@ -1,18 +1,3 @@
-// import { useNavigate } from 'react-router-dom'
-
-// function Attempt() {
-//     const navigate = useNavigate()
-
-//   return (
-//     <div>
-//         <p>test of attempt screen</p>
-//       <h1>Attempt</h1>
-//       <button onClick={ () => navigate('/')}> Home </button> 
-//     </div>
-//   )
-// }
-
-// export default Attempt
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
