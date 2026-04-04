@@ -96,6 +96,9 @@ def drop_from_party(party_slot):
 def get_box(conn):
     return conn.execute(f'select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where attempt_id = (?) and run_id = (?) and status = "Captured"', (state['active_attempt_id'], state['active_run_id'],)).fetchall()
 
+def get_species_search(conn, name):
+    return conn.execute('select name, species_id from species where name like (?)',('%'+name+'%',)).fetchall()
+
 def add_pokemon(conn, species_id, location_id, nickname, status, shiny):
     conn.execute('insert into pokebank (run_id, attempt_id, species_id, location_id, nickname, status, shiny) values (?,?,?,?,?,?,?)', (state['active_run_id'],state['active_attempt_id'],species_id, location_id, nickname, status, shiny))
     conn.commit()
@@ -123,8 +126,15 @@ def get_encounter_pool(conn, location_id, game_id):
     tmp = conn.execute('select encounter_pool.species_id, species.name from encounter_pool left join species on encounter_pool.species_id = species.species_id where canonical_location_id = (?) and game_id = (?)', (location_id, game_id)).fetchall()
     return [dict(x) for x in tmp]
 
+def get_encounters_for_attempt(conn, run_id, attempt_id):
+    return conn.execute('select species_id, location_id from pokebank where run_id = (?) and attempt_id = (?)', (run_id, attempt_id)).fetchall()
+
 def get_trainers_by_location(conn, location_id):
     return conn.execute('Select trainer_id, encounter_name as trainer_name, location_id, is_event from trainer_pool where location_id = (?)', (location_id,)).fetchall()
+
+def update_starter(conn, run_id, attempt_id, starter):
+    conn.execute('update attempts set starter = (?) where run_id = (?) and attempt_id = (?) ',(starter, run_id,attempt_id))
+    conn.commit()
 
 def get_trainer_parties_by_encounter(conn, trainer_name):
     return conn.execute('Select species_name, iv, lvl, moves from trainer_pokemon where encounter_name = (?)', (trainer_name,)).fetchall()
@@ -139,8 +149,7 @@ if __name__ == '__main__':
     m_location_id = 8
     m_nickname = 'Arbithor'
     m_status = 'Captured'
-    m_shiny = 'False'    
-    state['active_run_id'] = 1
+    m_shiny = 'False'
     state['active_attempt_id'] = 2
     starter = 'Grass'
     set_active_game(conn, 10)
@@ -164,5 +173,5 @@ if __name__ == '__main__':
     swap_party_slots( {'party_slot': 2, 'pokemon_id': active_party[2]}, {'party_slot': '', 'pokemon_id': 26} )
     print(f'party = {active_party}')
     run = get_run_by_id(conn,1)
-
+    species = get_species_search(conn, 'ew')
     get_latest_attempt(conn)

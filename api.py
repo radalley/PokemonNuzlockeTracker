@@ -2,7 +2,9 @@ from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 import sqlite3
 import time
-from backend import get_games, create_run, get_runs, get_script, get_encounter_pool, get_run_by_id, get_trainers_by_location
+from backend import (get_games, create_run, get_runs, get_script,
+                     get_encounter_pool, get_run_by_id, get_trainers_by_location,
+                     get_trainer_parties_by_encounter, get_species_search, update_starter)
 
 app = Flask(__name__)
 CORS(app)
@@ -68,6 +70,29 @@ def trainer_list_route(location_id):
     conn = get_db()
     trainers = get_trainers_by_location(conn, location_id)
     return jsonify([dict(t) for t in trainers])
+
+@app.route('/api/trainer-party/<trainer_name>', methods=['GET'])
+def trainer_party_route(trainer_name):
+    conn = get_db()
+    party = get_trainer_parties_by_encounter(conn, trainer_name)
+    return jsonify([dict(p) for p in party])
+
+@app.route('/api/species/search', methods=['GET'])
+def species_search_route():
+    conn = get_db()
+    query = request.args.get('q', '')
+    species = get_species_search(conn, query)
+    return jsonify([dict(s) for s in species])
+
+@app.route('/api/update-starter', methods=['POST'])
+def update_starter_route():
+    conn = get_db()
+    data = request.get_json()
+    run_id = int(data['run_id'])
+    attempt_id = int(data['attempt_id'])
+    starter = data['starter']
+    update_starter(conn, run_id, attempt_id, starter)
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True)
