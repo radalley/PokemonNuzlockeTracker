@@ -12,7 +12,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/new-run" element={<NewRun />} />
         <Route path="/load-run" element={<LoadRun />} />
-        <Route path="/attempt/:runId" element={<Attempt />} />
+        <Route path="/attempt/:runId/:attemptId" element={<Attempt />} />
       </Routes>
     </BrowserRouter>
   )

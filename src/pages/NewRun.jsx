@@ -27,7 +27,7 @@ function handleCreate() {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        navigate(`/attempt/${data.run_id}`)
+        navigate(`/attempt/${data.run_id}/1`)
       }
     })
 }
