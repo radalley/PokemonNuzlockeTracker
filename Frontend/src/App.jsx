@@ -1,0 +1,36 @@
+
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import NewRun from './pages/NewRun'
+import LoadRun from './pages/LoadRun'
+import Guides from './pages/Guides'
+import Attempt from './pages/Attempt'
+import Box from './pages/Box'
+import Graveyard from './pages/Graveyard'
+import ErrorBoundary from './components/ErrorBoundary'
+import AuthDialog from './components/AuthDialog'
+import RequireAuth from './components/RequireAuth'
+import { AuthProvider } from './contexts/AuthContext'
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <AuthDialog />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/new-run" element={<RequireAuth><NewRun /></RequireAuth>} />
+            <Route path="/load-run" element={<RequireAuth><LoadRun /></RequireAuth>} />
+            <Route path="/guides" element={<Guides />} />
+            <Route path="/attempt/:runId/:attemptId" element={<RequireAuth><Attempt /></RequireAuth>} />
+            <Route path="/box/:runId/:attemptId" element={<RequireAuth><Box /></RequireAuth>} />
+            <Route path="/graveyard/:runId/:attemptId" element={<RequireAuth><Graveyard /></RequireAuth>} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
+  )
+}
+
+export default App
