@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { apiFetch } from '../utils/api'
 import Sprite from './Sprite'
 import TrainerCard from './TrainerCard'
 import { TypeIconRow } from './TypeIcon'
@@ -175,7 +176,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (!trimmedName || trimmedName === originalName) return
 
     const timer = setTimeout(() => {
-      fetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
+      apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -215,7 +216,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
     const controller = new AbortController()
     const query = gameId ? `?game_id=${gameId}` : ''
-    fetch(`/api/species/${encounter.species_id}/summary${query}`, { signal: controller.signal })
+    apiFetch(`/api/species/${encounter.species_id}/summary${query}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setEncounterDetails(data))
       .catch(err => {
@@ -235,7 +236,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       return
     }
     const timer = setTimeout(() => {
-      fetch('/api/pokebank/save', {
+      apiFetch('/api/pokebank/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -267,7 +268,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (activePanel !== 'trainers') return
     if (!canShowTrainerView) return
     const controller = new AbortController()
-    fetch(`/api/trainer-list/${row.event_id}?run_id=${runId}&attempt_number=${attemptNumber}`, { signal: controller.signal })
+    apiFetch(`/api/trainer-list/${row.event_id}?run_id=${runId}&attempt_number=${attemptNumber}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setTrainers(data)
@@ -285,7 +286,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       return
     }
     const timer = setTimeout(() => {
-      fetch(`/api/species/search?q=${searchQuery}`)
+      apiFetch(`/api/species/search?q=${searchQuery}`)
         .then(res => res.json())
         .then(data => setSearchResults(data))
     }, 300)
@@ -315,7 +316,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       setEvolutions(null)
       return
     }
-    fetch(`/api/evolutions/${encounter.species_id}`)
+    apiFetch(`/api/evolutions/${encounter.species_id}`)
       .then(res => res.json())
       .then(data => {
         setEvolutions(data)
@@ -363,7 +364,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleClear = () => {
     if (pokemonId) {
-      fetch(`/api/pokebank/${pokemonId}`, { method: 'DELETE' })
+      apiFetch(`/api/pokebank/${pokemonId}`, { method: 'DELETE' })
         .then(() => { if (onEncounterChange) onEncounterChange() })
         .catch(err => console.error('Failed to delete encounter:', err))
     }
@@ -381,7 +382,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   const handleAddLocation = () => {
-    fetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
+    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ canonical_location_id: row.event_id })
@@ -398,7 +399,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   const handleDeleteLocation = () => {
-    fetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
+    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -423,7 +424,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       onStatusChange(row.encounter_key, encounter.species_id, 'Dead')
     }
     if (pokemonId) {
-      fetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
+      apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
         .then(() => { if (onPartyChange) onPartyChange() })
         .catch(err => console.error('Failed to remove from party on death:', err))
     }
@@ -438,7 +439,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleAddToParty = () => {
     if (!pokemonId) return
-    fetch(`/api/runs/${runId}/attempts/${attemptNumber}/party`, {
+    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pokemon_id: pokemonId })
@@ -450,7 +451,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleRemoveFromParty = () => {
     if (!pokemonId) return
-    fetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
       .then(() => { if (onPartyChange) onPartyChange() })
       .catch(err => console.error('Failed to remove from party:', err))
   }

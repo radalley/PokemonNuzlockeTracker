@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { apiFetch } from '../utils/api'
 import { useNavigate } from 'react-router-dom'
 import Sprite from './Sprite'
 import HeaderAuthMenu from './HeaderAuthMenu'
@@ -49,7 +50,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/attempts`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/attempts`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setAttempts(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -58,7 +59,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setParty(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -79,7 +80,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   }, [gameLogoSrc])
 
   const handleNewAttempt = () => {
-    fetch(`/api/runs/${runId}/attempts`, { method: 'POST' })
+    apiFetch(`/api/runs/${runId}/attempts`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         setShowAttemptMenu(false)
@@ -88,7 +89,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   }
 
   const handleRemoveFromParty = (pokemonId) => {
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party/${pokemonId}`, { method: 'DELETE' })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${pokemonId}`, { method: 'DELETE' })
       .then(() => setParty(prev => prev.filter(p => p.pokemon_id !== pokemonId)))
       .catch(err => console.error('Failed to remove from party:', err))
   }

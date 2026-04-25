@@ -1,7 +1,12 @@
 import os
-from flask import Flask, jsonify, request, g, session
+from pathlib import Path
+import jwt
+from jwt import PyJWKClient
+from flask import Flask, jsonify, request, g, send_from_directory, abort
 from flask_cors import CORS
-import sqlite3
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 import time
 from backend import (get_games, create_run, get_runs, get_script,
                      get_encounter_pool, get_run_by_id, get_trainers_by_location,
@@ -12,31 +17,72 @@ from backend import (get_games, create_run, get_runs, get_script,
                      mark_trainer_victory, get_pokemon_trainers_and_badges, get_badges_by_ids,
                      get_pokebank_with_stats, get_attempt_session_stats, create_bonus_location,
                      delete_bonus_location, rename_bonus_location, get_species_summary,
-                     register_user, authenticate_user, get_user_by_id,
-                     run_belongs_to_user, pokemon_belongs_to_user)
+                     get_or_create_user_by_supabase_id,
+                     run_belongs_to_user, pokemon_belongs_to_user, wrap_conn)
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('LOCKLEY_SECRET_KEY', 'lockley-dev-secret-change-me')
-app.config['SESSION_COOKIE_NAME'] = 'lockley_session'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('LOCKLEY_SECURE_COOKIES', '0') == '1'
-CORS(app, supports_credentials=True)
+load_dotenv()
+
+BACKEND_DIR = Path(__file__).resolve().parent
+FRONTEND_DIST_DIR = BACKEND_DIR.parent / 'Frontend' / 'dist'
+
+app = Flask(__name__, static_folder=None)
+
+# Keep local dev easy while allowing stricter production CORS.
+cors_origins_env = os.environ.get('LOCKLEY_CORS_ORIGINS', '').strip()
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
+else:
+    cors_origins = ['http://localhost:5173', 'http://localhost:5174']
+
+CORS(app, supports_credentials=True, origins=cors_origins)
+
+# JWKS client for asymmetric JWT verification (cached at module level)
+_jwks_client = None
+
+def _get_jwks_client():
+    global _jwks_client
+    if _jwks_client is None:
+        supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+        _jwks_client = PyJWKClient(f"{supabase_url}/auth/v1/.well-known/jwks.json")
+    return _jwks_client
+
+def _decode_supabase_jwt(token):
+    """Try HS256 legacy secret first, then fall back to JWKS asymmetric verification."""
+    secret = os.environ.get('SUPABASE_JWT_SECRET', '')
+    if secret:
+        try:
+            return jwt.decode(token, secret, algorithms=['HS256'], audience='authenticated')
+        except jwt.PyJWTError:
+            pass
+    try:
+        jwks_client = _get_jwks_client()
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        return jwt.decode(token, signing_key.key, algorithms=['RS256', 'ES256'], audience='authenticated')
+    except Exception:
+        return None
 
 def get_db():
     if 'db' not in g:
-        g.db = sqlite3.connect('identifier.sqlite')
-        g.db.row_factory = sqlite3.Row
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            raise RuntimeError('DATABASE_URL environment variable is not set')
+        raw = psycopg2.connect(database_url)
+        g.db = wrap_conn(raw)
     return g.db
 
 def get_current_user():
-    user_id = session.get('user_id')
-    if not user_id:
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
         return None
-    user = get_user_by_id(get_db(), int(user_id))
-    if not user:
-        session.pop('user_id', None)
-    return user
+    token = auth_header[7:]
+    payload = _decode_supabase_jwt(token)
+    if not payload:
+        return None
+    supabase_id = payload.get('sub')
+    if not supabase_id:
+        return None
+    email = payload.get('email')
+    return get_or_create_user_by_supabase_id(get_db(), supabase_id, email=email)
 
 def require_auth():
     user = get_current_user()
@@ -64,6 +110,8 @@ def require_pokemon_access(conn, pokemon_id):
 def close_db(error):
     db = g.pop('db', None)
     if db is not None:
+        if error:
+            db.rollback()
         db.close()
 
 @app.route('/api/auth/me', methods=['GET'])
@@ -71,31 +119,9 @@ def auth_me_route():
     user = get_current_user()
     return jsonify({'authenticated': bool(user), 'user': user})
 
-@app.route('/api/auth/register', methods=['POST'])
-def auth_register_route():
-    conn = get_db()
-    data = request.get_json() or {}
-    result = register_user(conn, data.get('email'), data.get('password'), data.get('display_name'))
-    if not result.get('success'):
-        return jsonify(result), 400
-    session.clear()
-    session['user_id'] = result['user']['user_id']
-    return jsonify(result)
-
-@app.route('/api/auth/login', methods=['POST'])
-def auth_login_route():
-    conn = get_db()
-    data = request.get_json() or {}
-    result = authenticate_user(conn, data.get('email'), data.get('password'))
-    if not result.get('success'):
-        return jsonify(result), 401
-    session.clear()
-    session['user_id'] = result['user']['user_id']
-    return jsonify(result)
-
 @app.route('/api/auth/logout', methods=['POST'])
 def auth_logout_route():
-    session.clear()
+    # Token invalidation is handled client-side via Supabase SDK
     return jsonify({'success': True})
 
 @app.route('/api/games', methods=['GET'])
@@ -479,6 +505,26 @@ def delete_run_route():
     return jsonify({'success': True})
 
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def frontend_route(path):
+    if path.startswith('api/'):
+        abort(404)
+
+    if not FRONTEND_DIST_DIR.exists():
+        return jsonify({
+            'error': 'Frontend build not found',
+            'hint': 'Run "npm run build" inside Frontend before starting the backend in production.'
+        }), 404
+
+    requested = (FRONTEND_DIST_DIR / path).resolve()
+    if path and requested.is_file() and FRONTEND_DIST_DIR in requested.parents:
+        return send_from_directory(FRONTEND_DIST_DIR, path)
+
+    return send_from_directory(FRONTEND_DIST_DIR, 'index.html')
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', '8000'))
+    app.run(host='0.0.0.0', port=port, debug=True)

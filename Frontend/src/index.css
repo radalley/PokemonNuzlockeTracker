@@ -417,6 +417,43 @@ p {
   font-size: 0.86em;
 }
 
+.auth-dialog__password-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-dialog__forgot {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #7ec8e3;
+  font-size: 0.86em;
+  cursor: pointer;
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.auth-dialog__forgot--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.auth-dialog__forgot--visible:hover {
+  text-decoration: underline;
+}
+
+.auth-dialog__forgot-sent {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid rgba(126, 200, 227, 0.3);
+  border-radius: 10px;
+  background: rgba(126, 200, 227, 0.08);
+  color: #b8e4f5;
+  line-height: 1.5;
+}
+
 .auth-dialog__field input {
   width: 100%;
   box-sizing: border-box;
@@ -473,6 +510,29 @@ p {
   min-height: 100svh;
   padding: 112px 20px 32px;
   box-sizing: border-box;
+}
+
+.reset-password-page {
+  margin: 112px auto 0;
+  width: min(400px, calc(100vw - 40px));
+  padding: 28px;
+  border: 1px solid #343a47;
+  border-radius: 18px;
+  background: #171920;
+}
+
+.reset-password__title {
+  margin: 0 0 8px;
+}
+
+.reset-password__sub {
+  margin: 0 0 20px;
+  color: #9aa3b5;
+}
+
+.reset-password__form {
+  display: grid;
+  gap: 14px;
 }
 
 .guides-panel {

@@ -6,13 +6,14 @@ import { useAuth } from '../contexts/AuthContext'
 function Home() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, openAuthDialog } = useAuth()
+  const { user, loading, openAuthDialog } = useAuth()
 
   useEffect(() => {
+    if (loading) return
     if (location.state?.from && !user) {
       openAuthDialog('login')
     }
-  }, [location.state, openAuthDialog, user])
+  }, [loading, location.state, openAuthDialog, user])
 
   function handleProtectedNavigation(path) {
     if (!user) {
@@ -28,7 +29,7 @@ function Home() {
 
       <main className="home-main">
         <img className="home-logo" src="/sprites/Lockley_Logo.gif" alt="Lockley" />
-        <h2>A Multi-game Pokémon Nuzlocke Tracker</h2>
+        <h2>A Multi-Game Pokémon Nuzlocke Tracker</h2>
         <p className="home-auth-note">
           {user ? `Signed in as ${user.display_name}` : 'Sign in to sync your runs across laptop and PC.'}
         </p>

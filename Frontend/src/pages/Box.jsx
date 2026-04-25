@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
@@ -13,7 +14,7 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setRunDetails(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -22,7 +23,7 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
+    apiFetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setPokemon(data.filter(p => p.status === 'Captured')))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -34,7 +35,7 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setPartyPokemonIds(new Set(data.map(p => p.pokemon_id))))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -42,7 +43,7 @@ function Box() {
   }, [runId, attemptId, partyRefreshKey])
 
   const handleAddToParty = (p) => {
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party`, {
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pokemon_id: p.pokemon_id })
@@ -52,7 +53,7 @@ function Box() {
   }
 
   const handleDead = (p) => {
-    fetch('/api/pokebank/save', {
+    apiFetch('/api/pokebank/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -70,14 +71,14 @@ function Box() {
       .then(() => {
         setPokemon(prev => prev.filter(x => x.pokemon_id !== p.pokemon_id))
         setStatsRefreshKey(k => k + 1)
-        fetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
+        apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
           .then(() => setPartyRefreshKey(k => k + 1))
       })
       .catch(err => console.error('Failed to mark dead:', err))
   }
 
   const handleRemoveFromParty = (p) => {
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
       .then(() => setPartyRefreshKey(k => k + 1))
       .catch(err => console.error('Failed to remove from party:', err))
   }
@@ -91,7 +92,7 @@ function Box() {
     const uniqueIds = [...new Set(pokemon.map(p => p.species_id))]
     Promise.all(
       uniqueIds.map(id =>
-        fetch(`/api/evolutions/${id}`)
+        apiFetch(`/api/evolutions/${id}`)
           .then(res => res.json())
           .then(data => ({ id, canEvolve: data.length > 0 }))
           .catch(() => ({ id, canEvolve: false }))
@@ -104,14 +105,14 @@ function Box() {
   const handleEvolve = (p) => {
     setEvolveTarget(p)
     setEvolveOptions(null)
-    fetch(`/api/evolutions/${p.species_id}`)
+    apiFetch(`/api/evolutions/${p.species_id}`)
       .then(res => res.json())
       .then(data => setEvolveOptions(data))
       .catch(err => console.error('Failed to fetch evolutions:', err))
   }
 
   const handleConfirmEvolve = (toSpeciesId) => {
-    fetch('/api/pokebank/save', {
+    apiFetch('/api/pokebank/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -128,7 +129,7 @@ function Box() {
     })
       .then(res => res.json())
       .then(() => {
-        fetch(`/api/box/${runId}/${attemptId}`)
+        apiFetch(`/api/box/${runId}/${attemptId}`)
           .then(res => res.json())
           .then(data => setPokemon(data.filter(p => p.status === 'Captured')))
         setEvolveTarget(null)

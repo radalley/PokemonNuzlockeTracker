@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../utils/api'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
@@ -72,7 +73,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       setBadgeMeta([])
       return
     }
-    fetch(`/api/badges?ids=${badgeIds.join(',')}`)
+    apiFetch(`/api/badges?ids=${badgeIds.join(',')}`)
       .then(res => res.json())
       .then(data => setBadgeMeta(Array.isArray(data) ? data : []))
       .catch(() => setBadgeMeta([]))
@@ -86,7 +87,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       return
     }
     setLoading(true)
-    fetch(`/api/pokemon/${pokemon.pokemon_id}/trainers-badges/${runId}/${attemptId}`)
+    apiFetch(`/api/pokemon/${pokemon.pokemon_id}/trainers-badges/${runId}/${attemptId}`)
       .then(res => res.json())
       .then(data => {
         setTrainerData(data)

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SiteHeader from '../components/SiteHeader'
 import Sprite from '../components/Sprite'
+import { apiFetch } from '../utils/api'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -154,7 +155,7 @@ function LoadRun() {
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   const handleDeleteRun = (run_id) => {
-    fetch(`/api/delete-run`, {
+    apiFetch(`/api/delete-run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ run_id: run_id})
@@ -171,7 +172,7 @@ function LoadRun() {
   
 
   useEffect(() => {
-    fetch('/api/runs')
+    apiFetch('/api/runs')
       .then(res => res.json())
       .then(data => setRuns(data))
   }, [])

@@ -4,6 +4,7 @@ import TypeIcon, { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
 import { getTrainerSpriteSrc } from './trainerSprite'
 import BattleCompareModal from './BattleCompareModal'
+import { apiFetch } from '../utils/api'
 
 function normalizeItemName(raw) {
   const token = String(raw || '').trim()
@@ -72,7 +73,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
     const controller = new AbortController()
     const query = gameId ? `?game_id=${gameId}` : ''
-    fetch(`/api/trainer-party/${encodeURIComponent(encounterName)}${query}`, { signal: controller.signal })
+    apiFetch(`/api/trainer-party/${encodeURIComponent(encounterName)}${query}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setParty(data)
@@ -109,7 +110,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
     setBattleResult(null)
     setShowBattleModal(true)
     setBattleLoading(true)
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party`)
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`)
       .then(res => res.json())
       .then(data => setPlayerParty(data))
       .finally(() => setBattleLoading(false))
@@ -125,7 +126,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
     event.stopPropagation()
     if (!runId || !attemptId || !trainerId) return
     setBattleSaving(true)
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/trainer-victory`, {
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/trainer-victory`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import LocationRow from '../components/LocationRow'
 import BossRow from '../components/BossRow'
@@ -51,7 +52,7 @@ function Attempt() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setPartyPokemonIds(new Set(data.map(p => p.pokemon_id))))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -62,7 +63,7 @@ function Attempt() {
     const controller = new AbortController()
     setAttemptLoadError('')
     setAttemptLoaded(false)
-    fetch(`/api/attempt-page/${runId}/${attemptId}`, { signal: controller.signal })
+    apiFetch(`/api/attempt-page/${runId}/${attemptId}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setRunDetails(data.run)
@@ -83,7 +84,7 @@ function Attempt() {
 
   const handleStarterChange = (newStarter) => {
     if (newStarter !== currentStarter) {
-      fetch(`/api/update-starter`, {
+      apiFetch(`/api/update-starter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ run_id: runId, attempt_id: attemptId, starter: newStarter })
@@ -113,7 +114,7 @@ function Attempt() {
       return
     }
     const controller = new AbortController()
-    fetch(`/api/evolution-families?ids=${capturedSpeciesIds.join(',')}`, { signal: controller.signal })
+    apiFetch(`/api/evolution-families?ids=${capturedSpeciesIds.join(',')}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setDupedFamilyIds(new Set(data)))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -128,7 +129,7 @@ function Attempt() {
   }, [])
 
   const handleEncounterChange = useCallback(() => {
-    fetch(`/api/pokebank/${runId}/${attemptId}`)
+    apiFetch(`/api/pokebank/${runId}/${attemptId}`)
       .then(res => res.json())
       .then(data => {
         const byLocation = {}

@@ -7,6 +7,7 @@ import Guides from './pages/Guides'
 import Attempt from './pages/Attempt'
 import Box from './pages/Box'
 import Graveyard from './pages/Graveyard'
+import ResetPassword from './pages/ResetPassword'
 import ErrorBoundary from './components/ErrorBoundary'
 import AuthDialog from './components/AuthDialog'
 import RequireAuth from './components/RequireAuth'
@@ -26,6 +27,7 @@ function App() {
             <Route path="/attempt/:runId/:attemptId" element={<RequireAuth><Attempt /></RequireAuth>} />
             <Route path="/box/:runId/:attemptId" element={<RequireAuth><Box /></RequireAuth>} />
             <Route path="/graveyard/:runId/:attemptId" element={<RequireAuth><Graveyard /></RequireAuth>} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

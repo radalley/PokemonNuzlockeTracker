@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { apiFetch } from '../utils/api'
 import { useState, useEffect } from 'react'
 import SiteHeader from '../components/SiteHeader'
 
@@ -45,7 +46,7 @@ function NewRun() {
   const [selectedGeneration, setSelectedGeneration] = useState('all')
 
   useEffect(() => {
-    fetch('/api/games')
+    apiFetch('/api/games')
       .then(res => res.json())
       .then(data => setGames(data))
   }, [])
@@ -75,7 +76,7 @@ function NewRun() {
       return
     }
 
-    fetch('/api/runs', {
+    apiFetch('/api/runs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_id: gameid, run_name: runName })

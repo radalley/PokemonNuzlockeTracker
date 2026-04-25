@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
@@ -12,7 +13,7 @@ function Graveyard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
+    apiFetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setRunDetails(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -21,7 +22,7 @@ function Graveyard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
+    apiFetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => setPokemon(data.filter(p => p.status === 'Dead')))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
@@ -29,7 +30,7 @@ function Graveyard() {
   }, [runId, attemptId])
 
   const handleRevive = (pokemonToRevive) => {
-    fetch('/api/pokebank/save', {
+    apiFetch('/api/pokebank/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
