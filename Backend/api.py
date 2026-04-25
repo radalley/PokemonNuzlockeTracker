@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 import jwt
 from jwt import PyJWKClient
 from flask import Flask, jsonify, request, g, send_from_directory, abort
@@ -61,12 +62,25 @@ def _decode_supabase_jwt(token):
     except Exception:
         return None
 
+def _normalize_database_url(database_url):
+    parsed = urlparse(database_url)
+    if not parsed.query:
+        return database_url
+
+    filtered_params = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key.lower() != 'pgbouncer'
+    ]
+    normalized_query = urlencode(filtered_params)
+    return urlunparse(parsed._replace(query=normalized_query))
+
 def get_db():
     if 'db' not in g:
         database_url = os.environ.get('DATABASE_URL')
         if not database_url:
             raise RuntimeError('DATABASE_URL environment variable is not set')
-        raw = psycopg2.connect(database_url)
+        raw = psycopg2.connect(_normalize_database_url(database_url))
         g.db = wrap_conn(raw)
     return g.db
 
