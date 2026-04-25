@@ -10,17 +10,33 @@ export function AuthProvider({ children }) {
   const [authDialogOpen, setAuthDialogOpen] = useState(false)
   const [authDialogMode, setAuthDialogMode] = useState('login')
 
-  // Fetch the local backend user record using the current Supabase session
+  // Fetch the local backend user record using the current Supabase session.
+  // Retries with backoff to handle Render cold-start delays (~30s on free tier).
   const refreshUser = useCallback(async () => {
-    try {
-      const response = await apiFetch('/api/auth/me')
-      const data = await response.json()
-      setUser(data.user || null)
-    } catch (error) {
-      console.error('Failed to fetch current user:', error)
-      setUser(null)
-    } finally {
-      setLoading(false)
+    const delays = [0, 3000, 8000, 15000, 25000]
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] > 0) await new Promise(r => setTimeout(r, delays[i]))
+      try {
+        const response = await apiFetch('/api/auth/me')
+        if (response.ok) {
+          const data = await response.json()
+          setUser(data.user || null)
+          setLoading(false)
+          return
+        }
+        // 5xx from a waking backend — retry unless last attempt
+        if (response.status < 500 || i === delays.length - 1) {
+          setUser(null)
+          setLoading(false)
+          return
+        }
+      } catch {
+        // Network error (service still waking up) — retry unless last attempt
+        if (i === delays.length - 1) {
+          setUser(null)
+          setLoading(false)
+        }
+      }
     }
   }, [])
 
