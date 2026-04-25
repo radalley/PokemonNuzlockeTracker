@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 import jwt
 from jwt import PyJWKClient
 from flask import Flask, jsonify, request, g, send_from_directory, abort
@@ -63,17 +62,22 @@ def _decode_supabase_jwt(token):
         return None
 
 def _normalize_database_url(database_url):
-    parsed = urlparse(database_url)
-    if not parsed.query:
+    if not database_url or '?' not in database_url:
         return database_url
 
-    filtered_params = [
-        (key, value)
-        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
-        if key.lower() != 'pgbouncer'
-    ]
-    normalized_query = urlencode(filtered_params)
-    return urlunparse(parsed._replace(query=normalized_query))
+    base, query = database_url.split('?', 1)
+    filtered_params = []
+    for chunk in query.split('&'):
+        if not chunk:
+            continue
+        key = chunk.split('=', 1)[0].strip().lower()
+        if key == 'pgbouncer':
+            continue
+        filtered_params.append(chunk)
+
+    if not filtered_params:
+        return base
+    return f"{base}?{'&'.join(filtered_params)}"
 
 def get_db():
     if 'db' not in g:
