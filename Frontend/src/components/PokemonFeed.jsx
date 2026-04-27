@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import Sprite from './Sprite'
 import { apiFetch } from '../utils/api'
 import { getLocalFeedPokemon, hasLocalData } from '../utils/guestStorage'
@@ -70,17 +70,35 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
   const rafRef = useRef(null)
   const lastTimeRef = useRef(null)
 
+  // Phase 1: load default species feed immediately on mount - no auth needed
   useEffect(() => {
-    // Wait until auth has resolved so we know whether to use the authed
-    // Pokebank route or fall back to guest storage.
+    let cancelled = false
+
+    async function loadDefault() {
+      try {
+        const response = await fetch(`/api/species/random-feed?limit=${DEFAULT_FEED_LIMIT}`)
+        const data = await response.json()
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setSpecies(shuffleList(data))
+        }
+      } catch {
+      }
+    }
+
+    loadDefault()
+    return () => { cancelled = true }
+  }, [])
+
+  // Phase 2: once auth resolves, refresh with user pokemon mixed in (if any)
+  useEffect(() => {
     if (authLoading) return
 
     let cancelled = false
 
-    async function loadFeed() {
+    async function loadUserFeed() {
       let userData = []
 
-      // 1. Try authenticated server-side Pokebank
+      // Try authenticated server-side Pokebank
       if (user) {
         try {
           const userResponse = await apiFetch(`/api/pokebank/random-feed?limit=${USER_FEED_LIMIT}`)
@@ -94,11 +112,14 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
         }
       }
 
-      // 2. If not signed in, fall back to local guest storage
+      // If not signed in (or Pokebank returned nothing), check local guest storage
       if (userData.length === 0 && hasLocalData()) {
         const local = getLocalFeedPokemon()
         userData = local.slice(0, USER_FEED_LIMIT)
       }
+
+      // No user data - leave the default feed as-is
+      if (userData.length === 0) return
 
       const remainingDefault = Math.max(0, DEFAULT_FEED_LIMIT - userData.length)
 
@@ -115,15 +136,13 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
         }
       } catch {
         if (!cancelled) {
-          setSpecies(shuffleList(userData))
+          setSpecies(prev => shuffleList([...userData, ...prev.slice(0, Math.max(0, DEFAULT_FEED_LIMIT - userData.length))]))
         }
       }
     }
 
-    loadFeed()
-    return () => {
-      cancelled = true
-    }
+    loadUserFeed()
+    return () => { cancelled = true }
   }, [authLoading, user])
 
   useEffect(() => {
