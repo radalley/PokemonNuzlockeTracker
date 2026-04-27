@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Sprite from './Sprite'
 import { apiFetch } from '../utils/api'
 import { getLocalFeedPokemon, hasLocalData } from '../utils/guestStorage'
+import { useAuth } from '../contexts/AuthContext'
 
 // px per second the feed scrolls upward
 const DEFAULT_SPEED = 40
@@ -58,6 +59,7 @@ function shuffleList(items) {
 }
 
 function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, className = '' }) {
+  const { user, loading: authLoading } = useAuth()
   const [species, setSpecies] = useState([])
   const [spriteSize, setSpriteSize] = useState(40)
   const feedRef = useRef(null)
@@ -69,21 +71,27 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
   const lastTimeRef = useRef(null)
 
   useEffect(() => {
+    // Wait until auth has resolved so we know whether to use the authed
+    // Pokebank route or fall back to guest storage.
+    if (authLoading) return
+
     let cancelled = false
 
     async function loadFeed() {
       let userData = []
 
       // 1. Try authenticated server-side Pokebank
-      try {
-        const userResponse = await apiFetch(`/api/pokebank/random-feed?limit=${USER_FEED_LIMIT}`)
-        if (userResponse.ok) {
-          const parsed = await userResponse.json()
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            userData = parsed.map(item => ({ ...item, fromUser: true }))
+      if (user) {
+        try {
+          const userResponse = await apiFetch(`/api/pokebank/random-feed?limit=${USER_FEED_LIMIT}`)
+          if (userResponse.ok) {
+            const parsed = await userResponse.json()
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              userData = parsed.map(item => ({ ...item, fromUser: true }))
+            }
           }
+        } catch {
         }
-      } catch {
       }
 
       // 2. If not signed in, fall back to local guest storage
@@ -116,7 +124,7 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [authLoading, user])
 
   useEffect(() => {
     const feed = feedRef.current
