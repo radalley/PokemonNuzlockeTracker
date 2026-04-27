@@ -282,6 +282,24 @@ def set_active_attempt(attempt):
 def get_pokebank(conn):
     return conn.execute(f'select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank').fetchall()
 
+def get_pokebank_feed_for_user(conn, user_id, limit=360):
+    has_badges_earned = conn.execute(
+        "select 1 from information_schema.columns where table_name = 'pokebank' and column_name = 'badges_earned' limit 1"
+    ).fetchone() is not None
+
+    badges_select = 'pb.badges_earned' if has_badges_earned else "'' as badges_earned"
+
+    rows = conn.execute(
+        f'select pb.species_id, {badges_select}, pb.shiny, pb.status '
+        f'from pokebank pb '
+        f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
+        f'where r.user_id = %s and (pb.status = %s or pb.status = %s) '
+        f'order by RANDOM() '
+        f'limit %s',
+        (user_id, 'Captured', 'Dead', min(limit, 500))
+    ).fetchall()
+    return [dict(r) for r in rows]
+
 def get_graveyard(conn):
     return conn.execute("select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where status = 'Dead'").fetchall()
 

@@ -336,6 +336,40 @@ export function getBonusLocations(runId, attemptNumber) {
   return _getState().bonus_locations[attemptKey(runId, attemptNumber)] || []
 }
 
+/**
+ * Aggregate all Captured/Dead pokemon across every local run and attempt
+ * into a flat feed-compatible list. Badges are sourced from the attempt's
+ * badge list and attached to every pokemon in that attempt.
+ */
+export function getLocalFeedPokemon() {
+  const state = _getState()
+  const runs = state.runs || []
+  const result = []
+
+  for (const run of runs) {
+    const attempts = state.attempts[run.run_id] || []
+    for (const attempt of attempts) {
+      const key = attemptKey(run.run_id, attempt.attempt_number)
+      const encounters = Object.values(state.encounters[key] || {})
+      const badgeIds = (state.badges[key] || []).map(Number).sort((a, b) => a - b)
+      const badgesJson = badgeIds.length > 0 ? JSON.stringify(badgeIds) : null
+
+      for (const enc of encounters) {
+        if (enc.status !== 'Captured' && enc.status !== 'Dead') continue
+        result.push({
+          species_id: enc.species_id,
+          shiny: Boolean(enc.shiny),
+          status: enc.status,
+          badges_earned: badgesJson,
+          fromUser: true,
+        })
+      }
+    }
+  }
+
+  return result
+}
+
 export function addBonusLocation(runId, attemptNumber, canonicalLocationId) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)

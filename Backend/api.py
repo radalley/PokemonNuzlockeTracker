@@ -16,7 +16,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      mark_trainer_victory, get_pokemon_trainers_and_badges, get_badges_by_ids,
                      get_pokebank_with_stats, get_attempt_session_stats, create_bonus_location,
                      delete_bonus_location, rename_bonus_location, get_species_summary,
-                     get_or_create_user_by_supabase_id,
+                     get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn)
 from backend import _badge_id_for_gym_leader
 
@@ -195,6 +195,26 @@ def species_search_route():
     query = request.args.get('q', '')
     species = get_species_search(conn, query)
     return jsonify([dict(s) for s in species])
+
+@app.route('/api/species/random-feed', methods=['GET'])
+def species_random_feed_route():
+    conn = get_db()
+    limit = request.args.get('limit', default=300, type=int)
+    rows = conn.execute(
+        'SELECT species_id, name FROM species ORDER BY RANDOM() LIMIT %s',
+        (min(limit, 500),)
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/pokebank/random-feed', methods=['GET'])
+def pokebank_random_feed_route():
+    conn = get_db()
+    user, error = require_auth()
+    if error:
+        return error
+    limit = request.args.get('limit', default=100, type=int)
+    rows = get_pokebank_feed_for_user(conn, user['user_id'], limit=limit)
+    return jsonify(rows)
 
 @app.route('/api/species/<int:species_id>/summary', methods=['GET'])
 def species_summary_route(species_id):
