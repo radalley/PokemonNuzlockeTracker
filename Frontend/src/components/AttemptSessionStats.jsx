@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiFetch } from '../utils/api'
+import { getSessionStats } from '../utils/dataLayer'
 
 function StatItem({ label, value, compact = false }) {
   return (
@@ -38,8 +38,7 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/session-stats`, { signal: controller.signal })
-      .then(res => res.json())
+    getSessionStats(runId, attemptId, controller.signal)
       .then(data => setStats(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()

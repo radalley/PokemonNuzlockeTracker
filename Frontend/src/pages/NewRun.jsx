@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../utils/api'
 import { useState, useEffect } from 'react'
 import SiteHeader from '../components/SiteHeader'
+import { useAuth } from '../contexts/AuthContext'
+import { createRun } from '../utils/dataLayer'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -40,9 +42,11 @@ function GameRow({ game, isSelected, onSelect }) {
 
 function NewRun() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [gameid, setGameId] = useState('')
   const [runName, setRunName] = useState('')
   const [games, setGames] = useState([])
+  const [selectedGame, setSelectedGame] = useState(null)
   const [selectedGeneration, setSelectedGeneration] = useState('all')
 
   useEffect(() => {
@@ -70,23 +74,17 @@ function NewRun() {
     }
   }, [generations.join(','), selectedGeneration])
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!gameid || !runName) {
       alert('Please select a game and enter a run name')
       return
     }
 
-    apiFetch('/api/runs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game_id: gameid, run_name: runName })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          navigate(`/attempt/${data.run_id}/1`)
-        }
-      })
+    const gameMeta = selectedGame || games.find(g => String(g.game_id) === String(gameid)) || null
+    const data = await createRun(!!user, gameid, runName, gameMeta)
+    if (data?.success) {
+      navigate(`/attempt/${data.run_id}/1`)
+    }
   }
 
   return (
@@ -98,7 +96,14 @@ function NewRun() {
       <div className="new-run-controls">
         <label className="new-run-field">
           <span>Selected Game</span>
-          <select value={gameid} onChange={(e) => setGameId(e.target.value)}>
+          <select
+            value={gameid}
+            onChange={(e) => {
+              const id = e.target.value
+              setGameId(id)
+              setSelectedGame(games.find(g => String(g.game_id) === id) || null)
+            }}
+          >
             <option value="">Select a game...</option>
             {games.map(g => (
               <option key={g.game_id} value={g.game_id}>
@@ -150,7 +155,10 @@ function NewRun() {
               key={game.game_id}
               game={game}
               isSelected={String(game.game_id) === String(gameid)}
-              onSelect={(selected) => setGameId(String(selected.game_id))}
+              onSelect={(selected) => {
+                setGameId(String(selected.game_id))
+                setSelectedGame(selected)
+              }}
             />
           ))}
         </div>

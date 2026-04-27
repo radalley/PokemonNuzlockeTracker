@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { apiFetch } from '../utils/api'
 import { useNavigate } from 'react-router-dom'
 import Sprite from './Sprite'
 import HeaderAuthMenu from './HeaderAuthMenu'
+import { getAttempts, getParty, createAttempt, removeFromParty } from '../utils/dataLayer'
 
 function PartySlot({ member, slot, onRemove }) {
   const [hovered, setHovered] = useState(false)
@@ -36,7 +36,7 @@ function PartySlot({ member, slot, onRemove }) {
   )
 }
 
-function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0 }) {
+function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null }) {
   const navigate = useNavigate()
   const [attempts, setAttempts] = useState([])
   const [showAttemptMenu, setShowAttemptMenu] = useState(false)
@@ -50,18 +50,16 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/attempts`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setAttempts(data))
+    getAttempts(runId)
+      .then(data => setAttempts(data || []))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId])
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setParty(data))
+    getParty(runId, attemptId)
+      .then(data => setParty(data || []))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId, attemptId, partyRefreshKey])
@@ -80,8 +78,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   }, [gameLogoSrc])
 
   const handleNewAttempt = () => {
-    apiFetch(`/api/runs/${runId}/attempts`, { method: 'POST' })
-      .then(res => res.json())
+    createAttempt(runId)
       .then(data => {
         setShowAttemptMenu(false)
         window.location.href = `/attempt/${runId}/${data.attempt_number}`
@@ -89,8 +86,11 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   }
 
   const handleRemoveFromParty = (pokemonId) => {
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${pokemonId}`, { method: 'DELETE' })
-      .then(() => setParty(prev => prev.filter(p => p.pokemon_id !== pokemonId)))
+    removeFromParty(runId, attemptId, pokemonId)
+      .then(() => {
+        setParty(prev => prev.filter(p => p.pokemon_id !== pokemonId))
+        if (onPartyChange) onPartyChange()
+      })
       .catch(err => console.error('Failed to remove from party:', err))
   }
 

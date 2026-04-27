@@ -3,6 +3,16 @@ import { apiFetch } from '../utils/api'
 import Sprite from './Sprite'
 import TrainerCard from './TrainerCard'
 import { TypeIconRow } from './TypeIcon'
+import {
+  saveEncounter,
+  deleteEncounterById,
+  getTrainerList,
+  addBonusLocation,
+  deleteBonusLocation,
+  renameBonusLocation,
+  addToParty,
+  removeFromParty,
+} from '../utils/dataLayer'
 
 const NATURES = [
   { name: 'Adamant', up: 'Atk', down: 'SpA' },
@@ -176,16 +186,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (!trimmedName || trimmedName === originalName) return
 
     const timer = setTimeout(() => {
-      apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          canonical_location_id: row.event_id,
-          secondary_sort_order: row.secondary_sort_order || 0,
-          canonical_name: trimmedName,
-        })
-      })
-        .then(res => res.json())
+      renameBonusLocation(runId, attemptNumber, row.event_id, row.secondary_sort_order || 0, trimmedName)
         .then(data => {
           if (!data.success) {
             throw new Error(data.error || 'Failed to rename bonus location')
@@ -236,26 +237,23 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       return
     }
     const timer = setTimeout(() => {
-      apiFetch('/api/pokebank/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          run_id: runId,
-          attempt_number: attemptNumber,
-          location_id: row.event_id,
-          bonus_location: row.secondary_sort_order || 0,
-          species_id: encounter.species_id,
-          nickname: nickname || null,
-          nature: nature || null,
-          status: status || null,
-          shiny: isShiny ? 'True' : null,
-          pokemon_id: pokemonId || null,
-        })
-      })
-        .then(res => res.json())
+      saveEncounter(
+        runId,
+        attemptNumber,
+        row.event_id,
+        row.secondary_sort_order || 0,
+        encounter.species_id,
+        encounter.name,
+        nickname,
+        nature,
+        status,
+        isShiny,
+        pokemonId
+      )
         .then(data => {
           if (data.pokemon_id) setPokemonId(data.pokemon_id)
           if (onEncounterChange) onEncounterChange()
+          if (onPartyChange) onPartyChange()
         })
         .catch(err => console.error('Failed to save encounter:', err))
     }, 600)
@@ -268,8 +266,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (activePanel !== 'trainers') return
     if (!canShowTrainerView) return
     const controller = new AbortController()
-    apiFetch(`/api/trainer-list/${row.event_id}?run_id=${runId}&attempt_number=${attemptNumber}`, { signal: controller.signal })
-      .then(res => res.json())
+    getTrainerList(row.event_id, runId, attemptNumber, controller.signal)
       .then(data => {
         setTrainers(data)
         setTrainersLoaded(true)
@@ -330,9 +327,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const availableTrainers = trainers.filter(t => !t.is_event)
   const defeatedTrainerCount = availableTrainers.filter(t => Boolean(t.is_defeated)).length
-  const initialTrainerCount = Number(row.trainer_count || 0)
+  const hasSeedTrainerCount = row.available_trainer_count != null || row.trainer_count != null
+  const initialTrainerCount = Number(row.available_trainer_count ?? row.trainer_count ?? 0)
   const trainerCount = trainersLoaded ? availableTrainers.length : initialTrainerCount
-  const trainerButtonDisabled = trainersLoaded ? availableTrainers.length === 0 : initialTrainerCount === 0
+  // Allow first load only when trainer counts are unknown; honor explicit zero counts.
+  const trainerButtonDisabled = trainersLoaded
+    ? availableTrainers.length === 0
+    : (hasSeedTrainerCount && initialTrainerCount === 0)
   const inParty = pokemonId ? partyPokemonIds.has(pokemonId) : false
   const summaryName = nickname || encounter?.name || 'Encounter'
   const type1 = encounterDetails?.type1 || null
@@ -364,7 +365,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleClear = () => {
     if (pokemonId) {
-      apiFetch(`/api/pokebank/${pokemonId}`, { method: 'DELETE' })
+      deleteEncounterById(runId, attemptNumber, pokemonId)
         .then(() => { if (onEncounterChange) onEncounterChange() })
         .catch(err => console.error('Failed to delete encounter:', err))
     }
@@ -382,12 +383,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   const handleAddLocation = () => {
-    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ canonical_location_id: row.event_id })
-    })
-      .then(res => res.json())
+    addBonusLocation(runId, attemptNumber, row.event_id)
       .then(data => {
         if (!data.success) {
           throw new Error(data.error || 'Failed to add bonus location')
@@ -399,15 +395,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   const handleDeleteLocation = () => {
-    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        canonical_location_id: row.event_id,
-        secondary_sort_order: row.secondary_sort_order || 0,
-      })
-    })
-      .then(res => res.json())
+    deleteBonusLocation(runId, attemptNumber, row.event_id, row.secondary_sort_order || 0)
       .then(data => {
         if (!data.success) {
           throw new Error(data.error || 'Failed to delete bonus location')
@@ -424,7 +412,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       onStatusChange(row.encounter_key, encounter.species_id, 'Dead')
     }
     if (pokemonId) {
-      apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
+      removeFromParty(runId, attemptNumber, pokemonId)
         .then(() => { if (onPartyChange) onPartyChange() })
         .catch(err => console.error('Failed to remove from party on death:', err))
     }
@@ -439,19 +427,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleAddToParty = () => {
     if (!pokemonId) return
-    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pokemon_id: pokemonId })
-    })
-      .then(res => res.json())
+    addToParty(runId, attemptNumber, pokemonId)
       .then(() => { if (onPartyChange) onPartyChange() })
       .catch(err => console.error('Failed to add to party:', err))
   }
 
   const handleRemoveFromParty = () => {
     if (!pokemonId) return
-    apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/party/${pokemonId}`, { method: 'DELETE' })
+    removeFromParty(runId, attemptNumber, pokemonId)
       .then(() => { if (onPartyChange) onPartyChange() })
       .catch(err => console.error('Failed to remove from party:', err))
   }

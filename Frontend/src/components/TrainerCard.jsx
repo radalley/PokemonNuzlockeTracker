@@ -5,6 +5,7 @@ import PokemonStatRows from './PokemonStatRows'
 import { getTrainerSpriteSrc } from './trainerSprite'
 import BattleCompareModal from './BattleCompareModal'
 import { apiFetch } from '../utils/api'
+import { getParty, markTrainerVictory } from '../utils/dataLayer'
 
 function normalizeItemName(raw) {
   const token = String(raw || '').trim()
@@ -74,13 +75,20 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
     const controller = new AbortController()
     const query = gameId ? `?game_id=${gameId}` : ''
     apiFetch(`/api/trainer-party/${encodeURIComponent(encounterName)}${query}`, { signal: controller.signal })
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          throw new Error(`trainer-party failed ${res.status}: ${text.slice(0, 200)}`)
+        }
+        return res.json()
+      })
       .then(data => {
-        setParty(data)
+        setParty(Array.isArray(data) ? data : [])
         setPartyLoaded(true)
       })
       .catch(err => {
         if (err.name === 'AbortError') return
+        console.error('Failed to load trainer party:', err)
         setParty([])
         setPartyLoaded(true)
       })
@@ -110,9 +118,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
     setBattleResult(null)
     setShowBattleModal(true)
     setBattleLoading(true)
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`)
-      .then(res => res.json())
-      .then(data => setPlayerParty(data))
+    getParty(runId, attemptId)
+      .then(data => setPlayerParty(data || []))
       .finally(() => setBattleLoading(false))
   }
 
@@ -126,17 +133,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
     event.stopPropagation()
     if (!runId || !attemptId || !trainerId) return
     setBattleSaving(true)
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/trainer-victory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        trainer_id: trainerId,
-        trainer_name: encounterName,
-        trainer_class: trainerClass,
-        encounter_title: encounterTitle,
-      })
-    })
-      .then(res => res.json())
+    markTrainerVictory(runId, attemptId, trainerId, encounterName, trainerClass, encounterTitle)
       .then(data => {
         setBattleResult(data)
         if (data?.success) {
@@ -152,7 +149,14 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
   return (
     <div
       style={{ border: '1px solid #ccc', padding: '8px', cursor: 'pointer', userSelect: 'none' }}
-      onClick={() => setOpen(!open)}
+      onClick={() => {
+        const nextOpen = !open
+        setOpen(nextOpen)
+        if (nextOpen && party.length === 0) {
+          // If a prior load failed, retry when the card is reopened.
+          setPartyLoaded(false)
+        }
+      }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
 

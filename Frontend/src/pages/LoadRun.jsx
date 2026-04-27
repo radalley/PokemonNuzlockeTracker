@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SiteHeader from '../components/SiteHeader'
 import Sprite from '../components/Sprite'
-import { apiFetch } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
+import { getRuns, deleteRun } from '../utils/dataLayer'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -151,31 +152,23 @@ function LoadRunRow({ run, onLoad, onDelete }) {
 
 function LoadRun() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [runs, setRuns] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
 
-  const handleDeleteRun = (run_id) => {
-    apiFetch(`/api/delete-run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ run_id: run_id})
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setRuns(prev => prev.filter(r => r.run_id !== run_id))
-        }
-      })
-      .catch(err => console.error('Failed to delete run:', err))
-    setConfirmDelete(null)
+  const handleDeleteRun = async (run_id) => {
+    const data = await deleteRun(run_id)
+    if (data?.success) {
+      setRuns(prev => prev.filter(r => String(r.run_id) !== String(run_id)))
     }
-  
+    setConfirmDelete(null)
+  }
 
   useEffect(() => {
-    apiFetch('/api/runs')
-      .then(res => res.json())
-      .then(data => setRuns(data))
-  }, [])
+    getRuns(!!user)
+      .then(data => setRuns(data || []))
+      .catch(() => setRuns([]))
+  }, [user])
 
   return (
     <div className="load-run-page">

@@ -10,7 +10,6 @@ import Graveyard from './pages/Graveyard'
 import ResetPassword from './pages/ResetPassword'
 import ErrorBoundary from './components/ErrorBoundary'
 import AuthDialog from './components/AuthDialog'
-import RequireAuth from './components/RequireAuth'
 import { AuthProvider } from './contexts/AuthContext'
 
 function App() {
@@ -21,12 +20,12 @@ function App() {
           <AuthDialog />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/new-run" element={<RequireAuth><NewRun /></RequireAuth>} />
-            <Route path="/load-run" element={<RequireAuth><LoadRun /></RequireAuth>} />
+            <Route path="/new-run" element={<NewRun />} />
+            <Route path="/load-run" element={<LoadRun />} />
             <Route path="/guides" element={<Guides />} />
-            <Route path="/attempt/:runId/:attemptId" element={<RequireAuth><Attempt /></RequireAuth>} />
-            <Route path="/box/:runId/:attemptId" element={<RequireAuth><Box /></RequireAuth>} />
-            <Route path="/graveyard/:runId/:attemptId" element={<RequireAuth><Graveyard /></RequireAuth>} />
+            <Route path="/attempt/:runId/:attemptId" element={<Attempt />} />
+            <Route path="/box/:runId/:attemptId" element={<Box />} />
+            <Route path="/graveyard/:runId/:attemptId" element={<Graveyard />} />
             <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
         </BrowserRouter>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
-import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import PokemonCard from '../components/PokemonCard'
+import { getRunDetails, getBox, updateEncounterStatus } from '../utils/dataLayer'
 
 function Graveyard() {
   const { runId, attemptId } = useParams()
@@ -13,8 +13,7 @@ function Graveyard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
-      .then(res => res.json())
+    getRunDetails(runId, attemptId)
       .then(data => setRunDetails(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
@@ -22,28 +21,17 @@ function Graveyard() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setPokemon(data.filter(p => p.status === 'Dead')))
+    getBox(runId, attemptId)
+      .then(data => setPokemon((data || []).filter(p => p.status === 'Dead')))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId, attemptId])
 
   const handleRevive = (pokemonToRevive) => {
-    apiFetch('/api/pokebank/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        run_id: parseInt(runId),
-        attempt_number: parseInt(attemptId),
-        location_id: pokemonToRevive.location_id,
-        species_id: pokemonToRevive.species_id,
-        nickname: pokemonToRevive.nickname || null,
-        nature: pokemonToRevive.nature || null,
-        status: 'Captured',
-        shiny: pokemonToRevive.shiny || null,
-        pokemon_id: pokemonToRevive.pokemon_id,
-      })
+    updateEncounterStatus(runId, attemptId, {
+      ...pokemonToRevive,
+      status: 'Captured',
+      bonus_location: pokemonToRevive.bonus_location || pokemonToRevive.secondary_sort_order || 0,
     })
       .then(() => {
         setPokemon(prev => prev.filter(entry => entry.pokemon_id !== pokemonToRevive.pokemon_id))
@@ -54,10 +42,10 @@ function Graveyard() {
 
   return (
     <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
-      <AttemptHeader runId={parseInt(runId)} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={parseInt(runId)} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: '#aaa' }}>
@@ -73,7 +61,7 @@ function Graveyard() {
                   key={p.pokemon_id}
                   pokemon={p}
                   onRevive={handleRevive}
-                  runId={parseInt(runId)}
+                  runId={runId}
                   attemptId={parseInt(attemptId)}
                 />
               ))}

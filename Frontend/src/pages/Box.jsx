@@ -5,6 +5,14 @@ import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import PokemonCard from '../components/PokemonCard'
 import Sprite from '../components/Sprite'
+import {
+  getRunDetails,
+  getBox,
+  getParty,
+  addToParty,
+  removeFromParty,
+  updateEncounterStatus,
+} from '../utils/dataLayer'
 
 function Box() {
   const { runId, attemptId } = useParams()
@@ -14,8 +22,7 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/${attemptId}`, { signal: controller.signal })
-      .then(res => res.json())
+    getRunDetails(runId, attemptId)
       .then(data => setRunDetails(data))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
@@ -23,9 +30,8 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/box/${runId}/${attemptId}`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setPokemon(data.filter(p => p.status === 'Captured')))
+    getBox(runId, attemptId)
+      .then(data => setPokemon((data || []).filter(p => p.status === 'Captured')))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId, attemptId])
@@ -35,50 +41,35 @@ function Box() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setPartyPokemonIds(new Set(data.map(p => p.pokemon_id))))
+    getParty(runId, attemptId)
+      .then(data => setPartyPokemonIds(new Set((data || []).map(p => p.pokemon_id))))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId, attemptId, partyRefreshKey])
 
   const handleAddToParty = (p) => {
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pokemon_id: p.pokemon_id })
-    })
+    addToParty(runId, attemptId, p.pokemon_id)
       .then(() => setPartyRefreshKey(k => k + 1))
       .catch(err => console.error('Failed to add to party:', err))
   }
 
   const handleDead = (p) => {
-    apiFetch('/api/pokebank/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        run_id: parseInt(runId),
-        attempt_number: parseInt(attemptId),
-        location_id: p.location_id,
-        species_id: p.species_id,
-        nickname: p.nickname || null,
-        nature: p.nature || null,
-        status: 'Dead',
-        shiny: p.shiny || null,
-        pokemon_id: p.pokemon_id,
-      })
+    updateEncounterStatus(runId, attemptId, {
+      ...p,
+      status: 'Dead',
+      bonus_location: p.bonus_location || p.secondary_sort_order || 0,
     })
       .then(() => {
         setPokemon(prev => prev.filter(x => x.pokemon_id !== p.pokemon_id))
         setStatsRefreshKey(k => k + 1)
-        apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
+        removeFromParty(runId, attemptId, p.pokemon_id)
           .then(() => setPartyRefreshKey(k => k + 1))
       })
       .catch(err => console.error('Failed to mark dead:', err))
   }
 
   const handleRemoveFromParty = (p) => {
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party/${p.pokemon_id}`, { method: 'DELETE' })
+    removeFromParty(runId, attemptId, p.pokemon_id)
       .then(() => setPartyRefreshKey(k => k + 1))
       .catch(err => console.error('Failed to remove from party:', err))
   }
@@ -112,26 +103,14 @@ function Box() {
   }
 
   const handleConfirmEvolve = (toSpeciesId) => {
-    apiFetch('/api/pokebank/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        run_id: parseInt(runId),
-        attempt_number: parseInt(attemptId),
-        location_id: evolveTarget.location_id,
-        species_id: toSpeciesId,
-        nickname: evolveTarget.nickname || null,
-        nature: evolveTarget.nature || null,
-        status: evolveTarget.status,
-        shiny: evolveTarget.shiny || null,
-        pokemon_id: evolveTarget.pokemon_id,
-      })
+    updateEncounterStatus(runId, attemptId, {
+      ...evolveTarget,
+      species_id: toSpeciesId,
+      bonus_location: evolveTarget.bonus_location || evolveTarget.secondary_sort_order || 0,
     })
-      .then(res => res.json())
       .then(() => {
-        apiFetch(`/api/box/${runId}/${attemptId}`)
-          .then(res => res.json())
-          .then(data => setPokemon(data.filter(p => p.status === 'Captured')))
+        getBox(runId, attemptId)
+          .then(data => setPokemon((data || []).filter(p => p.status === 'Captured')))
         setEvolveTarget(null)
         setEvolveOptions(null)
       })
@@ -181,10 +160,10 @@ function Box() {
           </div>
         </div>
       )}
-      <AttemptHeader runId={parseInt(runId)} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt partyRefreshKey={partyRefreshKey} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt partyRefreshKey={partyRefreshKey} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={parseInt(runId)} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: '#aaa' }}>
@@ -198,7 +177,7 @@ function Box() {
               display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'center',
             }}>
               {pokemon.map(p => (
-                <PokemonCard key={p.pokemon_id} pokemon={p} inParty={partyPokemonIds.has(p.pokemon_id)} onAddToParty={handleAddToParty} onRemoveFromParty={handleRemoveFromParty} onDead={handleDead} onEvolve={evolvableSpecies.has(p.species_id) ? handleEvolve : undefined} runId={parseInt(runId)} attemptId={parseInt(attemptId)} />
+                <PokemonCard key={p.pokemon_id} pokemon={p} inParty={partyPokemonIds.has(p.pokemon_id)} onAddToParty={handleAddToParty} onRemoveFromParty={handleRemoveFromParty} onDead={handleDead} onEvolve={evolvableSpecies.has(p.species_id) ? handleEvolve : undefined} runId={runId} attemptId={parseInt(attemptId)} />
               ))}
             </div>
           )}
