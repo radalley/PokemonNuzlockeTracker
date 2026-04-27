@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { apiFetch } from '../utils/api'
+import { isLocalRun } from '../utils/dataLayer'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
@@ -49,6 +50,17 @@ const BADGE_LEADERS = {
   8: 'Giovanni',
 }
 
+const BADGE_NAMES = {
+  1: 'Boulder Badge',
+  2: 'Cascade Badge',
+  3: 'Thunder Badge',
+  4: 'Rainbow Badge',
+  5: 'Soul Badge',
+  6: 'Marsh Badge',
+  7: 'Volcano Badge',
+  8: 'Earth Badge',
+}
+
 function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty, onDead, onRevive, onEvolve, runId, attemptId }) {
   const { species_name, nickname, nature, status, shiny, level_met, location_name,
           type1, type2, hp, atk, def, spa, spd, spe, bst } = pokemon
@@ -57,6 +69,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
 
   const statusInfo = STATUS_STYLE[status] || { color: '#aaa', label: status }
   const badgeIds = parseBadgeIds(pokemon.badges_earned)
+  const localRun = Boolean(runId) && isLocalRun(runId)
   const showReviveAction = status === 'Dead' && Boolean(onRevive)
   const showPartyAction = inParty ? Boolean(onRemoveFromParty) : Boolean(onAddToParty)
   const showEvolveAction = Boolean(onEvolve) && status !== 'Dead'
@@ -73,11 +86,20 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       setBadgeMeta([])
       return
     }
+
+    if (localRun) {
+      setBadgeMeta(badgeIds.map(badgeId => ({
+        badge_id: badgeId,
+        badge_name: BADGE_NAMES[badgeId] || `Badge ${badgeId}`,
+      })))
+      return
+    }
+
     apiFetch(`/api/badges?ids=${badgeIds.join(',')}`)
       .then(res => res.json())
       .then(data => setBadgeMeta(Array.isArray(data) ? data : []))
       .catch(() => setBadgeMeta([]))
-  }, [pokemon.pokemon_id, badgeIds.join(',')])
+  }, [pokemon.pokemon_id, badgeIds.join(','), localRun])
 
   const badgeById = new Map(badgeMeta.map(b => [b.badge_id, b]))
 
@@ -86,6 +108,21 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
     if (!showDropdown || !runId || !attemptId || !pokemon.pokemon_id) {
       return
     }
+
+    if (localRun) {
+      setTrainerData({
+        trainers_defeated_count: Number(pokemon.trainers_defeated_count || pokemon.trainers_defeated || 0),
+        bosses_defeated_count: Number(pokemon.bosses_defeated_count || 0),
+        rivals_defeated_count: Number(pokemon.rivals_defeated_count || 0),
+        badges_earned: badgeIds.map(badgeId => ({
+          badge_id: badgeId,
+          badge_name: BADGE_NAMES[badgeId] || `Badge ${badgeId}`,
+        })),
+      })
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     apiFetch(`/api/pokemon/${pokemon.pokemon_id}/trainers-badges/${runId}/${attemptId}`)
       .then(res => res.json())
@@ -97,7 +134,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
         console.error('Failed to fetch trainer/badge data:', err)
         setLoading(false)
       })
-  }, [showDropdown, runId, attemptId, pokemon.pokemon_id])
+  }, [showDropdown, runId, attemptId, pokemon.pokemon_id, localRun, badgeIds.join(',')])
 
   return (
     <div style={{

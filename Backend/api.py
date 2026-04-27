@@ -1,8 +1,7 @@
 import os
-from pathlib import Path
 import jwt
 from jwt import PyJWKClient
-from flask import Flask, jsonify, request, g, send_from_directory, abort
+from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
@@ -19,22 +18,12 @@ from backend import (get_games, create_run, get_runs, get_script,
                      delete_bonus_location, rename_bonus_location, get_species_summary,
                      get_or_create_user_by_supabase_id,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn)
+from backend import _badge_id_for_gym_leader
 
 load_dotenv()
 
-BACKEND_DIR = Path(__file__).resolve().parent
-FRONTEND_DIST_DIR = BACKEND_DIR.parent / 'Frontend' / 'dist'
-
-app = Flask(__name__, static_folder=None)
-
-# Keep local dev easy while allowing stricter production CORS.
-cors_origins_env = os.environ.get('LOCKLEY_CORS_ORIGINS', '').strip()
-if cors_origins_env:
-    cors_origins = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
-else:
-    cors_origins = ['http://localhost:5173', 'http://localhost:5174']
-
-CORS(app, supports_credentials=True, origins=cors_origins)
+app = Flask(__name__)
+CORS(app, supports_credentials=True)
 
 # JWKS client for asymmetric JWT verification (cached at module level)
 _jwks_client = None
@@ -48,7 +37,8 @@ def _get_jwks_client():
 
 def _decode_supabase_jwt(token):
     """Try HS256 legacy secret first, then fall back to JWKS asymmetric verification."""
-    secret = os.environ.get('SUPABASE_JWT_SECRET', '')
+    # Keep backward compatibility with older local env files that used a typo.
+    secret = os.environ.get('SUPABASE_JWT_SECRET', '') or os.environ.get('SUPRABASE_JWT_SECRET', '')
     if secret:
         try:
             return jwt.decode(token, secret, algorithms=['HS256'], audience='authenticated')
@@ -61,30 +51,12 @@ def _decode_supabase_jwt(token):
     except Exception:
         return None
 
-def _normalize_database_url(database_url):
-    if not database_url or '?' not in database_url:
-        return database_url
-
-    base, query = database_url.split('?', 1)
-    filtered_params = []
-    for chunk in query.split('&'):
-        if not chunk:
-            continue
-        key = chunk.split('=', 1)[0].strip().lower()
-        if key == 'pgbouncer':
-            continue
-        filtered_params.append(chunk)
-
-    if not filtered_params:
-        return base
-    return f"{base}?{'&'.join(filtered_params)}"
-
 def get_db():
     if 'db' not in g:
         database_url = os.environ.get('DATABASE_URL')
         if not database_url:
             raise RuntimeError('DATABASE_URL environment variable is not set')
-        raw = psycopg2.connect(_normalize_database_url(database_url))
+        raw = psycopg2.connect(database_url)
         g.db = wrap_conn(raw)
     return g.db
 
@@ -523,26 +495,60 @@ def delete_run_route():
     return jsonify({'success': True})
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def frontend_route(path):
-    if path.startswith('api/'):
-        abort(404)
+@app.route('/api/guest-script', methods=['GET'])
+def guest_script_route():
+    conn = get_db()
+    starter = request.args.get('starter', default='Fire', type=str)
+    game_id = request.args.get('game_id', type=int)
+    version_group_id = request.args.get('version_group_id', type=int)
 
-    if not FRONTEND_DIST_DIR.exists():
-        return jsonify({
-            'error': 'Frontend build not found',
-            'hint': 'Run "npm run build" inside Frontend before starting the backend in production.'
-        }), 404
+    if not game_id:
+        return jsonify({'error': 'game_id required'}), 400
 
-    requested = (FRONTEND_DIST_DIR / path).resolve()
-    if path and requested.is_file() and FRONTEND_DIST_DIR in requested.parents:
-        return send_from_directory(FRONTEND_DIST_DIR, path)
+    script_rows = get_script(conn, starter, version_group_id=version_group_id)
+    script = []
+    for row in script_rows:
+        data = dict(row)
+        data['secondary_sort_order'] = int(data.get('secondary_sort_order') or 0)
+        data['is_bonus_location'] = bool(data.get('is_bonus_location'))
+        data['encounter_key'] = f"{data['event_id']}:{data['secondary_sort_order']}"
+        data['is_defeated'] = False
+        data['trainer_count'] = int(data.get('trainer_count') or 0)
+        data['available_trainer_count'] = int(data.get('available_trainer_count') or 0)
 
-    return send_from_directory(FRONTEND_DIST_DIR, 'index.html')
+        # Local mode depends on these counts to enable the trainer panel button.
+        # Recompute from trainer_pool so Postgres/text source data doesn't disable UI.
+        if data.get('event_type') == 'Location':
+            location_id = int(data['event_id'])
+            trainer_rows = get_trainers_by_location(conn, location_id)
+            non_event_count = sum(1 for t in trainer_rows if not bool(t.get('is_event')))
+            data['trainer_count'] = non_event_count
+            data['available_trainer_count'] = non_event_count
+        script.append(data)
+
+    pools = {}
+    for row in script:
+        if row.get('event_type') != 'Location':
+            continue
+        location_id = int(row['event_id'])
+        if location_id in pools:
+            continue
+        pools[location_id] = get_encounter_pool(conn, location_id, game_id)
+
+    return jsonify({'script': script, 'pools': pools})
+
+
+@app.route('/api/trainer-badge-info', methods=['GET'])
+def trainer_badge_info_route():
+    trainer_name = request.args.get('trainer_name', default='', type=str)
+    trainer_class = request.args.get('trainer_class', default='', type=str)
+    encounter_title = request.args.get('encounter_title', default='', type=str)
+
+    is_gym_leader = 'LEADER' in trainer_class.upper()
+    badge_id = _badge_id_for_gym_leader(trainer_name, encounter_title) if is_gym_leader else None
+    return jsonify({'badge_id': badge_id, 'is_gym_leader': is_gym_leader})
 
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', '8000'))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)

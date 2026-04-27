@@ -7,6 +7,7 @@ import BossRow from '../components/BossRow'
 import RivalRow from '../components/RivalRow'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
+import { getAttemptPageData, getParty, getPokebank, updateStarter as saveStarter } from '../utils/dataLayer'
 
 const FILTER_OPTIONS = [
   { key: 'master', label: 'Master' },
@@ -52,9 +53,8 @@ function Attempt() {
 
   useEffect(() => {
     const controller = new AbortController()
-    apiFetch(`/api/runs/${runId}/attempts/${attemptId}/party`, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => setPartyPokemonIds(new Set(data.map(p => p.pokemon_id))))
+    getParty(runId, attemptId)
+      .then(data => setPartyPokemonIds(new Set((data || []).map(p => p.pokemon_id))))
       .catch(err => { if (err.name !== 'AbortError') console.error(err) })
     return () => controller.abort()
   }, [runId, attemptId, partyRefreshKey])
@@ -63,14 +63,13 @@ function Attempt() {
     const controller = new AbortController()
     setAttemptLoadError('')
     setAttemptLoaded(false)
-    apiFetch(`/api/attempt-page/${runId}/${attemptId}`, { signal: controller.signal })
-      .then(res => res.json())
+    getAttemptPageData(runId, attemptId)
       .then(data => {
-        setRunDetails(data.run)
-        setCurrentStarter(data.run?.starter || '')
-        setScript(data.script)
-        setPools(data.pools || {})
-        setSavedEncounters(data.encounters || {})
+        setRunDetails(data?.run || null)
+        setCurrentStarter(data?.run?.starter || '')
+        setScript(data?.script || [])
+        setPools(data?.pools || {})
+        setSavedEncounters(data?.encounters || {})
         setAttemptLoaded(true)
       })
       .catch(err => {
@@ -84,17 +83,12 @@ function Attempt() {
 
   const handleStarterChange = (newStarter) => {
     if (newStarter !== currentStarter) {
-      apiFetch(`/api/update-starter`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ run_id: runId, attempt_id: attemptId, starter: newStarter })
-      })
-      .then(res => res.json())
-      .then(() => {
-        setCurrentStarter(newStarter)
-        setRefreshKey(k => k + 1)
-      })
-      .catch(err => console.error('Failed to update starter:', err))
+      saveStarter(runId, attemptId, newStarter)
+        .then(() => {
+          setCurrentStarter(newStarter)
+          setRefreshKey(k => k + 1)
+        })
+        .catch(err => console.error('Failed to update starter:', err))
     }
   }
 
@@ -129,11 +123,10 @@ function Attempt() {
   }, [])
 
   const handleEncounterChange = useCallback(() => {
-    apiFetch(`/api/pokebank/${runId}/${attemptId}`)
-      .then(res => res.json())
+    getPokebank(runId, attemptId)
       .then(data => {
         const byLocation = {}
-        data.forEach(p => { byLocation[p.encounter_key] = p })
+        ;(data || []).forEach(p => { byLocation[p.encounter_key] = p })
         setSavedEncounters(byLocation)
         setStatsRefreshKey(k => k + 1)
       })
@@ -172,9 +165,9 @@ function Attempt() {
   if (!runDetails) return <p>{attemptLoadError || 'Attempt not found.'}</p>
 
   function renderScriptRow(row) {
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] || []} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={parseInt(runId)} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
-    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={parseInt(runId)} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
-    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={parseInt(runId)} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] || []} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
+    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
   }
 
   return (
@@ -264,10 +257,10 @@ function Attempt() {
         </div>
       )}
 
-      <AttemptHeader runId={parseInt(runId)} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={parseInt(runId)} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey}>
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey}>
           <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 8px 0', border: '1px solid #343a47', borderRadius: '8px', padding: '10px', background: '#171920' }}>
             <div style={{ fontSize: '0.8em', color: '#8d97ab', marginBottom: '8px' }}>Starter</div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '6px' }}>

@@ -938,22 +938,31 @@ def get_evolution_families(conn, species_ids):
     """Return all species_ids in the same evolution chain(s) as the given ids."""
     if not species_ids:
         return []
-    family = set(species_ids)
-    frontier = set(species_ids)
+    # Normalize to integers so the IN clause is always type-safe on Postgres.
+    family = {int(s) for s in species_ids}
+    frontier = set(family)
     while frontier:
         placeholders = ','.join(['%s'] * len(frontier))
         frontier_list = list(frontier)
         next_frontier = set()
-        for sid, in conn.execute(f'SELECT to_species_id FROM evolutions WHERE from_species_id IN ({placeholders})', frontier_list).fetchall():
+        for row in conn.execute(
+            f'SELECT to_species_id FROM evolutions WHERE from_species_id IN ({placeholders})',
+            frontier_list,
+        ).fetchall():
+            sid = int(dict(row)['to_species_id'])
             if sid not in family:
                 next_frontier.add(sid)
                 family.add(sid)
-        for sid, in conn.execute(f'SELECT from_species_id FROM evolutions WHERE to_species_id IN ({placeholders})', frontier_list).fetchall():
+        for row in conn.execute(
+            f'SELECT from_species_id FROM evolutions WHERE to_species_id IN ({placeholders})',
+            frontier_list,
+        ).fetchall():
+            sid = int(dict(row)['from_species_id'])
             if sid not in family:
                 next_frontier.add(sid)
                 family.add(sid)
         frontier = next_frontier
-    return list(family)
+    return sorted(family)
 
 def get_attempt_page_data(conn, run_id, attempt_number):
     run = get_run_by_id(conn, run_id, attempt_number)
@@ -1181,16 +1190,16 @@ def _dedupe_encounter_pool_rows(rows):
     unique_rows = []
     seen_species_ids = set()
     for row in rows:
-        species_id = row[0]
+        row = dict(row)
+        species_id = row['species_id']
         if species_id in seen_species_ids:
             continue
         seen_species_ids.add(species_id)
-        unique_rows.append({'species_id': species_id, 'name': row[1]})
+        unique_rows.append({'species_id': species_id, 'name': row['name']})
     return unique_rows
 
 def get_encounter_pool(conn, location_id, game_id):
-    # tmp = conn.execute('select species_id from encounter_pool left join species on encounter_ where canonical_location_id = (%s) and game_id = (%s)', (location_id, game_id)).fetchall()
-    tmp = conn.execute('select encounter_pool.species_id, species.name from encounter_pool left join species on encounter_pool.species_id = species.species_id where canonical_location_id = (%s) and game_id = (%s)', (location_id, game_id)).fetchall()
+    tmp = conn.execute('select encounter_pool.species_id, species.name from encounter_pool left join species on encounter_pool.species_id = species.species_id where canonical_location_id::integer = (%s) and game_id::integer = (%s)', (int(location_id), int(game_id))).fetchall()
     return _dedupe_encounter_pool_rows(tmp)
 
 def get_encounters_for_attempt(conn, run_id, attempt_id):
@@ -1345,7 +1354,7 @@ def _resolve_explicit_moves(conn, moves_text, version_group_id):
             continue
         move_row = conn.execute(
             'select move_id from moves '
-            'where lower(replace(move_name, " ", "-")) = %s '
+            "where lower(replace(move_name, ' ', '-')) = %s "
             'order by case when version_group_id is null then 1 else 0 end, version_group_id desc limit 1',
             (move_slug,)
         ).fetchone()
