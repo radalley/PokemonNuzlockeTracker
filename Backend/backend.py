@@ -114,13 +114,14 @@ def set_active_game(conn, game):
 
 def create_run(conn, name, user_id=None):
     _ensure_auth_schema(conn)
-    conn.execute(
-        "insert into runs (game_id, name, user_id) values (%s,%s,%s)",
+    row = conn.execute(
+        "insert into runs (game_id, name, user_id) values (%s,%s,%s) returning run_id",
         (state['active_game_id'], name, user_id)
-    )
+    ).fetchone()
     conn.commit()
-    set_active_run(conn.execute('select run_id from runs order by run_id desc limit 1').fetchone()['run_id'])
+    set_active_run(row['run_id'])
     new_attempt(conn)
+    return row['run_id']
 
 def get_runs(conn, user_id=None):
     _ensure_auth_schema(conn)
@@ -207,7 +208,6 @@ def delete_run(conn, run_id):
         conn.execute('delete from party where attempt_id = (%s)',(attempt_id,))
         # delete from attempts
         conn.execute('delete from attempts where attempt_id = (%s)',(attempt_id,))
-        conn.execute('delete from badges where attempt_id = (%s)',(attempt_id,))
         conn.execute('delete from trainers_defeated where attempt_id = (%s)',(attempt_id,))
     conn.commit()
 
@@ -215,26 +215,15 @@ def set_active_run(run_id):
     state['active_run_id'] = run_id
 
 def new_attempt(conn, ):
-    has_attempt_badges_earned = _has_column(conn, 'attempts', 'badges_earned')
-    attempts = conn.execute(f'select attempt_number, is_active from attempts where run_id = {state["active_run_id"]}').fetchall()
+    attempts = conn.execute('select attempt_number from attempts where run_id = %s', (state["active_run_id"],)).fetchall()
     if len(attempts) == 0:
-        #create new attempt on run with id = 1
-        if has_attempt_badges_earned:
-            conn.execute("insert into attempts (run_id, attempt_number, starter, badges_earned) values (%s,%s,%s,%s)",
-                        (state['active_run_id'], 1, 'Fire', '') )
-        else:
-            conn.execute("insert into attempts (run_id, attempt_number, starter) values (%s,%s,%s)",
-                        (state['active_run_id'], 1, 'Fire') )
+        conn.execute("insert into attempts (run_id, attempt_number, starter) values (%s,%s,%s)",
+                    (state['active_run_id'], 1, 'Fire') )
         state['active_attempt_id'] = 1
     else:
-        new_attempt_number = attempts[::-1][0][0] + 1
-        #create new attempt on run with id = 1
-        if has_attempt_badges_earned:
-            conn.execute("insert into attempts (run_id, attempt_number, starter, badges_earned) values (%s,%s,%s,%s)",
-                        (state['active_run_id'], new_attempt_number, 'Fire', '') )
-        else:
-            conn.execute("insert into attempts (run_id, attempt_number, starter) values (%s,%s,%s)",
-                        (state['active_run_id'], new_attempt_number, 'Fire') )
+        new_attempt_number = attempts[::-1][0]['attempt_number'] + 1
+        conn.execute("insert into attempts (run_id, attempt_number, starter) values (%s,%s,%s)",
+                    (state['active_run_id'], new_attempt_number, 'Fire') )
         set_active_attempt(new_attempt_number)
     conn.commit()
 
@@ -280,7 +269,7 @@ def set_active_attempt(attempt):
     state['active_attempt_id'] = attempt
 
 def get_pokebank(conn):
-    return conn.execute(f'select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank').fetchall()
+    return conn.execute(f'select pokemon_id, species_id, canonical_location_id as location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank').fetchall()
 
 def get_pokebank_feed_for_user(conn, user_id, limit=360):
     has_badges_earned = conn.execute(
@@ -301,7 +290,7 @@ def get_pokebank_feed_for_user(conn, user_id, limit=360):
     return [dict(r) for r in rows]
 
 def get_graveyard(conn):
-    return conn.execute("select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where status = 'Dead'").fetchall()
+    return conn.execute("select pokemon_id, species_id, canonical_location_id as location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where status = 'Dead'").fetchall()
 
 def get_party(conn):
     party = conn.execute('select party_slot, pokemon_id from party where attempt_id = (%s)', (state['active_attempt_id'],)).fetchall()
@@ -324,7 +313,7 @@ def drop_from_party(party_slot):
     update_party()
 
 def get_box(conn):
-    return conn.execute("select pokemon_id, species_id, location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where attempt_id = (%s) and run_id = (%s) and status = 'Captured'", (state['active_attempt_id'], state['active_run_id'],)).fetchall()
+    return conn.execute("select pokemon_id, species_id, canonical_location_id as location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where attempt_id = (%s) and run_id = (%s) and status = 'Captured'", (state['active_attempt_id'], state['active_run_id'],)).fetchall()
 
 def get_species_search(conn, name):
     return conn.execute('select name, species_id from species where name like (%s)',('%'+name+'%',)).fetchall()
@@ -393,9 +382,10 @@ def create_bonus_location(conn, run_id, attempt_number, canonical_location_id):
         return {'success': False, 'error': 'Run not found'}
 
     base_row = conn.execute(
-        'select canonical_name, sort_order, coalesce(secondary_sort_order, 0) as secondary_sort_order, event_type '
-        'from event_locations '
-        'where canonical_location_id = %s and version_group_id = %s '
+        'select cl.canonical_location_name as canonical_name, el.sort_order, coalesce(el.secondary_sort_order, 0) as secondary_sort_order, el.event_type '
+        'from event_locations el '
+        'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
+        'where el.canonical_location_id = %s and el.version_group_id = %s '
         'limit 1',
         (canonical_location_id, version_group_id)
     ).fetchone()
@@ -463,7 +453,7 @@ def delete_bonus_location(conn, run_id, attempt_number, canonical_location_id, s
     pokemon_ids = [
         row['pokemon_id'] for row in conn.execute(
             'select pokemon_id from pokebank '
-            'where run_id = %s and attempt_id = %s and location_id = %s and coalesce(bonus_location, 0) = %s',
+            'where run_id = %s and attempt_id = %s and canonical_location_id = %s and coalesce(bonus_location, 0) = %s',
             (run_id, attempt_id, canonical_location_id, secondary_sort_order)
         ).fetchall()
     ]
@@ -477,7 +467,7 @@ def delete_bonus_location(conn, run_id, attempt_number, canonical_location_id, s
 
     conn.execute(
         'delete from pokebank '
-        'where run_id = %s and attempt_id = %s and location_id = %s and coalesce(bonus_location, 0) = %s',
+        'where run_id = %s and attempt_id = %s and canonical_location_id = %s and coalesce(bonus_location, 0) = %s',
         (run_id, attempt_id, canonical_location_id, secondary_sort_order)
     )
     conn.execute(
@@ -1017,18 +1007,22 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     location_ids = sorted({r['event_id'] for r in script_list if r['event_type'] == 'Location'})
 
     available_trainers_by_location = {}
-    if attempt_row and location_ids:
+    if attempt_row and location_ids and version_group_id is not None:
         placeholders = ','.join(['%s'] * len(location_ids))
+        # Count all regular trainers (not rematch, not event) for the location, for the correct version_group_id
         trainer_rows = conn.execute(
-            f'select tp.location_id, '
-            f"count(case when case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 then 1 end) as trainer_count, "
-            f"count(case when case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 and td.trainer_id is null then 1 end) as available_trainer_count "
+            f'select tp.canonical_location_id as location_id, '
+            f"count(*) as trainer_count, "
+            f"count(case when td.trainer_id is null then 1 end) as available_trainer_count "
             f'from trainer_pool tp '
             f'left join trainers_defeated td '
             f'on td.trainer_id = tp.trainer_id and td.run_id = %s and td.attempt_id = %s '
-            f'where tp.location_id in ({placeholders}) '
-            f'group by tp.location_id',
-            [run_id, attempt_row['attempt_id'], *location_ids]
+            f"where tp.canonical_location_id in ({placeholders}) "
+            f"and tp.version_group_id = %s "
+            f"and case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
+            f"and case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
+            f'group by tp.canonical_location_id',
+            [run_id, attempt_row['attempt_id'], *location_ids, version_group_id]
         ).fetchall()
         available_trainers_by_location = {
             int(row['location_id']): {
@@ -1129,7 +1123,7 @@ def get_attempt_session_stats(conn, run_id, attempt_number):
     }
 
 def add_pokemon(conn, species_id, location_id, nickname, status, shiny):
-    conn.execute('insert into pokebank (run_id, attempt_id, species_id, location_id, nickname, status, shiny) values (%s,%s,%s,%s,%s,%s,%s)', (state['active_run_id'],state['active_attempt_id'],species_id, location_id, nickname, status, shiny))
+    conn.execute('insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, status, shiny) values (%s,%s,%s,%s,%s,%s,%s)', (state['active_run_id'],state['active_attempt_id'],species_id, location_id, nickname, status, shiny))
     conn.commit()
 
 def drop_pokemon(conn, pokemon_id):
@@ -1146,14 +1140,14 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
     ).fetchone()['attempt_id']
     if pokemon_id:
         conn.execute(
-            'update pokebank set species_id=%s, location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s where pokemon_id=%s',
+            'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s where pokemon_id=%s',
             (species_id, location_id, nickname, nature, status, shiny, bonus_location, pokemon_id)
         )
         conn.commit()
         return pokemon_id
     else:
         conn.execute(
-            'insert into pokebank (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
             (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location)
         )
         conn.commit()
@@ -1171,7 +1165,7 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
 
     if version_group_id is not None:
         boss_filter = 'and eb.version_group_id = %s '
-        loc_filter = 'where version_group_id = %s '
+        loc_filter = 'where el.version_group_id = %s '
         params.append(version_group_id)
         params.append(version_group_id)
 
@@ -1195,14 +1189,21 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
         'union all '
-        'select nullif(canonical_location_id::text, \'\')::integer as event_id, canonical_name as display_name, nullif(sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, event_type, null, null, null, null, 0::integer as is_bonus_location '
-        f'from event_locations {loc_filter}'
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, 0::integer as is_bonus_location '
+        'from event_locations el '
+        'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
+        f'{loc_filter}'
         f'{bonus_sql}'
         'order by sort_order asc, secondary_sort_order asc',
         tuple(params)).fetchall()
 
 def get_location_by_id(conn, location_id):
-    return conn.execute('select canonical_name from event_locations where canonical_location_id = (%s) and version_group_id = (%s)', (location_id, state['version_group_id'],)).fetchone()[0]
+    row = conn.execute(
+        'select canonical_location_name as location_name '
+        'from canon_locations where canonical_location_id = (%s) limit 1',
+        (location_id,)
+    ).fetchone()
+    return row['location_name'] if row else None
 
 def _dedupe_encounter_pool_rows(rows):
     unique_rows = []
@@ -1221,7 +1222,7 @@ def get_encounter_pool(conn, location_id, game_id):
     return _dedupe_encounter_pool_rows(tmp)
 
 def get_encounters_for_attempt(conn, run_id, attempt_id):
-    return conn.execute('select species_id, location_id from pokebank where run_id = (%s) and attempt_id = (%s)', (run_id, attempt_id)).fetchall()
+    return conn.execute('select species_id, canonical_location_id as location_id from pokebank where run_id = (%s) and attempt_id = (%s)', (run_id, attempt_id)).fetchall()
 
 def get_pokebank_with_stats(conn, run_id, attempt_number):
     # Check if badges_earned column exists
@@ -1236,8 +1237,8 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
     trainers_defeated_select = ', pb.trainers_defeated' if has_trainers_defeated else ", '' as trainers_defeated"
     
     rows = conn.execute(
-        f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.location_id, '
-        f'el.canonical_name as location_name, '
+        f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
+        f'cl.canonical_location_name as location_name, '
         f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, '
         f'st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, ss.bst'
         f'{badges_select}{trainers_defeated_select} '
@@ -1246,7 +1247,7 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
         f'join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
         f'left join species s on pb.species_id = s.species_id '
-        f'left join event_locations el on nullif(el.canonical_location_id::text, \'\')::integer = nullif(pb.location_id::text, \'\')::integer and nullif(el.version_group_id::text, \'\')::integer = nullif(g.version_group_id::text, \'\')::integer '
+        f'left join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(pb.canonical_location_id::text, \'\')::integer '
         + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'g.generation')
         + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'g.generation')
         + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'g.generation')
@@ -1258,7 +1259,7 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
 def get_pokebank_for_attempt(conn, run_id, attempt_number):
     version_group_id = _get_run_version_group_id(conn, run_id)
     rows = conn.execute(
-        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.location_id, '
+        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         'case '
         '  when coalesce(pb.bonus_location, 0) > 0 then pb.bonus_location '
         '  else coalesce(el.secondary_sort_order, 0) '
@@ -1267,7 +1268,7 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
         'from pokebank pb '
         'join attempts a on pb.attempt_id = a.attempt_id '
         'left join species s on pb.species_id = s.species_id '
-        'left join event_locations el on el.canonical_location_id = pb.location_id and el.version_group_id = %s '
+        'left join event_locations el on el.canonical_location_id = pb.canonical_location_id and el.version_group_id = %s '
         'where pb.run_id = (%s) and a.attempt_number = (%s)',
         (version_group_id, run_id, attempt_number)
     ).fetchall()
@@ -1288,7 +1289,20 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         ).fetchone()
         attempt_id = attempt_row['attempt_id'] if attempt_row else None
 
-    params = [location_id]
+    # Always require version_group_id for correct filtering
+    version_group_id = None
+    if run_id is not None:
+        vg_row = conn.execute(
+            'select g.version_group_id from runs r join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer where nullif(r.run_id::text, \'\')::integer = %s',
+            (run_id,)
+        ).fetchone()
+        if vg_row:
+            version_group_id = vg_row['version_group_id']
+
+    if version_group_id is None:
+        raise ValueError('version_group_id is required to fetch trainers for a location')
+
+    params = []
     defeated_join = ''
     defeated_select = '0 as is_defeated '
 
@@ -1298,18 +1312,25 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
             'on td.trainer_id = tp.trainer_id and td.run_id = %s and td.attempt_id = %s '
         )
         defeated_select = 'case when td.trainer_id is null then 0 else 1 end as is_defeated '
-        params = [run_id, attempt_id, location_id]
+        params = [run_id, attempt_id]
 
-    return conn.execute(
+    # Always filter by location_id and version_group_id
+    where_clauses = ["tp.canonical_location_id = %s", "tp.version_group_id = %s"]
+    params.append(location_id)
+    params.append(version_group_id)
+    # Only regular trainers
+    where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+
+    query = (
         'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         + defeated_select +
         'from trainer_pool tp '
         + defeated_join +
-        'where tp.location_id = %s and coalesce(tp.is_rematch, \'\') != \'True\' '
-        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, tp.trainer_id asc",
-        params
-    ).fetchall()
+        'where ' + ' and '.join(where_clauses) + ' '
+        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, tp.trainer_id asc"
+    )
+    return conn.execute(query, params).fetchall()
 
 def _normalize_move_constant(move_token):
     token = (move_token or '').strip()

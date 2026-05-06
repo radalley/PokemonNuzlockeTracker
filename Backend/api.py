@@ -150,8 +150,8 @@ def runs_route():
     # set state before calling create_run
     from backend import state, set_active_game
     set_active_game(conn, data['game_id'])
-    create_run(conn, data['run_name'], user_id=user['user_id'])
-    return jsonify({'success': True, 'run_id': state['active_run_id']})
+    run_id = create_run(conn, data['run_name'], user_id=user['user_id'])
+    return jsonify({'success': True, 'run_id': run_id})
 
 @app.route('/api/script', methods=['GET'])
 def script_route():

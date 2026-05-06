@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 import pokebase as pb
 
 CACHE_DIR = Path("seed_cache")
-POKEMON_CACHE = CACHE_DIR / "pokemon_loc"
+POKEMON_CACHE = CACHE_DIR / "pokemon_locs"
 POKEMON_CACHE.mkdir(parents=True, exist_ok=True)
 
 
@@ -85,63 +85,103 @@ import time
 import sqlite3
 from typing import Optional, Dict, Any
 
-def upsert_location(conn: sqlite3.Connection, row: Dict[str, Any]) -> None:
-    if row['dex_id'] == 2:
-        print('found')
+def upsert_location(conn: sqlite3.Connection, row: Dict[str, Any], dex_id) -> None:
 
-
-    for loc in row['data']:
+    for loc in row:
         # conn.execute(
         # "INSERT OR IGNORE INTO locations (location_name, location_id) VALUES (?,?);",
         # (loc["area_name"], loc["area_id"]),
         # )
         for ver in loc['version_details']:
+            # conn.execute(
+            #     "INSERT OR IGNORE into games (game_id, name) VALUES (?, ?); ",
+            #     (ver['version_id'], ver['version_name']),
+            # )
             conn.execute(
-                "INSERT OR IGNORE into games (game_id, name) VALUES (?, ?); ",
-                (ver['version_id'], ver['version_name']),
+        """
+            INSERT OR IGNORE INTO encounter_pool (species_id, location_id, game_id)
+            VALUES (?, ?, ?);
+            """,
+            (dex_id, loc['location_area']['url'].split('/')[::-1][1], ver["version"]['url'].split('/')[::-1][1]),
             )
-        #     conn.execute(
-        # """
-        #     INSERT OR IGNORE INTO encounter_pool (species_id, location_id, game_id)
-        #     VALUES (?, ?, ?);
-        #     """,
-        #     (row["dex_id"], loc['area_id'], ver["version_id"]),
-        #     )
         conn.commit()
 
+# conn = sqlite3.connect('identifier.sqlite')
 
-'''
-for id in range(1,152):
-    start_poke = time.perf_counter()
-    loc = pokemon_get_loc(id)
-    end_poke = time.perf_counter()
-    elapsed_poke = end_poke - start_poke
-    for i in loc:
-        upsert_location()
-    print(f"#{id:03d} took {elapsed_poke:.4f} seconds")
-'''
+#seeding locations for all pokemon section
+# for id in range(1,1027):
+#     start_poke = time.perf_counter()
+#     loc = pokemon_get_loc(id)
+#     end_poke = time.perf_counter()
+#     elapsed_poke = end_poke - start_poke
+#     for i in loc:
+#         upsert_location(conn, loc, id)
+#     print(f"#{id:03d} took {elapsed_poke:.4f} seconds")
 
 
 def seed_gen_locations(conn: sqlite3.Connection) -> None:
-    for dex_id in range(1,152):
+    for dex_id in range(1,200):
         start_poke = time.perf_counter()#(1, 152):
         data = pokemon_get_loc(dex_id, use_cache=True)  # will fetch once then cache forever
-        upsert_location(conn, {'dex_id': dex_id,'data': data})
+        # upsert_location(conn, {'dex_id': dex_id,'data': data})
         end_poke = time.perf_counter()
         elapsed_poke = end_poke - start_poke
         print(f"#{dex_id:03d} took {elapsed_poke:.4f} seconds")
 
-conn = sqlite3.connect('identifier.sqlite')
-start_total = time.perf_counter()
+# conn = sqlite3.connect('identifier.sqlite')
+# start_total = time.perf_counter()
 
-seed_gen_locations(conn)
+# seed_gen_locations(conn)
+#
+# end_total = time.perf_counter()
+# total_elapsed = end_total - start_total
+#
+# print("-" * 40)
+#
+# print(f"Total time: {total_elapsed:.4f} seconds")
+# print('done')
 
-end_total = time.perf_counter()
-total_elapsed = end_total - start_total
+# --- Postgres encounter_pool seeding section ---
+import os
+import psycopg2
+from dotenv import load_dotenv
+from backend import wrap_conn
 
-print("-" * 40)
-print(f"Total time: {total_elapsed:.4f} seconds")
-print('done')
+load_dotenv()
+
+def upsert_encounter_pool_postgres(conn, row, dex_id):
+    for loc in row:
+        for ver in loc['version_details']:
+            conn.execute(
+                """
+                INSERT INTO encounter_pool (species_id, location_id, game_id)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING;
+                """,
+                (dex_id, loc['location_area']['url'].split('/')[::-1][1], ver["version"]['url'].split('/')[::-1][1]),
+            )
+            # conn.execute(
+            #     """
+            #         INSERT INTO encounter_pool (species_id, location_id, game_id)
+            #         VALUES (?, ?, ?);
+            #         """,
+            #     (dex_id, loc['location_area']['url'].split('/')[::-1][1], ver["version"]['url'].split('/')[::-1][1]),
+            # )
+        conn.commit()
+
+if __name__ == "__main__":
+    print("DATABASE_URL" in os.environ, os.environ.get("DATABASE_URL"))
+    if "DATABASE_URL" in os.environ:
+        raw = psycopg2.connect(os.environ["DATABASE_URL"])
+        pgconn = wrap_conn(raw)
+        for id in range(1, 1027):
+            start_poke = time.perf_counter()
+            loc = pokemon_get_loc(id)
+            end_poke = time.perf_counter()
+            elapsed_poke = end_poke - start_poke
+            upsert_encounter_pool_postgres(pgconn, loc, id)
+            print(f"[PG] #{id:03d} took {elapsed_poke:.4f} seconds")
+        print("[PG] Done seeding encounter_pool in Postgres.")
 
 
 #for each loc in pokemon location_area_encounters
