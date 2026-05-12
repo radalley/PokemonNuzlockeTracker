@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://lockley-uat.onrender.com/api/$1"
+      "destination": "${{RENDER_BACKEND_URL}}/api/$1"
     }
   ],
   "headers": [
