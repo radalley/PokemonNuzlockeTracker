@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext'
 // px per second the feed scrolls upward
 const DEFAULT_SPEED = 40
 const DEFAULT_COLUMNS = 8
-const ROW_GAP_PX = 8
+const ROW_GAP_PX = 20
 const ROW_PAD_X_PX = 12
 const ROW_PAD_Y_PX = 6
 const MIN_SPRITE_SIZE = 24
@@ -240,16 +240,23 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
               style={{ width: `${spriteSize}px`, height: `${spriteSize}px` }}
             >
               <Sprite speciesId={s.species_id} size={spriteSize} shiny={Boolean(s.shiny)} />
-              {badgeIds.length > 0 && (
-                <div className="pokemon-feed__badge-strip" aria-hidden="true">
-                  {badgeIds.map(badgeId => (
-                    <img
-                      key={badgeId}
-                      className="pokemon-feed__badge"
-                      src={`/sprites/Badges/${badgeId}.png`}
-                      alt=""
-                    />
-                  ))}
+              {isUser && (s.nickname || badgeIds.length > 0) && (
+                <div className="pokemon-feed__info-box" aria-hidden="true">
+                  {s.nickname && (
+                    <span className="pokemon-feed__nickname">{s.nickname}</span>
+                  )}
+                  {badgeIds.length > 0 && (
+                    <div className="pokemon-feed__badge-strip">
+                      {badgeIds.map(badgeId => (
+                        <img
+                          key={badgeId}
+                          className="pokemon-feed__badge"
+                          src={`/sprites/Badges/${badgeId}.png`}
+                          alt=""
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
