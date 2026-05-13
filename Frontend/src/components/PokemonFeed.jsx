@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Sprite from './Sprite'
 import { apiFetch } from '../utils/api'
 import { getLocalFeedPokemon, hasLocalData } from '../utils/guestStorage'
@@ -76,7 +76,7 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
 
     async function loadDefault() {
       try {
-        const response = await fetch(`/api/species/random-feed?limit=${DEFAULT_FEED_LIMIT}`)
+        const response = await apiFetch(`/api/species/random-feed?limit=${DEFAULT_FEED_LIMIT}`)
         const data = await response.json()
         if (!cancelled && Array.isArray(data) && data.length > 0) {
           setSpecies(shuffleList(data))
@@ -126,7 +126,7 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
       try {
         let defaultData = []
         if (remainingDefault > 0) {
-          const response = await fetch(`/api/species/random-feed?limit=${remainingDefault}`)
+          const response = await apiFetch(`/api/species/random-feed?limit=${remainingDefault}`)
           const data = await response.json()
           defaultData = Array.isArray(data) ? data : []
         }
