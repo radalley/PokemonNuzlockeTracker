@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import Sprite from './Sprite'
 import { apiFetch } from '../utils/api'
 import { getLocalFeedPokemon, hasLocalData } from '../utils/guestStorage'
+import { useAuth } from '../contexts/AuthContext'
 
 // px per second the feed scrolls upward
 const DEFAULT_SPEED = 40
@@ -58,6 +59,7 @@ function shuffleList(items) {
 }
 
 function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, className = '' }) {
+  const { user, loading: authLoading } = useAuth()
   const [species, setSpecies] = useState([])
   const [spriteSize, setSpriteSize] = useState(40)
   const feedRef = useRef(null)
@@ -68,29 +70,56 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
   const rafRef = useRef(null)
   const lastTimeRef = useRef(null)
 
+  // Phase 1: load default species feed immediately on mount - no auth needed
   useEffect(() => {
     let cancelled = false
 
-    async function loadFeed() {
-      let userData = []
-
-      // 1. Try authenticated server-side Pokebank
+    async function loadDefault() {
       try {
-        const userResponse = await apiFetch(`/api/pokebank/random-feed?limit=${USER_FEED_LIMIT}`)
-        if (userResponse.ok) {
-          const parsed = await userResponse.json()
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            userData = parsed.map(item => ({ ...item, fromUser: true }))
-          }
+        const response = await fetch(`/api/species/random-feed?limit=${DEFAULT_FEED_LIMIT}`)
+        const data = await response.json()
+        if (!cancelled && Array.isArray(data) && data.length > 0) {
+          setSpecies(shuffleList(data))
         }
       } catch {
       }
+    }
 
-      // 2. If not signed in, fall back to local guest storage
+    loadDefault()
+    return () => { cancelled = true }
+  }, [])
+
+  // Phase 2: once auth resolves, refresh with user pokemon mixed in (if any)
+  useEffect(() => {
+    if (authLoading) return
+
+    let cancelled = false
+
+    async function loadUserFeed() {
+      let userData = []
+
+      // Try authenticated server-side Pokebank
+      if (user) {
+        try {
+          const userResponse = await apiFetch(`/api/pokebank/random-feed?limit=${USER_FEED_LIMIT}`)
+          if (userResponse.ok) {
+            const parsed = await userResponse.json()
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              userData = parsed.map(item => ({ ...item, fromUser: true }))
+            }
+          }
+        } catch {
+        }
+      }
+
+      // If not signed in (or Pokebank returned nothing), check local guest storage
       if (userData.length === 0 && hasLocalData()) {
         const local = getLocalFeedPokemon()
         userData = local.slice(0, USER_FEED_LIMIT)
       }
+
+      // No user data - leave the default feed as-is
+      if (userData.length === 0) return
 
       const remainingDefault = Math.max(0, DEFAULT_FEED_LIMIT - userData.length)
 
@@ -107,16 +136,14 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
         }
       } catch {
         if (!cancelled) {
-          setSpecies(shuffleList(userData))
+          setSpecies(prev => shuffleList([...userData, ...prev.slice(0, Math.max(0, DEFAULT_FEED_LIMIT - userData.length))]))
         }
       }
     }
 
-    loadFeed()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+    loadUserFeed()
+    return () => { cancelled = true }
+  }, [authLoading, user])
 
   useEffect(() => {
     const feed = feedRef.current
