@@ -1280,7 +1280,7 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
         result.append(item)
     return result
 
-def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None):
+def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None):
     attempt_id = None
     if run_id is not None and attempt_number is not None:
         attempt_row = conn.execute(
@@ -1290,8 +1290,7 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         attempt_id = attempt_row['attempt_id'] if attempt_row else None
 
     # Always require version_group_id for correct filtering
-    version_group_id = None
-    if run_id is not None:
+    if version_group_id is None and run_id is not None:
         vg_row = conn.execute(
             'select g.version_group_id from runs r join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer where nullif(r.run_id::text, \'\')::integer = %s',
             (run_id,)
