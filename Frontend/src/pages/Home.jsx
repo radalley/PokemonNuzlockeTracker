@@ -74,7 +74,7 @@ function Home() {
       </main>
 
       <footer className="home-footer">
-        <div>Lockley Nuzlocke Tracker BETAv0.1 — Built by Riley Dalley ·
+        <div >Lockley Nuzlocke Tracker BETAv0.1 — Built by Riley Dalley ·
         <a href="https://github.com/radalley/PokemonNuzlockeTracker">GitHub</a> </div>
         Pokemon and its trademarks are ©1995-2023 Nintendo/Creatures Inc./GAME FREAK inc. TM, ® and © 1995-2023 Nintendo.
       </footer>
