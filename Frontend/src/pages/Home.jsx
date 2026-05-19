@@ -1,11 +1,46 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SiteHeader from '../components/SiteHeader'
 import { useAuth } from '../contexts/AuthContext'
 import PokemonFeed from '../components/PokemonFeed'
+import { getRuns } from '../utils/dataLayer'
 
 function Home() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const [hasRuns, setHasRuns] = useState(false)
+  const [runsLoading, setRunsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRunAvailability() {
+      if (authLoading) return
+
+      setRunsLoading(true)
+      try {
+        const runs = await getRuns(Boolean(user))
+        if (!cancelled) {
+          setHasRuns(Array.isArray(runs) && runs.length > 0)
+        }
+      } catch {
+        if (!cancelled) {
+          setHasRuns(false)
+        }
+      } finally {
+        if (!cancelled) {
+          setRunsLoading(false)
+        }
+      }
+    }
+
+    loadRunAvailability()
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, user])
+
+  const loadDisabled = runsLoading || !hasRuns
 
   return (
     <div className="home-page">
@@ -24,7 +59,15 @@ function Home() {
           </p>
           <div className="home-actions">
             <button className="home-action-button" onClick={() => navigate('/new-run')}>New Game</button>
-            <button className="home-action-button" onClick={() => navigate('/load-run')}>Load Game</button>
+            <button
+              className={`home-action-button${loadDisabled ? ' is-disabled' : ''}`}
+              onClick={() => navigate('/load-run')}
+              disabled={loadDisabled}
+              aria-disabled={loadDisabled}
+              title={loadDisabled ? 'No runs available yet' : 'Load an existing run'}
+            >
+              Load Game
+            </button>
             <button className="home-action-button" onClick={() => navigate('/guides')}>Guides</button>
           </div>
         </div>

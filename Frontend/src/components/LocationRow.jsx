@@ -326,9 +326,12 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }, [encounter?.species_id])
 
   const availableTrainers = trainers.filter(t => !t.is_event)
-  const defeatedTrainerCount = availableTrainers.filter(t => Boolean(t.is_defeated)).length
-  const hasSeedTrainerCount = row.available_trainer_count != null || row.trainer_count != null
-  const initialTrainerCount = Number(row.available_trainer_count ?? row.trainer_count ?? 0)
+  // Use the loaded value if trainers are loaded, otherwise use the seed value from row
+  const defeatedTrainerCount = trainersLoaded
+    ? availableTrainers.filter(t => Boolean(t.is_defeated)).length
+    : Number(row.trainer_count ?? 0) - Number(row.available_trainer_count ?? 0)
+  const hasSeedTrainerCount = row.trainer_count != null
+  const initialTrainerCount = Number(row.trainer_count ?? 0)
   const trainerCount = trainersLoaded ? availableTrainers.length : initialTrainerCount
   // Allow first load only when trainer counts are unknown; honor explicit zero counts.
   const trainerButtonDisabled = trainersLoaded
