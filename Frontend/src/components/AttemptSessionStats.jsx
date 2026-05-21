@@ -3,17 +3,17 @@ import { getSessionStats } from '../utils/dataLayer'
 
 function StatItem({ label, value, compact = false }) {
   return (
-    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid #2f3340', borderRadius: '6px', padding: '8px 10px', background: '#1d2028' }}>
-      <div style={{ fontSize: '0.72em', color: '#99a2b5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
-      <div style={{ marginTop: '4px', fontSize: '1.05em', color: '#e8ecf5', fontWeight: 'bold' }}>{value}</div>
+    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
+      <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+      <div style={{ marginTop: '4px', fontSize: '1.05em', color: 'var(--text-primary)', fontWeight: 'bold' }}>{value}</div>
     </div>
   )
 }
 
 function BadgeStatItem({ badgeIds = [], compact = false }) {
   return (
-    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid #2f3340', borderRadius: '6px', padding: '8px 10px', background: '#1d2028' }}>
-      <div style={{ fontSize: '0.72em', color: '#99a2b5', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Badges Earned</div>
+    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
+      <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Badges Earned</div>
       <div style={{ marginTop: '6px', minHeight: '28px', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
         {badgeIds.length > 0 ? (
           badgeIds.map(badgeId => (
@@ -26,14 +26,36 @@ function BadgeStatItem({ badgeIds = [], compact = false }) {
             />
           ))
         ) : (
-          <div style={{ width: '100%', textAlign: 'center', fontSize: '1.05em', color: '#e8ecf5', fontWeight: 'bold' }}>0</div>
+          <div style={{ width: '100%', textAlign: 'center', fontSize: '1.05em', color: 'var(--text-primary)', fontWeight: 'bold' }}>0</div>
         )}
       </div>
     </div>
   )
 }
 
-function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false }) {
+function StarterButton({ label, color, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '5px 8px',
+        backgroundColor: selected ? color : 'var(--surface-deep)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        color: selected ? '#111' : 'var(--text-secondary)',
+        font: 'inherit',
+        fontSize: '0.85em',
+      }}
+    >
+      {label}
+    </button>
+  )
+}
+
+function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false, starter = '', onStarterChange = null, isOpen = true, onToggle = null }) {
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
@@ -44,11 +66,30 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
     return () => controller.abort()
   }, [runId, attemptId, refreshKey])
 
+  if (!isOpen) return null
+
+  const miniBtn = { padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit', lineHeight: '1.4' }
+
   return (
-    <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid #343a47', borderRadius: '8px', padding: '10px', background: '#171920', overflow: 'hidden' }}>
-      <div style={{ fontSize: '0.8em', color: '#8d97ab', marginBottom: '8px' }}> Run\] Stats</div>
+    <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Run Stats</div>
+        {onToggle && <button onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
+      </div>
+
+      {onStarterChange && (
+        <div style={{ marginBottom: '10px', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
+          <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Starter</div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <StarterButton label="Fire" color="#ff6b6b" selected={starter === 'Fire'} onClick={() => onStarterChange('Fire')} />
+            <StarterButton label="Grass" color="#51cf66" selected={starter === 'Grass'} onClick={() => onStarterChange('Grass')} />
+            <StarterButton label="Water" color="#74c0fc" selected={starter === 'Water'} onClick={() => onStarterChange('Water')} />
+          </div>
+        </div>
+      )}
+
       {!stats ? (
-        <div style={{ fontSize: '0.8em', color: '#7f8798' }}>Loading...</div>
+        <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Loading...</div>
       ) : (
         <div style={{ display: 'flex', minWidth: 0, flexDirection: compact ? 'column' : 'row', flexWrap: compact ? 'nowrap' : 'wrap', gap: '8px' }}>
           <BadgeStatItem badgeIds={stats.badge_ids || []} compact={compact} />
@@ -63,3 +104,4 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
 }
 
 export default AttemptSessionStats
+

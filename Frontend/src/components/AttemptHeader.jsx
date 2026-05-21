@@ -9,9 +9,9 @@ function PartySlot({ member, slot, onRemove }) {
   if (!member) {
     return (
       <div style={{
-        width: '64px', height: '64px', border: '1px solid #444', borderRadius: '4px',
+        width: '64px', height: '64px', border: '1px solid var(--border-strong)', borderRadius: '10px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.6em', color: '#444'
+        fontSize: '0.6em', color: 'var(--text-secondary)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
       }}>{slot}</div>
     )
   }
@@ -23,12 +23,12 @@ function PartySlot({ member, slot, onRemove }) {
       onMouseLeave={() => setHovered(false)}
       title="Drop from party"
       style={{
-        width: '64px', height: '64px', borderRadius: '4px', cursor: 'pointer',
+        width: '64px', height: '64px', borderRadius: '10px', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: hovered ? 'rgba(229,85,85,0.15)' : '#2e2f3a',
+        backgroundColor: hovered ? 'rgba(229,85,85,0.15)' : 'var(--border)',
         border: hovered ? '2px solid #e55' : '2px solid transparent',
         transition: 'border-color 0.15s, background-color 0.15s',
-        boxSizing: 'border-box',
+        boxSizing: 'border-box', boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
       }}
     >
       <Sprite speciesId={member.species_id} size={52} shiny={isShiny} />
@@ -36,7 +36,7 @@ function PartySlot({ member, slot, onRemove }) {
   )
 }
 
-function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null }) {
+function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null, statsOpen = true, onToggleStats = null, debugOpen = true, onToggleDebug = null }) {
   const navigate = useNavigate()
   const [attempts, setAttempts] = useState([])
   const [showAttemptMenu, setShowAttemptMenu] = useState(false)
@@ -94,14 +94,14 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
       .catch(err => console.error('Failed to remove from party:', err))
   }
 
-  const btnStyle = { padding: '4px 8px', fontSize: '0.8em', cursor: 'pointer' }
+  const btnStyle = { padding: '6px 14px', fontSize: '0.8em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit' }
   return (
     <header style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '10px', borderBottom: '1px solid #ccc',
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: '#16171d'
+      padding: '10px', borderBottom: '1px solid var(--border-strong)',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: 'var(--surface-deep)'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
         <div style={{ width: '138px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {gameLogoSrc && !logoLoadFailed ? (
             <img
@@ -111,12 +111,12 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
             />
           ) : (
-            <div style={{ fontSize: '0.72em', color: '#667085', textAlign: 'center' }}>Game Art</div>
+            <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textAlign: 'center' }}>Game Art</div>
           )}
         </div>
         <div>
           {/* <div style={{ fontWeight: 'bold' }}>{runDetails?.game_name || 'Game Name'}</div> */}
-          <div>{runDetails?.name || 'Run Name'}</div>
+          <div style={{ color: 'var(--text-primary)' }}>{runDetails?.name || 'Run Name'}</div>
         </div>
 
         <div ref={attemptMenuRef} style={{ position: 'relative' }}>
@@ -126,16 +126,16 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
           {showAttemptMenu && (
             <div style={{
               position: 'absolute', top: '100%', left: 0, zIndex: 2000,
-              background: '#1e1f26', border: '1px solid #555', borderRadius: '4px', minWidth: '150px'
+              background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '4px', minWidth: '150px'
             }}>
               {attempts.map(a => (
                 <div
                   key={a.attempt_number}
                   onClick={() => { setShowAttemptMenu(false); window.location.href = `/attempt/${runId}/${a.attempt_number}` }}
                   style={{
-                    padding: '7px 12px', cursor: 'pointer', borderBottom: '1px solid #333',
+                    padding: '7px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)',
                     fontWeight: a.attempt_number === parseInt(attemptId) ? 'bold' : 'normal',
-                    color: a.attempt_number === parseInt(attemptId) ? '#fff' : '#aaa'
+                    color: a.attempt_number === parseInt(attemptId) ? 'var(--text-primary)' : 'var(--text-secondary)'
                   }}
                 >
                   Attempt {a.attempt_number}
@@ -143,7 +143,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               ))}
               <div
                 onClick={handleNewAttempt}
-                style={{ padding: '7px 12px', cursor: 'pointer', color: '#6cf', borderTop: '1px solid #555' }}
+                style={{ padding: '7px 12px', cursor: 'pointer', color: '#6cf', borderTop: '1px solid var(--border-strong)' }}
               >
                 + New Attempt
               </div>
@@ -152,34 +152,34 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         </div>
 
         <button onClick={() => navigate('/')} style={btnStyle}>Main Menu</button>
+        {!statsOpen && onToggleStats && (
+          <button onClick={onToggleStats} style={btnStyle}>Stats</button>
+        )}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
         {Array.from({ length: 6 }, (_, i) => {
           const slot = i + 1
           const member = party.find(p => p.party_slot === slot)
           return (
-            <div key={slot} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-              <PartySlot
+            <PartySlot
+                key={slot}
                 member={member}
                 slot={slot}
                 onRemove={handleRemoveFromParty}
               />
-              {member && (
-                <div style={{ fontSize: '0.6em', color: '#ccc', maxWidth: '64px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
-                  {member.nickname || member.species_name}
-                </div>
-              )}
-            </div>
           )
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
         {backToAttempt && (
           <button onClick={() => navigate(`/attempt/${runId}/${attemptId}`)} style={btnStyle}>
             ← Attempt
           </button>
+        )}
+        {onToggleDebug && (
+          <button onClick={onToggleDebug} style={btnStyle}>{debugOpen ? 'Debug −' : 'Debug'}</button>
         )}
         <button onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>
         <button onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>

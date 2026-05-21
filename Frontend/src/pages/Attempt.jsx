@@ -7,7 +7,10 @@ import BossRow from '../components/BossRow'
 import RivalRow from '../components/RivalRow'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
+import PaletteDebugPanel from '../components/PaletteDebugPanel'
 import { getAttemptPageData, getParty, getPokebank, updateStarter as saveStarter } from '../utils/dataLayer'
+
+const EMPTY_POOL = []
 
 const FILTER_OPTIONS = [
   { key: 'master', label: 'Master' },
@@ -48,6 +51,16 @@ function Attempt() {
   const [partyPokemonIds, setPartyPokemonIds] = useState(new Set())
   const [activeFilter, setActiveFilter] = useState('master')
   const [showDocsMenu, setShowDocsMenu] = useState(false)
+  const [allSpecies, setAllSpecies] = useState([])
+  const [statsOpen, setStatsOpen] = useState(true)
+  const [debugOpen, setDebugOpen] = useState(true)
+
+  useEffect(() => {
+    apiFetch('/api/species/search?q=')
+      .then(res => res.json())
+      .then(data => setAllSpecies(data))
+      .catch(err => console.error('Failed to preload species:', err))
+  }, [])
 
   const handlePartyChange = useCallback(() => setPartyRefreshKey(k => k + 1), [])
 
@@ -165,7 +178,7 @@ function Attempt() {
   if (!runDetails) return <p>{attemptLoadError || 'Attempt not found.'}</p>
 
   function renderScriptRow(row) {
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] || []} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
     if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
     return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
   }
@@ -189,17 +202,17 @@ function Attempt() {
             onClick={event => event.stopPropagation()}
             style={{
               width: 'min(560px, calc(100vw - 32px))',
-              background: '#1b1c23',
-              border: '1px solid #343a47',
+              background: 'var(--surface)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '14px',
               padding: '20px',
               boxShadow: '0 18px 48px rgba(0, 0, 0, 0.35)',
             }}
           >
-            <div style={{ fontSize: '1rem', fontWeight: 'bold', color: '#eef2f7', marginBottom: '4px' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '4px' }}>
               Game Documentation
             </div>
-            <div style={{ fontSize: '0.82rem', color: '#9aa3b5', marginBottom: '16px' }}>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Choose a source for {runDetails?.game_name || 'this game'}.
             </div>
             <div
@@ -207,10 +220,10 @@ function Attempt() {
                 marginBottom: '16px',
                 padding: '8px 10px',
                 borderRadius: '8px',
-                border: '1px dashed #3f4654',
-                background: '#141922',
+                border: '1px dashed var(--border-strong)',
+                background: 'var(--surface-deep)',
                 fontSize: '0.76rem',
-                color: '#9aa3b5',
+                color: 'var(--text-secondary)',
                 fontFamily: 'Consolas, monospace',
               }}
             >
@@ -226,14 +239,14 @@ function Attempt() {
                     textAlign: 'left',
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    border: '1px solid #343a47',
-                    background: '#11151d',
-                    color: '#eef2f7',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-deep)',
+                    color: 'var(--text-primary)',
                     cursor: 'pointer',
                   }}
                 >
                   <div style={{ fontWeight: 'bold', color: '#7ec8e3', marginBottom: '4px' }}>{source.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#c5cedd', lineHeight: 1.4 }}>{source.description}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{source.description}</div>
                 </button>
               ))}
             </div>
@@ -244,9 +257,9 @@ function Attempt() {
                 style={{
                   padding: '7px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #343a47',
-                  background: '#171920',
-                  color: '#d6dbe6',
+                  border: '1px solid var(--border-strong)',
+                  background: 'var(--surface)',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
                 }}
               >
@@ -257,59 +270,16 @@ function Attempt() {
         </div>
       )}
 
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={debugOpen} onToggleDebug={() => setDebugOpen(v => !v)} />
+
+      <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey}>
-          <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 8px 0', border: '1px solid #343a47', borderRadius: '8px', padding: '10px', background: '#171920' }}>
-            <div style={{ fontSize: '0.8em', color: '#8d97ab', marginBottom: '8px' }}>Starter</div>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '6px' }}>
-              <button 
-                onClick={() => handleStarterChange('Fire')}
-                style={{ 
-                  flex: 1,
-                  padding: '5px 8px', 
-                  backgroundColor: currentStarter === 'Fire' ? '#ff6b6b' : '',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Fire
-              </button>
-              <button 
-                onClick={() => handleStarterChange('Grass')}
-                style={{ 
-                  flex: 1,
-                  padding: '5px 8px', 
-                  backgroundColor: currentStarter === 'Grass' ? '#51cf66' : '',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Grass
-              </button>
-              <button 
-                onClick={() => handleStarterChange('Water')}
-                style={{ 
-                  flex: 1,
-                  padding: '5px 8px', 
-                  backgroundColor: currentStarter === 'Water' ? '#74c0fc' : '',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Water
-              </button>
-            </div>
-          </div>
-        </AttemptSidePanel>
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} />
 
         <div style={{ textAlign: 'left' }}>
-          <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid #343a47', borderRadius: '12px', background: '#171920', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: '0.82em', color: '#8d97ab', marginRight: '8px' }}>Filter View</div>
+          <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+            <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
             {FILTER_OPTIONS.map(option => {
               const isActive = activeFilter === option.key
               return (
@@ -320,9 +290,9 @@ function Attempt() {
                   style={{
                     padding: '8px 14px',
                     borderRadius: '999px',
-                    border: `1px solid ${isActive ? '#7ec8e3' : '#343a47'}`,
-                    background: isActive ? '#1d2430' : '#11151d',
-                    color: isActive ? '#eef7fb' : '#c5cedd',
+                    border: `1px solid ${isActive ? '#7ec8e3' : 'var(--border-strong)'}`,
+                    background: isActive ? 'var(--surface-mid)' : 'var(--surface-deep)',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                     cursor: 'pointer',
                     font: 'inherit',
                   }}
@@ -337,7 +307,7 @@ function Attempt() {
         </div>
       </div>
 
-      <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '40px', borderTop: '1px solid #ccc', backgroundColor: '#16171d', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+      <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '40px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-page)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
         <button type="button" onClick={() => setShowDocsMenu(true)}>Game Documentation</button>
         <button>Contact/About Me</button>
       </footer>
