@@ -61,26 +61,26 @@ function BattleCompareModal({
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(1200px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
-          background: '#1b1c23', border: '1px solid #3a3c47', borderRadius: '10px',
+          background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '10px',
           padding: '18px 18px 14px', display: 'flex', flexDirection: 'column', gap: '0',
         }}
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
-          <div style={{ fontSize: '0.8em', color: '#999' }}>{subtitle}</div>
+          <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{subtitle}</div>
         </div>
 
         {/* Three columns */}
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 200px', gap: '12px', flex: 1 }}>
 
           {/* Left — Player party */}
-          <div style={{ border: '1px solid #343746', borderRadius: '8px', padding: '10px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: '#ccc' }}>Your Party</div>
+          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Your Party</div>
             {battleLoading ? (
-              <div style={{ color: '#999', fontSize: '0.82em' }}>Loading...</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>Loading...</div>
             ) : playerParty.length === 0 ? (
-              <div style={{ color: '#999', fontSize: '0.82em' }}>No party Pokémon.</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party Pokémon.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {playerParty.map((mon, idx) => (
@@ -89,7 +89,7 @@ function BattleCompareModal({
                     onClick={() => togglePlayer(idx)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '7px',
-                      border: `1px solid ${selectedPlayer === idx ? '#7ec8e3' : '#2e2f3a'}`,
+                      border: `1px solid ${selectedPlayer === idx ? '#7ec8e3' : 'var(--border)'}`,
                       borderRadius: '6px', padding: '5px 6px', cursor: 'pointer',
                       background: selectedPlayer === idx ? 'rgba(126,200,227,0.08)' : 'transparent',
                       transition: 'border-color 0.1s',
@@ -100,7 +100,7 @@ function BattleCompareModal({
                       <div style={{ fontSize: '0.8em', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {mon.nickname || mon.species_name}
                       </div>
-                      <div style={{ fontSize: '0.68em', color: '#a0a2ad', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: '0.68em', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {mon.species_name}
                       </div>
                     </div>
@@ -111,9 +111,9 @@ function BattleCompareModal({
           </div>
 
           {/* Center — Stats / Comparison */}
-          <div style={{ border: '1px solid #343746', borderRadius: '8px', padding: '14px' }}>
+          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '14px' }}>
             {!hasOne ? (
-              <div style={{ height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#444', fontSize: '0.82em', textAlign: 'center' }}>
+              <div style={{ height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '0.82em', textAlign: 'center' }}>
                 Select a Pokémon from either party to view stats
               </div>
             ) : hasBoth ? (
@@ -123,23 +123,23 @@ function BattleCompareModal({
                   <div style={{ textAlign: 'center', flex: 1 }}>
                     <Sprite speciesId={playerMon.species_id} size={56} shiny={playerMon.shiny === 'True' || playerMon.shiny === true} />
                     <div style={{ fontSize: '0.8em', fontWeight: 'bold', marginTop: '2px' }}>{playerMon.nickname || playerMon.species_name}</div>
-                    <div style={{ fontSize: '0.7em', color: '#aaa' }}>{playerMon.species_name}</div>
+                    <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>{playerMon.species_name}</div>
                     <TypeBadges type1={playerMon.type1} type2={playerMon.type2} />
                   </div>
-                  <div style={{ fontSize: '0.78em', color: '#555', padding: '0 10px', paddingBottom: '22px' }}>vs</div>
+                  <div style={{ fontSize: '0.78em', color: 'var(--text-secondary)', padding: '0 10px', paddingBottom: '22px' }}>vs</div>
                   <div style={{ textAlign: 'center', flex: 1 }}>
                     <Sprite speciesId={opponentMon.species_id} size={56} />
                     <div style={{ fontSize: '0.8em', fontWeight: 'bold', marginTop: '2px' }}>{opponentMon.species_name}</div>
-                    <div style={{ fontSize: '0.7em', color: '#aaa' }}>Lvl {opponentMon.lvl}</div>
+                    <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Lvl {opponentMon.lvl}</div>
                     <TypeBadges type1={opponentMon.type1} type2={opponentMon.type2} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gap: '10px', alignItems: 'start' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid #2e2f3a', fontSize: '0.78em' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid var(--border)', fontSize: '0.78em' }}>
                     <span />
-                    <span style={{ color: '#ddd', textAlign: 'right' }}>{playerMon.bst ?? '—'}</span>
-                    <span style={{ color: '#888', textAlign: 'center' }}>BST</span>
-                    <span style={{ color: '#ddd', textAlign: 'left' }}>{opponentMon.bst ?? '—'}</span>
+                    <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{playerMon.bst ?? '—'}</span>
+                    <span style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>BST</span>
+                    <span style={{ color: 'var(--text-primary)', textAlign: 'left' }}>{opponentMon.bst ?? '—'}</span>
                     <span />
                   </div>
                   <PokemonStatRows
@@ -153,7 +153,7 @@ function BattleCompareModal({
                     barHeight={8}
                     labelFontSize="0.72em"
                     valueFontSize="0.78em"
-                    trackColor="#2a2b33"
+                    trackColor="var(--surface-deep)"
                   />
                 </div>
               </div>
@@ -169,14 +169,14 @@ function BattleCompareModal({
                       <div style={{ fontSize: '0.88em', fontWeight: 'bold', marginTop: '4px' }}>
                         {isPlayer ? (mon.nickname || mon.species_name) : mon.species_name}
                       </div>
-                      <div style={{ fontSize: '0.74em', color: '#aaa' }}>
+                      <div style={{ fontSize: '0.74em', color: 'var(--text-secondary)' }}>
                         {isPlayer ? mon.species_name : `Lvl ${mon.lvl}`}
                       </div>
                       <TypeBadges type1={mon.type1} type2={mon.type2} />
                       {formatAbility(mon.ability1) && (
-                        <div style={{ fontSize: '0.72em', color: '#d9deea', marginTop: '5px' }}>{formatAbility(mon.ability1)}</div>
+                        <div style={{ fontSize: '0.72em', color: 'var(--text-primary)', marginTop: '5px' }}>{formatAbility(mon.ability1)}</div>
                       )}
-                      <div style={{ fontSize: '0.72em', color: '#aaa', marginTop: '5px' }}>
+                      <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', marginTop: '5px' }}>
                         BST {mon.bst ?? '—'}{isPlayer && mon.nature ? ` • ${mon.nature}` : ''}
                       </div>
                     </div>
@@ -191,7 +191,7 @@ function BattleCompareModal({
                       barHeight={6}
                       labelFontSize="0.7em"
                       valueFontSize="0.74em"
-                      trackColor="#2a2b33"
+                      trackColor="var(--surface-deep)"
                     />
                   </div>
                 )
@@ -200,10 +200,10 @@ function BattleCompareModal({
           </div>
 
           {/* Right — Opponent party */}
-          <div style={{ border: '1px solid #343746', borderRadius: '8px', padding: '10px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: '#ccc' }}>Opponent Team</div>
+          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Opponent Team</div>
             {opponentParty.length === 0 ? (
-              <div style={{ color: '#999', fontSize: '0.82em' }}>No party data.</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party data.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {opponentParty.map((mon, idx) => (
@@ -212,7 +212,7 @@ function BattleCompareModal({
                     onClick={() => toggleOpponent(idx)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '7px',
-                      border: `1px solid ${selectedOpponent === idx ? '#f2b46b' : '#2e2f3a'}`,
+                      border: `1px solid ${selectedOpponent === idx ? '#f2b46b' : 'var(--border)'}`,
                       borderRadius: '6px', padding: '5px 6px', cursor: 'pointer',
                       background: selectedOpponent === idx ? 'rgba(242,180,107,0.08)' : 'transparent',
                       transition: 'border-color 0.1s',
@@ -223,7 +223,7 @@ function BattleCompareModal({
                       <div style={{ fontSize: '0.8em', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {mon.species_name}
                       </div>
-                      <div style={{ fontSize: '0.68em', color: '#a0a2ad' }}>Lvl {mon.lvl}</div>
+                      <div style={{ fontSize: '0.68em', color: 'var(--text-secondary)' }}>Lvl {mon.lvl}</div>
                     </div>
                   </div>
                 ))}
@@ -259,8 +259,8 @@ function BattleCompareModal({
             style={{
               padding: '6px 12px',
               cursor: (defeated || battleResult?.success) ? 'not-allowed' : 'pointer',
-              color: (defeated || battleResult?.success) ? '#555' : '#5ba85b',
-              borderColor: (defeated || battleResult?.success) ? '#555' : '#5ba85b',
+              color: (defeated || battleResult?.success) ? 'var(--text-secondary)' : '#5ba85b',
+              borderColor: (defeated || battleResult?.success) ? 'var(--border-strong)' : '#5ba85b',
               opacity: (defeated || battleResult?.success) ? 0.6 : 1,
             }}
           >

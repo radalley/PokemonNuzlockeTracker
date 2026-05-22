@@ -48,12 +48,12 @@ function Graveyard() {
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
-          <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: '#aaa' }}>
+          <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>
             Graveyard — Attempt {attemptId} ({pokemon.length} fallen)
           </h2>
 
           {pokemon.length === 0 ? (
-            <p style={{ color: '#555' }}>No fallen pokemon — nice work.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>No fallen pokemon — nice work.</p>
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'center' }}>
               {pokemon.map(p => (

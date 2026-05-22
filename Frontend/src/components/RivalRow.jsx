@@ -2,7 +2,7 @@ import TrainerCard from './TrainerCard'
 
 function RivalRow({ row, gameId = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
   return (
-    <div style={{ marginBottom: '6px' }}>
+    <div style={{ marginBottom: '14px' }}>
       
       <TrainerCard
         encounterName={row.encounter_name}

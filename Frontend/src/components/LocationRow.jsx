@@ -43,18 +43,19 @@ const NATURES = [
 ]
 
 const PANEL_STYLE = {
-  border: '1px solid #343a47',
+  border: '1px solid var(--border-strong)',
   borderRadius: '14px',
-  background: '#141821',
+  background: 'var(--surface)',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
 }
 
 const SUMMARY_BUTTON_STYLE = {
   minHeight: '34px',
   padding: '6px 10px',
-  border: '1px solid #343a47',
+  border: '1px solid var(--border-strong)',
   borderRadius: '999px',
   background: 'transparent',
-  color: '#e7ebf3',
+  color: 'var(--text-secondary)',
   cursor: 'pointer',
   font: 'inherit',
 }
@@ -123,9 +124,8 @@ function SummaryButton({ active = false, disabled = false, style = {}, children,
       disabled={disabled}
       style={{
         ...SUMMARY_BUTTON_STYLE,
-        background: active ? '#1d2430' : '#141821',
-        borderColor: active ? '#7ec8e3' : '#343a47',
-        color: disabled ? '#687286' : '#e7ebf3',
+        background: active ? 'var(--surface-mid)' : 'var(--surface-deep)',
+        borderColor: active ? '#7ec8e3' : 'var(--border-strong)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
         ...style,
@@ -137,7 +137,7 @@ function SummaryButton({ active = false, disabled = false, style = {}, children,
   )
 }
 
-function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, pool = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master' }) {
+function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master' }) {
   const searchRef = useRef(null)
   const menuRef = useRef(null)
   const natureRef = useRef(null)
@@ -282,13 +282,20 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       setSearchResults(pool)
       return
     }
+    if (allSpecies.length > 0) {
+      const q = searchQuery.toLowerCase()
+      setSearchResults(allSpecies.filter(s => s.name.toLowerCase().includes(q)))
+      return
+    }
+    // fallback to API if species list not yet loaded
     const timer = setTimeout(() => {
       apiFetch(`/api/species/search?q=${searchQuery}`)
         .then(res => res.json())
         .then(data => setSearchResults(data))
+        .catch(() => {})
     }, 300)
     return () => clearTimeout(timer)
-  }, [searchQuery, pool])
+  }, [searchQuery, allSpecies, pool])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -479,7 +486,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const renderLocationCell = () => {
     if (!row.is_bonus_location) {
       return (
-        <div style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.display_name}>
+        <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={row.display_name}>
           {row.display_name}
         </div>
       )
@@ -521,7 +528,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           padding: 0,
           border: 'none',
           background: 'transparent',
-          color: 'inherit',
+          color: 'var(--text-primary)',
           fontWeight: 'bold',
           textAlign: 'left',
           cursor: 'text',
@@ -536,7 +543,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   return (
-    <div style={{ marginBottom: '14px' }}>
+    <div className="location-row" style={{ marginBottom: '14px' }}>
       {showEvolve && (
         <div style={{
           position: 'fixed',
@@ -548,19 +555,19 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           zIndex: 1000
         }}>
           <div style={{
-            background: '#1e1f26',
-            border: '1px solid #444',
+            background: 'var(--surface)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '10px',
             padding: '28px 32px',
             maxWidth: '420px',
             width: '90%',
             textAlign: 'center'
           }}>
-            <h2 style={{ marginTop: 0, color: '#f3f4f6' }}>Evolve {encounter?.name}?</h2>
+            <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Evolve {encounter?.name}?</h2>
             {evolutions === null ? (
-              <p style={{ color: '#aaa' }}>Loading...</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
             ) : evolutions.length === 0 ? (
-              <p style={{ color: '#aaa' }}>No evolutions available.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No evolutions available.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 {evolutions.map(evo => (
@@ -623,7 +630,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               )}
             </div>
 
-            <SummaryButton active={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, textAlign: 'left' }}>
+            <SummaryButton active={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, textAlign: 'left', color: 'var(--text-primary)' }}>
               <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                 {summaryName}
               </span>
@@ -641,21 +648,21 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           <>
             {status === 'Dead' ? (
               <div style={ROW_ACTION_GROUP_STYLE}>
-                <SummaryButton disabled={!pokemonId} onClick={handleRevive} style={{ gridColumn: '1 / -1', minWidth: 0, width: '100%', whiteSpace: 'nowrap' }}>
+                <SummaryButton disabled={!pokemonId} onClick={handleRevive} style={{ gridColumn: '1 / -1', minWidth: 0, width: '100%', whiteSpace: 'nowrap', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
                   Revive
                 </SummaryButton>
               </div>
             ) : (
               <div style={ROW_ACTION_GROUP_STYLE}>
-                <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ whiteSpace: 'nowrap' }}>
+                <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ whiteSpace: 'nowrap', color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
                   Party {inParty ? '-' : '+'}
                 </SummaryButton>
 
-                <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ whiteSpace: 'nowrap' }}>
+                <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ whiteSpace: 'nowrap', color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
                   Dead
                 </SummaryButton>
 
-                <SummaryButton disabled={!hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ whiteSpace: 'nowrap' }}>
+                <SummaryButton disabled={!hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ whiteSpace: 'nowrap', color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
                   Evolve
                 </SummaryButton>
               </div>
@@ -672,8 +679,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               position: 'absolute',
               top: '62px',
               right: 0,
-              background: '#1e1f26',
-              border: '1px solid #555',
+              background: 'var(--surface-mid)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '8px',
               zIndex: 1000,
               minWidth: '140px',
@@ -681,14 +688,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
             }}>
               <div
                 onClick={handleAddLocation}
-                style={{ padding: '10px 12px', cursor: 'pointer', color: '#7ec8e3', borderBottom: '1px solid #333' }}
+                style={{ padding: '10px 12px', cursor: 'pointer', color: '#7ec8e3', borderBottom: '1px solid var(--border-strong)' }}
               >
                 Add location
               </div>
               {row.is_bonus_location && (
                 <div
                   onClick={handleDeleteLocation}
-                  style={{ padding: '10px 12px', cursor: 'pointer', color: '#e55', borderBottom: '1px solid #333' }}
+                  style={{ padding: '10px 12px', cursor: 'pointer', color: '#e55', borderBottom: '1px solid var(--border-strong)' }}
                 >
                   Delete location
                 </div>
@@ -733,10 +740,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     height: '40px',
                     boxSizing: 'border-box',
                     borderRadius: '10px',
-                    border: '1px solid #3a4050',
-                    background: '#0f131a',
-                    color: '#eef2f7',
-                    padding: '0 12px'
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-deep)',
+                    color: 'var(--text-secondary)',
+                    padding: '0 12px',
+                    fontSize: '0.9em',
                   }}
                 />
 
@@ -748,8 +756,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     right: 0,
                     maxHeight: '190px',
                     overflowY: 'auto',
-                    background: '#1a1f29',
-                    border: '1px solid #3a4050',
+                    background: 'var(--surface-mid)',
+                    border: '1px solid var(--border-strong)',
                     borderRadius: '10px',
                     zIndex: 1000
                   }}>
@@ -763,7 +771,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                           gap: '8px',
                           padding: '8px 10px',
                           cursor: 'pointer',
-                          borderBottom: '1px solid #262d39',
+                          borderBottom: '1px solid var(--border-strong)',
                           ...(dupedFamilyIds.has(species.species_id) && species.species_id !== savedEncounter?.species_id ? { opacity: 0.35, color: '#888' } : {})
                         }}
                       >
@@ -780,9 +788,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1px solid #2f3744',
+                border: '1px solid var(--border-strong)',
                 borderRadius: '12px',
-                background: '#0f131a',
+                background: 'var(--surface-mid)',
                 minHeight: '200px'
               }}>
                 <button
@@ -795,10 +803,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     left: '8px',
                     width: '28px',
                     height: '28px',
-                    border: '1px solid #4a5363',
+                    border: '1px solid var(--border-strong)',
                     borderRadius: '8px',
-                    background: isShiny ? '#2d2410' : '#171b23',
-                    color: isShiny ? '#f4d35e' : '#7b8494',
+                    background: isShiny ? '#2d2410' : 'var(--surface-deep)',
+                    color: isShiny ? '#f4d35e' : 'var(--text-secondary)',
                     cursor: 'pointer',
                     fontSize: '0.9em',
                     lineHeight: 1
@@ -817,6 +825,37 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     style={{ imageRendering: 'pixelated', objectFit: 'contain', opacity: 0.78 }}
                   />
                 )}
+
+                {(() => {
+                  const raw = savedEncounter?.badges_earned
+                  if (!raw) return null
+                  let ids = []
+                  if (Array.isArray(raw)) {
+                    ids = raw.map(Number).filter(Number.isFinite)
+                  } else if (typeof raw === 'string' && raw.trim()) {
+                    try {
+                      const p = JSON.parse(raw)
+                      if (Array.isArray(p)) ids = p.map(Number).filter(Number.isFinite)
+                    } catch {
+                      ids = raw.split(',').map(s => Number(s.trim())).filter(Number.isFinite)
+                    }
+                  }
+                  if (ids.length === 0) return null
+                  return (
+                    <div style={{ position: 'absolute', bottom: '8px', left: 0, right: 0, display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', padding: '0 8px' }}>
+                      {ids.map(id => (
+                        <img
+                          key={id}
+                          src={`/sprites/Badges/${id}.png`}
+                          alt={`Badge ${id}`}
+                          title={`Badge ${id}`}
+                          style={{ width: '28px', height: '28px', imageRendering: 'pixelated' }}
+                          onError={e => { e.currentTarget.style.display = 'none' }}
+                        />
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
 
               <TypeIconRow
@@ -829,14 +868,84 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
-              <div style={{ border: '1px solid #2f3744', borderRadius: '12px', background: '#0f131a', padding: '14px', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.72em',  color: '#8d97ab', marginBottom: '4px' }}>BST</div>
-                <div style={{ fontSize: '1.7em', fontWeight: 'bold', color: '#f5f7fb' }}>{encounterDetails?.bst ?? '—'}</div>
+            <div style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
+              <div ref={natureRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowNature(current => !current)}
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    boxSizing: 'border-box',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-deep)',
+                    color: 'var(--text-secondary)',
+                    padding: '0 12px',
+                    fontSize: '0.9em',
+                    textAlign: 'left',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {getNatureLabel(nature)}
+                </button>
+                {showNature && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '48px',
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    background: 'var(--surface-mid)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: '10px',
+                    maxHeight: '220px',
+                    overflowY: 'auto'
+                  }}>
+                    <div
+                      onClick={() => { setNature(''); setShowNature(false) }}
+                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-strong)', color: 'var(--text-secondary)', fontSize: '0.85em' }}
+                    >
+                      - Clear -
+                    </div>
+                    {NATURES.map(entry => (
+                      <div
+                        key={entry.name}
+                        onClick={() => { setNature(entry.name); setShowNature(false) }}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid var(--border-strong)',
+                          backgroundColor: nature === entry.name ? 'var(--border-strong)' : 'transparent'
+                        }}
+                      >
+                        <span style={{ fontSize: '0.9em' }}>{entry.name}</span>
+                        <span style={{ fontSize: '0.75em', marginLeft: '12px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          {entry.up ? (
+                            <>
+                              <span style={{ color: '#e55' }}>+{entry.up}</span>
+                              <span style={{ color: '#66a8ff' }}>-{entry.down}</span>
+                            </>
+                          ) : (
+                            <span style={{ color: '#888' }}>Neutral</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div style={{ border: '1px solid #2f3744', borderRadius: '12px', background: '#0f131a', padding: '14px' }}>
-                <div style={{ fontSize: '0.72em', color: '#8d97ab', marginBottom: '10px' }}>Stat Spread</div>
+              <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.72em',  color: 'var(--text-secondary)', marginBottom: '4px' }}>BST</div>
+                <div style={{ fontSize: '1.7em', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{encounterDetails?.bst ?? '—'}</div>
+              </div>
+
+              <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px' }}>
+                <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', marginBottom: '10px' }}>Stat Spread</div>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {STAT_ROWS.map(stat => {
                     const value = encounterDetails?.[stat.key]
@@ -849,13 +958,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     return (
                       <div key={stat.key} style={{ display: 'grid', gridTemplateColumns: '60px 30px 1fr', gap: '8px', alignItems: 'center' }}>
                         <span style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
-                          <span style={{ width: '28px', fontSize: '0.72em', color: '#9ca0ad', textAlign: 'left' }}>{stat.label}</span>
+                          <span style={{ width: '28px', fontSize: '0.72em', color: 'var(--text-secondary)', textAlign: 'left' }}>{stat.label}</span>
                           <span style={{ width: '38px', fontSize: '0.72em', color: natureModifier?.color || 'transparent', textAlign: 'left' }}>
                             {natureModifier?.text || '+10%'}
                           </span>
                         </span>
-                        <span style={{ fontSize: '0.75em', color: '#eef2f7', textAlign: 'right', whiteSpace: 'nowrap' }}>{value ?? '—'}</span>
-                        <div style={{ position: 'relative', height: '8px', background: '#252c38', borderRadius: '999px', overflow: 'hidden' }}>
+                        <span style={{ fontSize: '0.75em', color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>{value ?? '—'}</span>
+                        <div style={{ position: 'relative', height: '8px', background: 'var(--surface-mid)', borderRadius: '999px', overflow: 'hidden' }}>
                           <div
                             style={{
                               position: 'absolute',
@@ -887,74 +996,6 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   })}
                 </div>
               </div>
-
-              <div ref={natureRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowNature(current => !current)}
-                  style={{
-                    width: '100%',
-                    minHeight: '42px',
-                    borderRadius: '10px',
-                    border: '1px solid #3a4050',
-                    background: '#0f131a',
-                    color: '#eef2f7',
-                    padding: '8px 12px',
-                    textAlign: 'left',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {getNatureLabel(nature)}
-                </button>
-                {showNature && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '48px',
-                    left: 0,
-                    right: 0,
-                    zIndex: 1000,
-                    background: '#1e1f26',
-                    border: '1px solid #555',
-                    borderRadius: '10px',
-                    maxHeight: '220px',
-                    overflowY: 'auto'
-                  }}>
-                    <div
-                      onClick={() => { setNature(''); setShowNature(false) }}
-                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #333', color: '#888', fontSize: '0.85em' }}
-                    >
-                      - Clear -
-                    </div>
-                    {NATURES.map(entry => (
-                      <div
-                        key={entry.name}
-                        onClick={() => { setNature(entry.name); setShowNature(false) }}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #2a2b33',
-                          backgroundColor: nature === entry.name ? '#2e2f3a' : 'transparent'
-                        }}
-                      >
-                        <span style={{ fontSize: '0.9em' }}>{entry.name}</span>
-                        <span style={{ fontSize: '0.75em', marginLeft: '12px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          {entry.up ? (
-                            <>
-                              <span style={{ color: '#e55' }}>+{entry.up}</span>
-                              <span style={{ color: '#66a8ff' }}>-{entry.down}</span>
-                            </>
-                          ) : (
-                            <span style={{ color: '#888' }}>Neutral</span>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
@@ -968,10 +1009,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   height: '40px',
                   boxSizing: 'border-box',
                   borderRadius: '10px',
-                  border: '1px solid #3a4050',
-                  background: '#0f131a',
-                  color: '#eef2f7',
-                  padding: '0 12px'
+                  border: '1px solid var(--border-strong)',
+                  background: 'var(--surface-deep)',
+                  color: 'var(--text-secondary)',
+                  padding: '0 12px',
+                  fontSize: '0.9em',
                 }}
               />
 
@@ -989,10 +1031,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   height: '40px',
                   boxSizing: 'border-box',
                   borderRadius: '10px',
-                  border: '1px solid #3a4050',
-                  background: '#0f131a',
-                  color: '#eef2f7',
-                  padding: '0 12px'
+                  border: '1px solid var(--border-strong)',
+                  background: 'var(--surface-deep)',
+                  color: 'var(--text-secondary)',
+                  padding: '0 12px',
+                  fontSize: '0.9em',
                 }}
               >
                 <option value="">Status</option>
@@ -1004,19 +1047,19 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                 {status === 'Dead' ? (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', width: '100%' }}>
-                    <SummaryButton disabled={!pokemonId} onClick={handleRevive} style={{ minHeight: '42px' }}>
+                    <SummaryButton disabled={!pokemonId} onClick={handleRevive} style={{ minHeight: '42px', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
                       Revive
                     </SummaryButton>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%' }}>
-                    <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ minHeight: '42px' }}>
+                    <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ minHeight: '42px', color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
                       {inParty ? 'Party -' : 'Party'}
                     </SummaryButton>
-                    <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ minHeight: '42px' }}>
+                    <SummaryButton disabled={!pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ minHeight: '42px', color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
                       Dead
                     </SummaryButton>
-                    <SummaryButton disabled={!hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ minHeight: '42px' }}>
+                    <SummaryButton disabled={!hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ minHeight: '42px', color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
                       Evolve
                     </SummaryButton>
                   </div>
@@ -1028,13 +1071,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       )}
 
       {showTrainerView && activePanel === 'trainers' && (
-        <div style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
+        <div style={{ ...PANEL_STYLE, background: 'var(--surface)', marginTop: '10px', padding: '16px' }}>
           {!trainersLoaded ? (
-            <div style={{ color: '#888', fontSize: '0.85em' }}>Loading trainers...</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>Loading trainers...</div>
           ) : availableTrainers.length === 0 ? (
-            <div style={{ color: '#888', fontSize: '0.85em' }}>No trainers at this location.</div>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>No trainers at this location.</div>
           ) : (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {availableTrainers.map(trainer => (
                 <TrainerCard
                   key={trainer.trainer_id}

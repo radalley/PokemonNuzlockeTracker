@@ -11,15 +11,7 @@ function getGameLogoSrc(gameName) {
 
 function formatTimestamp(value) {
   if (!value) return ''
-  const normalized = String(value).replace(' ', 'T')
-  const date = new Date(normalized)
-  if (Number.isNaN(date.getTime())) return String(value)
-
-  return date.toLocaleDateString([], {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return String(value).slice(0, 10)
 }
 
 function isRunWon(value) {
@@ -103,11 +95,10 @@ function LoadRunRow({ run, onLoad, onDelete }) {
               <span className={`load-run-summary__badge${won ? ' is-won' : ''}`}>
                 {won ? 'Won' : 'In Progress'}
               </span>
-              <span className="load-run-summary__separator">-</span>
-              <span className="load-run-summary__attempts">{totalAttempts} Attempt{totalAttempts === 1 ? '' : 's'}</span>
             </div>
             <div className="load-run-summary__title-row">
               <span className="load-run-summary__run-name">{run.run_name}</span>
+              <span className="load-run-summary__attempts">{totalAttempts} Attempt{totalAttempts === 1 ? '' : 's'}</span>
             </div>
             <div className="load-run-summary__status-row">
               <span className="load-run-summary__range">{statusTimeLabel}</span>
@@ -118,8 +109,6 @@ function LoadRunRow({ run, onLoad, onDelete }) {
 
       <td className="load-run-cell load-run-cell--latest-attempt">
         <div className="load-run-latest-attempt">
-          <BadgeStrip badgeIds={run.latest_attempt_badges} />
-
           <div className="load-run-party" aria-label={`Latest party for ${run.run_name}`}>
             {run.latest_party?.length ? (
               run.latest_party.map(member => (
@@ -137,6 +126,8 @@ function LoadRunRow({ run, onLoad, onDelete }) {
             <StatPill label="Dead" value={latestAttemptStats?.pokemon_dead ?? 0} />
             <StatPill label="Trainers" value={latestAttemptStats?.trainers_defeated ?? 0} />
           </div>
+
+          <BadgeStrip badgeIds={run.latest_attempt_badges} />
         </div>
       </td>
 
@@ -155,6 +146,7 @@ function LoadRun() {
   const { user } = useAuth()
   const [runs, setRuns] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [genFilter, setGenFilter] = useState(null)
 
   const handleDeleteRun = async (run_id) => {
     const data = await deleteRun(run_id)
@@ -207,27 +199,56 @@ function LoadRun() {
         </div>
       )}
       <h1>Load Run</h1>
-      <div className="load-run-table-wrap">
-        <table className="load-run-table">
-          <thead>
-            <tr>
-              <th>Run</th>
-              <th>Latest Attempt</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map(r => (
-              <LoadRunRow
-                key={r.run_id}
-                run={r}
-                onLoad={() => navigate(`/attempt/${r.run_id}/${r.latest_attempt}`)}
-                onDelete={() => setConfirmDelete(r.run_id)}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {(() => {
+        const generations = [...new Set(runs.map(r => r.generation).filter(g => g != null))].sort((a, b) => a - b)
+        const visibleRuns = genFilter === null ? runs : runs.filter(r => r.generation === genFilter)
+        return (
+          <>
+            {generations.length > 1 && (
+              <div className="load-run-filters">
+                <button
+                  type="button"
+                  className={`load-run-filter-btn${genFilter === null ? ' is-active' : ''}`}
+                  onClick={() => setGenFilter(null)}
+                >
+                  All
+                </button>
+                {generations.map(gen => (
+                  <button
+                    key={gen}
+                    type="button"
+                    className={`load-run-filter-btn${genFilter === gen ? ' is-active' : ''}`}
+                    onClick={() => setGenFilter(gen)}
+                  >
+                    Gen {gen}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="load-run-table-wrap">
+              <table className="load-run-table">
+                <thead>
+                  <tr>
+                    <th>Run</th>
+                    <th>Latest Attempt</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRuns.map(r => (
+                    <LoadRunRow
+                      key={r.run_id}
+                      run={r}
+                      onLoad={() => navigate(`/attempt/${r.run_id}/${r.latest_attempt}`)}
+                      onDelete={() => setConfirmDelete(r.run_id)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )
+      })()}
     </div>
   )
 }

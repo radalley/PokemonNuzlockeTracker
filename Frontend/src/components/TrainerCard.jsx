@@ -148,7 +148,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
   return (
     <div
-      style={{ border: '1px solid #ccc', padding: '8px', cursor: 'pointer', userSelect: 'none' }}
+      style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
       onClick={() => {
         const nextOpen = !open
         setOpen(nextOpen)
@@ -172,8 +172,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
         {/* Trainer name + title */}
         <div style={{ minWidth: '130px' }}>
-          <div style={{ fontWeight: 'bold' }}>{trainerName || '—'}</div>
-          <div style={{ fontSize: '0.8em', color: '#999', marginTop: '2px' }}>{subtitle}</div>
+          <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{trainerName || '—'}</div>
+          <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', marginTop: '2px' }}>{subtitle}</div>
         </div>
 
         {/* 6 pokemon slot placeholders — hidden when expanded */}
@@ -183,9 +183,9 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
               const pokemon = party[i]
               return (
                 <div key={i} style={{
-                  width: '48px', height: '48px', border: '1px solid #555',
+                  width: '48px', height: '48px', border: '1px solid var(--border-strong)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.65em', textAlign: 'center', color: '#aaa'
+                  fontSize: '0.65em', textAlign: 'center', color: 'var(--text-secondary)'
                 }}>
                   {pokemon ? <Sprite speciesId={pokemon.species_id} size={40} useIcon /> : '—'}
                 </div>
@@ -219,7 +219,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
         {showLevelCap && party.length > 0 && (
           <div style={{ marginRight: '12px', textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: '0.7em', color: '#888' }}>Level Cap</div>
+            <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
             <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
               Lvl {Math.max(...party.map(p => p.lvl))}
             </div>
@@ -241,7 +241,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
           )
         )}
 
-        <div style={{ fontSize: '0.8em', color: '#888', flexShrink: 0, marginLeft: '8px' }}>
+        <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: '8px' }}>
           {open ? '▲' : '▼'}
         </div>
       </div>
@@ -266,22 +266,22 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
             const type2 = formatType(p.type2)
             const ability = formatAbility(p.ability1)
             return (
-              <div key={i} style={{ border: '1px solid #444', borderRadius: '4px', overflow: 'hidden' }}>
+              <div key={i} style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', overflow: 'hidden' }}>
 
                 {/* Pokemon card header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderBottom: '1px solid #444', backgroundColor: '#1e1f26' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderBottom: '1px solid var(--border-strong)', backgroundColor: 'var(--surface-deep)' }}>
                   <Sprite speciesId={p.species_id} size={64} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <div style={{ fontWeight: 'bold' }}>
-                        {p.species_name} <span style={{ fontWeight: 'normal', fontSize: '0.85em', color: '#aaa' }}>Lvl {p.lvl}</span>
+                      <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                        {p.species_name} <span style={{ fontWeight: 'normal', fontSize: '0.85em', color: 'var(--text-secondary)' }}>Lvl {p.lvl}</span>
                       </div>
                       {normalizeItemName(p.held_item) && (() => {
                         const heldItem = normalizeItemName(p.held_item)
                         const heldItemSprite = toItemSpriteFile(heldItem)
                         if (!heldItemSprite) return null
                         return (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75em', color: '#cfd3de' }} title={displayItemName(heldItem)}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.75em', color: 'var(--text-secondary)' }} title={displayItemName(heldItem)}>
                             <img
                               src={`/sprites/Items/${heldItemSprite}.png`}
                               alt={displayItemName(heldItem)}
@@ -308,24 +308,24 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
                 <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', padding: '8px', gap: '8px', alignItems: 'stretch' }}>
 
                   {/* Moves */}
-                  <div style={{ minWidth: 0, border: '1px solid #2e2f38', borderRadius: '6px', padding: '7px', background: '#161a21' }}>
+                  <div style={{ minWidth: 0, border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
                     {p.moves_estimated && (
                       <div style={{ fontSize: '0.7em', color: '#f2b46b', marginBottom: '5px' }}>*Estimated</div>
                     )}
                     {(p.resolved_moves || movesList).length > 0
                       ? (p.resolved_moves || movesList).map((move, idx) => {
                           if (typeof move === 'string') {
-                            return <div key={idx} style={{ fontSize: '0.78em', color: '#ccc', marginBottom: '4px' }}>{move}</div>
+                            return <div key={idx} style={{ fontSize: '0.78em', color: 'var(--text-primary)', marginBottom: '4px' }}>{move}</div>
                           }
                           return (
-                            <div key={`${move.move_id}-${idx}`} style={{ position: 'relative', border: '1px solid #262c36', borderRadius: '5px', padding: '6px 28px 5px 8px', marginBottom: '3px', background: '#11151b', minHeight: '30px' }}>
+                            <div key={`${move.move_id}-${idx}`} style={{ position: 'relative', border: '1px solid var(--border-strong)', borderRadius: '5px', padding: '6px 28px 5px 8px', marginBottom: '3px', background: 'var(--surface-mid)', minHeight: '30px' }}>
                               {move.type && (
                                 <div style={{ position: 'absolute', top: '50%', right: '16px', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                                   <TypeIcon type={move.type} height={14} />
                                 </div>
                               )}
-                              <div style={{ fontSize: '0.75em', color: '#ddd', fontWeight: 'bold', lineHeight: 1.12, paddingRight: '2px' }}>{move.move_name}</div>
-                              <div style={{ display: 'flex', gap: '5px', marginTop: '2px', fontSize: '0.7em', color: '#98a1b2', flexWrap: 'wrap' }}>
+                              <div style={{ fontSize: '0.75em', color: 'var(--text-primary)', fontWeight: 'bold', lineHeight: 1.12, paddingRight: '2px' }}>{move.move_name}</div>
+                              <div style={{ display: 'flex', gap: '5px', marginTop: '2px', fontSize: '0.7em', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                                 <span>{move.damage_class || 'Status'}</span>
                                 <span>Pow {move.power ?? '—'}</span>
                                 <span>Acc {move.accuracy ?? '—'}</span>
@@ -333,15 +333,15 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
                             </div>
                           )
                         })
-                      : <div style={{ fontSize: '0.78em', color: '#666' }}>No moves</div>
+                      : <div style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>No moves</div>
                     }
                   </div>
 
                   {/* Stats */}
-                  <div style={{ minWidth: 0, fontSize: '0.8em', border: '1px solid #2e2f38', borderRadius: '6px', padding: '7px', background: '#161a21' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '44px 26px 1fr', columnGap: '4px', alignItems: 'center', padding: '0 0 5px 0', marginBottom: '4px', borderBottom: '1px solid #262c36' }}>
-                      <span style={{ fontSize: '0.68em', fontWeight: 'bold', color: '#9ca0ad', textAlign: 'left' }}>BST</span>
-                      <span style={{ fontSize: '0.72em', fontWeight: 'bold', color: '#eef2f7', textAlign: 'right', whiteSpace: 'nowrap' }}>{p.bst ?? '—'}</span>
+                  <div style={{ minWidth: 0, fontSize: '0.8em', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '44px 26px 1fr', columnGap: '4px', alignItems: 'center', padding: '0 0 5px 0', marginBottom: '4px', borderBottom: '1px solid var(--border-strong)' }}>
+                        <span style={{ fontSize: '0.68em', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'left' }}>BST</span>
+                        <span style={{ fontSize: '0.72em', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', whiteSpace: 'nowrap' }}>{p.bst ?? '—'}</span>
                       <span />
                     </div>
                     <PokemonStatRows
@@ -356,7 +356,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
                       labelFontSize="0.68em"
                       valueFontSize="0.72em"
                       labelGap="0px"
-                      trackColor="#2a2b33"
+                      trackColor="var(--surface-mid)"
                       reserveModifierSpace={false}
                     />
                   </div>

@@ -127,14 +127,14 @@ function Box() {
           zIndex: 1000
         }}>
           <div style={{
-            background: '#1e1f26', border: '1px solid #444', borderRadius: '10px',
+            background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '10px',
             padding: '28px 32px', maxWidth: '420px', width: '90%', textAlign: 'center'
           }}>
-            <h2 style={{ marginTop: 0, color: '#f3f4f6' }}>Evolve {evolveTarget.nickname || evolveTarget.species_name}?</h2>
+            <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Evolve {evolveTarget.nickname || evolveTarget.species_name}?</h2>
             {evolveOptions === null ? (
-              <p style={{ color: '#aaa' }}>Loading...</p>
+              <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
             ) : evolveOptions.length === 0 ? (
-              <p style={{ color: '#aaa' }}>No evolutions available.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No evolutions available.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 {evolveOptions.map(opt => (
@@ -166,12 +166,12 @@ function Box() {
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
-          <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: '#aaa' }}>
+          <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>
             Box — Attempt {attemptId} ({pokemon.length} caught)
           </h2>
 
           {pokemon.length === 0 ? (
-            <p style={{ color: '#555' }}>No pokemon recorded yet.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>No pokemon recorded yet.</p>
           ) : (
             <div style={{
               display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'center',

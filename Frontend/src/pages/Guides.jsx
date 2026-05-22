@@ -27,14 +27,14 @@ function Guides() {
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #343a47', fontSize: '0.82rem', color: '#9aa3b5' }}>Website</th>
-              <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid #343a47', fontSize: '0.82rem', color: '#9aa3b5' }}>Description</th>
+              <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--border-strong)', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Website</th>
+              <th style={{ textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--border-strong)', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Description</th>
             </tr>
           </thead>
           <tbody>
             {GUIDE_LINKS.map(site => (
               <tr key={site.url}>
-                <td style={{ padding: '12px', borderBottom: '1px solid #262c38', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                <td style={{ padding: '12px', borderBottom: '1px solid var(--border)', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
                   <a
                     href={site.url}
                     target="_blank"
@@ -44,7 +44,7 @@ function Guides() {
                     {site.name}
                   </a>
                 </td>
-                <td style={{ padding: '12px', borderBottom: '1px solid #262c38', color: '#d6dbe6', lineHeight: 1.45 }}>
+                <td style={{ padding: '12px', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                   {site.description}
                 </td>
               </tr>

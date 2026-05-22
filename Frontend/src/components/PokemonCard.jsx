@@ -138,7 +138,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
 
   return (
     <div style={{
-      background: '#1e1f26', border: inParty ? '1px solid #5ba85b' : '1px solid #333', borderRadius: '8px',
+      background: 'var(--surface)', border: inParty ? '1px solid #5ba85b' : '1px solid var(--border-strong)', borderRadius: '8px',
       overflow: 'hidden', width: '220px', minWidth: '220px', maxWidth: '220px', boxSizing: 'border-box',
       boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
       opacity: status === 'Dead' ? 0.65 : 1,
@@ -147,13 +147,13 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '8px 10px', background: '#25262f', borderBottom: '1px solid #2e2f3a'
+        padding: '8px 10px', background: 'var(--surface-mid)', borderBottom: '1px solid var(--border)'
       }}>
         {/* Sprite */}
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
           <Sprite speciesId={pokemon.species_id} size={48} shiny={shiny === 'True' || shiny === true} />
           {bst != null && (
-            <div style={{ fontSize: '0.6em', color: '#888' }}>BST {bst}</div>
+            <div style={{ fontSize: '0.6em', color: 'var(--text-secondary)' }}>BST {bst}</div>
           )}
         </div>
 
@@ -169,7 +169,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
               ? <span title="Shiny" style={{ fontSize: '0.8em' }}>★</span>
               : null}
           </div>
-          <div style={{ fontSize: '0.75em', color: '#aaa', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: '0.75em', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {species_name || '—'}
           </div>
           <TypeIconRow types={[type1, type2]} height={15} gap={4} style={{ marginTop: '3px' }} />
@@ -179,13 +179,13 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       {/* Body */}
       <div style={{ padding: '8px 10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Meta row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.72em', color: '#aaa' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.72em', color: 'var(--text-secondary)' }}>
           <span style={{ color: statusInfo.color, fontWeight: 'bold' }}>{statusInfo.label}</span>
-          <span style={{ color: '#ccc' }}>{nature || '—'}</span>
+          <span style={{ color: 'var(--text-primary)' }}>{nature || '—'}</span>
           {level_met != null && <span>Lv. {level_met}</span>}
         </div>
 
-        <div style={{ marginBottom: '8px', borderTop: '1px solid #2e2f3a', paddingTop: '6px', minHeight: '30px', boxSizing: 'border-box' }}>
+        <div style={{ marginBottom: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px', minHeight: '30px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', minHeight: '18px', alignItems: 'center' }}>
             {badgeIds.map(badgeId => (
               <img
@@ -201,7 +201,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
 
         {/* Battle Stats Dropdown */}
         {runId && attemptId && (
-          <div style={{ marginBottom: '8px', borderTop: '1px solid #2e2f3a', paddingTop: '6px' }}>
+          <div style={{ marginBottom: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px' }}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               style={{
@@ -223,44 +223,44 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
             </button>
 
             {showDropdown && (
-              <div style={{ marginTop: '6px', fontSize: '0.68em', color: '#aaa', paddingLeft: '12px' }}>
+              <div style={{ marginTop: '6px', fontSize: '0.68em', color: 'var(--text-secondary)', paddingLeft: '12px' }}>
                 {loading ? (
                   <div>Loading...</div>
                 ) : trainerData ? (
                   <div style={{ display: 'grid', gap: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #2e2f3a', paddingBottom: '3px' }}>
-                      <span style={{ color: '#9ca0ad' }}>trainers</span>
-                      <span style={{ color: '#ddd', fontWeight: 'bold' }}>{trainerData.trainers_defeated_count ?? trainerData.trainers_defeated ?? 0}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '3px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>trainers</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{trainerData.trainers_defeated_count ?? trainerData.trainers_defeated ?? 0}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #2e2f3a', paddingBottom: '3px' }}>
-                      <span style={{ color: '#9ca0ad' }}>bosses</span>
-                      <span style={{ color: '#ddd', fontWeight: 'bold' }}>{trainerData.bosses_defeated_count ?? 0}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '3px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>bosses</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{trainerData.bosses_defeated_count ?? 0}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #2e2f3a', paddingBottom: '3px' }}>
-                      <span style={{ color: '#9ca0ad' }}>rivals</span>
-                      <span style={{ color: '#ddd', fontWeight: 'bold' }}>{trainerData.rivals_defeated_count ?? 0}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '3px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>rivals</span>
+                      <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{trainerData.rivals_defeated_count ?? 0}</span>
                     </div>
 
-                    <div style={{ marginTop: '2px', color: '#9ca0ad' }}>badges</div>
+                    <div style={{ marginTop: '2px', color: 'var(--text-secondary)' }}>badges</div>
                     {trainerData.badges_earned?.length > 0 ? (
                       <div style={{ display: 'grid', gap: '4px' }}>
                         {trainerData.badges_earned.map(badge => (
-                          <div key={badge.badge_id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #2e2f3a', paddingBottom: '3px', gap: '8px' }}>
-                            <span style={{ color: '#ddd', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div key={badge.badge_id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '3px', gap: '8px' }}>
+                            <span style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {(badge.badge_name || `Badge ${badge.badge_id}`).toLowerCase()}
                             </span>
-                            <span style={{ color: '#8ea2bd', fontStyle: 'italic', flexShrink: 0 }}>
+                            <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', flexShrink: 0 }}>
                               {(BADGE_LEADERS[badge.badge_id] || 'Leader').toLowerCase()}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div style={{ color: '#555' }}>none</div>
+                      <div style={{ color: 'var(--text-secondary)' }}>none</div>
                     )}
                   </div>
                 ) : (
-                  <div style={{ color: '#555' }}>No battle stats yet</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>No battle stats yet</div>
                 )}
               </div>
             )}
@@ -283,13 +283,13 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
               labelFontSize="0.68em"
               valueFontSize="0.72em"
               labelGap="2px"
-              trackColor="#2a2b33"
+              trackColor="var(--surface-deep)"
               reserveModifierSpace={false}
               showNatureModifierText={false}
               colorNatureModifiedLabel
             />
           ) : (
-            <div style={{ fontSize: '0.75em', color: '#555', textAlign: 'center', padding: '8px 0' }}>
+            <div style={{ fontSize: '0.75em', color: 'var(--text-secondary)', textAlign: 'center', padding: '8px 0' }}>
               No stat data
             </div>
           )
@@ -297,7 +297,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
 
         <div style={{ marginTop: 'auto' }}>
           {(showReviveAction || showPartyAction || showEvolveAction || showDeadAction) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px', marginTop: '10px', borderTop: '1px solid #2e2f3a', paddingTop: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
               {showReviveAction ? (
                 <button
                   onClick={() => onRevive(pokemon)}
@@ -336,7 +336,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
           )}
 
           {location_name && (
-            <div style={{ paddingTop: '8px', borderTop: '1px solid #2e2f3a', fontSize: '0.65em', color: '#666', textAlign: 'center', fontStyle: 'italic' }}>
+            <div style={{ paddingTop: '8px', borderTop: '1px solid var(--border)', fontSize: '0.65em', color: 'var(--text-secondary)', textAlign: 'center', fontStyle: 'italic' }}>
               Met at {location_name}
             </div>
           )}

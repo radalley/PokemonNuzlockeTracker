@@ -116,10 +116,10 @@
   }
 
   a {
-    color: var(--text-h);
+    color: var(--text-primary);
     font-size: 16px;
     border-radius: 6px;
-    background: var(--social-bg);
+    background: var(--surface-deep);
     display: flex;
     padding: 6px 12px;
     align-items: center;

@@ -6,7 +6,7 @@ function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictory
   )
 
   return (
-    <div style={{ marginBottom: '6px' }}>
+    <div style={{ marginBottom: '14px', border: '1px solid var(--border-strong)', borderRadius: '12px', overflow: 'hidden', background: 'var(--surface)' }}>
       <TrainerCard
         encounterName={row.encounter_name}
         trainerName={row.trainer_name}

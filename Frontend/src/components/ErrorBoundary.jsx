@@ -30,13 +30,13 @@ class ErrorBoundary extends Component {
     }
 
     return (
-      <div style={{ padding: '24px', color: '#f3f4f6', background: '#16171d', minHeight: '100vh' }}>
+      <div style={{ padding: '24px', color: 'var(--text-primary)', background: 'var(--bg-page)', minHeight: '100vh' }}>
         <h1 style={{ marginTop: 0, fontSize: '1.2rem' }}>Frontend Render Error</h1>
-        <div style={{ marginBottom: '12px', color: '#cbd5e1' }}>
+        <div style={{ marginBottom: '12px', color: 'var(--text-secondary)' }}>
           {this.state.error?.message || 'Unknown error'}
         </div>
         {this.state.stack ? (
-          <pre style={{ whiteSpace: 'pre-wrap', background: '#0f1117', border: '1px solid #343a47', borderRadius: '8px', padding: '12px', overflowX: 'auto' }}>
+          <pre style={{ whiteSpace: 'pre-wrap', background: 'var(--surface-deep)', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '12px', overflowX: 'auto' }}>
             {this.state.stack}
           </pre>
         ) : null}
