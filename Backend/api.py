@@ -57,6 +57,8 @@ def get_db():
         if not database_url:
             raise RuntimeError('DATABASE_URL environment variable is not set')
         raw = psycopg2.connect(database_url)
+        raw.cursor().execute("SET search_path TO public")
+        raw.commit()
         g.db = wrap_conn(raw)
     return g.db
 
