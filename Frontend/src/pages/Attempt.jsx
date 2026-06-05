@@ -9,6 +9,7 @@ import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import PaletteDebugPanel from '../components/PaletteDebugPanel'
 import { getAttemptPageData, getParty, getPokebank, updateStarter as saveStarter } from '../utils/dataLayer'
+import { useAuth } from '../contexts/AuthContext'
 
 const EMPTY_POOL = []
 
@@ -21,23 +22,31 @@ const FILTER_OPTIONS = [
 const DOC_SOURCES = [
   {
     name: 'Serebii',
-    url: 'https://www.serebii.net/',
+    refKey: 's_ref',
+    buildUrl: (ref) => `https://serebii.net/${ref}/`,
+    fallbackUrl: 'https://serebii.net/',
     description: 'Pokemon game data, encounter tables, move lists, item data, and walkthrough coverage.',
   },
   {
     name: 'Bulbapedia',
-    url: 'https://bulbapedia.bulbagarden.net/',
+    refKey: 'b_ref',
+    buildUrl: (ref) => `https://bulbapedia.bulbagarden.net/wiki/${ref}`,
+    fallbackUrl: 'https://bulbapedia.bulbagarden.net/',
     description: 'Pokemon wiki documentation for games, mechanics, locations, trainers, and species.',
   },
   {
     name: 'PokemonDB',
-    url: 'https://pokemondb.net/',
+    refKey: 'pdb_ref',
+    buildUrl: (ref) => `https://pokemondb.net/${ref}`,
+    fallbackUrl: 'https://pokemondb.net/',
     description: 'Structured Pokemon reference data with quick lookups for moves, abilities, and locations.',
   },
 ]
 
 function Attempt() {
   const { runId, attemptId } = useParams()
+  const { user } = useAuth()
+  const isAdmin = user?.account_type === 'admin'
   const [script, setScript] = useState([])
   const [pools, setPools] = useState({})
   const [runDetails, setRunDetails] = useState(null)
@@ -52,8 +61,8 @@ function Attempt() {
   const [activeFilter, setActiveFilter] = useState('master')
   const [showDocsMenu, setShowDocsMenu] = useState(false)
   const [allSpecies, setAllSpecies] = useState([])
-  const [statsOpen, setStatsOpen] = useState(true)
-  const [debugOpen, setDebugOpen] = useState(true)
+  const [statsOpen, setStatsOpen] = useState(false)
+  const [debugOpen, setDebugOpen] = useState(false)
 
   useEffect(() => {
     apiFetch('/api/species/search?q=')
@@ -234,7 +243,7 @@ function Attempt() {
                 <button
                   key={source.name}
                   type="button"
-                  onClick={() => handleOpenDocsSource(source.url)}
+                  onClick={() => { const ref = runDetails?.[source.refKey]; handleOpenDocsSource(ref ? source.buildUrl(ref) : source.fallbackUrl) }}
                   style={{
                     textAlign: 'left',
                     padding: '12px 14px',
@@ -270,9 +279,9 @@ function Attempt() {
         </div>
       )}
 
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={debugOpen} onToggleDebug={() => setDebugOpen(v => !v)} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={isAdmin && debugOpen} onToggleDebug={isAdmin ? () => setDebugOpen(v => !v) : null} />
 
-      <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />
+      {isAdmin && <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />}
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} />
@@ -309,7 +318,7 @@ function Attempt() {
 
       <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '40px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-page)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
         <button type="button" onClick={() => setShowDocsMenu(true)}>Game Documentation</button>
-        <button>Contact/About Me</button>
+        <button>Contact</button>
       </footer>
     </div>
   )

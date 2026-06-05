@@ -159,6 +159,7 @@ def standardize_stats(base_stats, patch):
 
 def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
     #upload base stats
+    print(f'seeding stats for species {data["species"]["name"]}')
     species_id = data['id']
     name = data['name']
     type1 = data['types'][0]['type']['name'] if len(data['types']) >= 1 else None
@@ -209,10 +210,10 @@ def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
     )
     conn.execute(
         """
-        INSERT OR IGNORE INTO species_stats (species_id, bst, hp, atk, def, spa, spd, spe)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        INSERT OR IGNORE INTO species_stats (species_id, bst, hp, atk, def, spa, spd, spe, generation)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
         """,
-        (row["species_id"], row['bst'], row["hp"], row["attack"], row["defense"], row["special-attack"], row["special-defense"], row["speed"]),
+        (row["species_id"], row['bst'], row["hp"], row["attack"], row["defense"], row["special-attack"], row["special-defense"], row["speed"], 0),
     )
 
     gen = {'i':1, 'ii': 2,'iii': 3,'iv': 4 ,'v': 5, 'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9}
@@ -226,7 +227,7 @@ def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
             stats = standardize_stats(row, nrow)
             conn.execute(
                 """
-                INSERT INTO species_stats (species_id, bst, hp, atk, def, spa, spd, spe, generation)
+                INSERT OR IGNORE INTO species_stats (species_id, bst, hp, atk, def, spa, spd, spe, generation)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
                 (row["species_id"], stats['bst'], stats["hp"], stats["attack"], stats["defense"], stats["special-attack"],
@@ -235,10 +236,10 @@ def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
 
     conn.execute(
         """
-        INSERT OR IGNORE INTO species_types (species_id, type1, type2)
-        VALUES ( ?, ?, ?);
+        INSERT OR IGNORE INTO species_types (species_id, type1, type2, generation)
+        VALUES ( ?, ?, ?, ?);
         """,
-        (row["species_id"], row["type1"], row["type2"]),
+        (row["species_id"], row["type1"], row["type2"], "BASE"),
     )
 
     if row.get('past_types'):
@@ -261,10 +262,10 @@ def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
 
     conn.execute(
         """
-        INSERT OR IGNORE INTO species_abilities (species_id, ability1, ability2, ability3)
-        VALUES ( ?, ?, ?, ?);
+        INSERT OR IGNORE INTO species_abilities (species_id, ability1, ability2, ability3, generation)
+        VALUES ( ?, ?, ?, ?, ?);
         """,
-        (row["species_id"], row["ability1"], row["ability2"], row["ability3"]),
+        (row["species_id"], row["ability1"], row["ability2"], row["ability3"], "BASE"),
     )
     if row.get('past_abilities'):
         for x in row.get('past_abilities'):
@@ -291,12 +292,16 @@ def seed_stats(conn, data: Dict[str, Any]) -> Dict[str, Any]:
                 pass
     conn.commit()
 
+def post(dex_id):
+    data = pokemon_get_min(dex_id, use_cache=True)
+    seed_stats(conn, data)
+    # upsert_species(conn, data)
+
 def seed_species(conn: sqlite3.Connection) -> None:
-    for dex_id in range(1, 1025):
-        # (1, 152):
-        data = pokemon_get_min(dex_id, use_cache=True)
-        seed_stats(conn, data)
-        # upsert_species(conn, data)
+    for dex_id in range(1,1025):
+        post(dex_id)
+    for dex_id in range(10001, 10400):
+        post(dex_id)
 
 conn = sqlite3.connect('identifier.sqlite')
 seed_species(conn)

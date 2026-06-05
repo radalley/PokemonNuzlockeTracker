@@ -15,7 +15,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_party_for_attempt, add_to_party_for_attempt, remove_from_party_for_attempt,
                      mark_trainer_victory, get_pokemon_trainers_and_badges, get_badges_by_ids,
                      get_pokebank_with_stats, get_attempt_session_stats, create_bonus_location,
-                     delete_bonus_location, rename_bonus_location, get_species_summary,
+                     delete_bonus_location, rename_bonus_location, get_species_summary, get_species_forms,
                      get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn)
 from backend import _badge_id_for_gym_leader
@@ -201,7 +201,7 @@ def species_random_feed_route():
     conn = get_db()
     limit = request.args.get('limit', default=300, type=int)
     rows = conn.execute(
-        'SELECT species_id, name FROM species ORDER BY RANDOM() LIMIT %s',
+        "SELECT species_id, name FROM species WHERE valid = 'true' ORDER BY RANDOM() LIMIT %s",
         (min(limit, 500),)
     ).fetchall()
     return jsonify([dict(r) for r in rows])
@@ -224,6 +224,11 @@ def species_summary_route(species_id):
     if not species:
         return jsonify({'error': 'Species not found'}), 404
     return jsonify(species)
+
+@app.route('/api/species/<int:species_id>/forms', methods=['GET'])
+def species_forms_route(species_id):
+    conn = get_db()
+    return jsonify(get_species_forms(conn, species_id))
 
 @app.route('/api/evolutions/<int:species_id>', methods=['GET'])
 def evolutions_route(species_id):
@@ -277,7 +282,8 @@ def save_encounter_route():
         data.get('status'),
         data.get('shiny'),
         int(data['pokemon_id']) if data.get('pokemon_id') else None,
-        int(data.get('bonus_location') or 0)
+        int(data.get('bonus_location') or 0),
+        data.get('gender') or None,
     )
     return jsonify({'success': True, 'pokemon_id': pokemon_id})
 

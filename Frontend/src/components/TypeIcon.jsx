@@ -26,6 +26,8 @@ function TypeIcon({ type = null, height = 18, width = 'auto', style = {}, title 
       src={`/sprites/types/${spriteName}.png`}
       alt={label}
       title={title || label}
+      height={height}
+      width={width === 'auto' ? undefined : width}
       style={{
         height,
         width,

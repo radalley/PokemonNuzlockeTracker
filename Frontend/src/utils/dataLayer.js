@@ -136,7 +136,7 @@ export async function getPokebank(runId, attemptNumber) {
   return res.json()
 }
 
-export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId) {
+export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender) {
   if (isLocalRun(runId)) {
     const localId = guest.upsertEncounter(
       runId,
@@ -149,7 +149,8 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       nature,
       status,
       shiny,
-      pokemonId
+      pokemonId,
+      gender,
     )
     return { success: true, pokemon_id: localId }
   }
@@ -167,6 +168,7 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       status: status || null,
       shiny: shiny ? 'True' : null,
       pokemon_id: pokemonId || null,
+      gender: gender || null,
     }),
   })
   return res.json()

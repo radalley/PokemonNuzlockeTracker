@@ -168,6 +168,11 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
             {shiny === 'True' || shiny === true
               ? <span title="Shiny" style={{ fontSize: '0.8em' }}>★</span>
               : null}
+            {pokemon.gender === 'female'
+              ? <span title="Female" style={{ fontSize: '0.85em', color: '#e84d8a', flexShrink: 0 }}>♀</span>
+              : pokemon.gender === 'male'
+              ? <span title="Male" style={{ fontSize: '0.85em', color: '#4d8fe8', flexShrink: 0 }}>♂</span>
+              : null}
           </div>
           <div style={{ fontSize: '0.75em', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {species_name || '—'}

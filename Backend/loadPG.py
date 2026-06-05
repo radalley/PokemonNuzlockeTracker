@@ -18,33 +18,43 @@ pg_cur = pg_conn.cursor()
 sqlite_cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
 tables = [row[0] for row in sqlite_cur.fetchall()]
 
+# TABLE_ORDER = [
+#     'species',
+#     'locations',
+#     'games',
+#     'runs',
+#     'attempts',
+#     'event_locations',
+#     'location_alias_map_frlg',  # depends on locations + event_locations
+#     'encounter_pool',
+#     'pokebank',                  # depends on runs + species
+#     'party',
+#     'evolutions',
+#     'movesets',
+#     'moves',
+#     'badges',
+#     'trainers_defeated',
+#     'trainer_pokemon',
+#     'species_types',
+#     'species_abilities',
+#     'species_stats',
+#     'event_bosses',
+#     'bonus_locations',
+#     'trainer_pool',
+#     'users',
+# ]
+
 TABLE_ORDER = [
-    'species',
-    'locations',
-    'games',
-    'runs',
-    'attempts',
-    'event_locations',
-    'location_alias_map_frlg',  # depends on locations + event_locations
-    'encounter_pool',
-    'pokebank',                  # depends on runs + species
-    'party',
-    'evolutions',
-    'movesets',
-    'moves',
-    'badges',
-    'trainers_defeated',
-    'trainer_pokemon',
-    'species_types',
+    # 'species',
+    # 'movesets',
+    # 'moves',
+    # 'species_types',
     'species_abilities',
-    'species_stats',
-    'event_bosses',
-    'bonus_locations',
-    'trainer_pool',
-    'users',
+    # 'species_stats',
 ]
 
 for table in TABLE_ORDER:
+    print('table')
     # skip internal SQLite tables
     if table.startswith('sqlite_'):
         continue
@@ -61,7 +71,7 @@ for table in TABLE_ORDER:
 
     for row in rows:
         pg_cur.execute(
-            f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders})",
+            f"INSERT INTO {table} ({cols_str}) VALUES ({placeholders}) ON CONFLICT DO NOTHING",
             tuple(row)
         )
 

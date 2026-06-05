@@ -143,6 +143,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const natureRef = useRef(null)
   const locationNameInputRef = useRef(null)
   const skipNextEncounterSaveRef = useRef(false)
+  const pokemonIdRef = useRef(null)
 
   const [trainers, setTrainers] = useState([])
   const [trainersLoaded, setTrainersLoaded] = useState(false)
@@ -159,6 +160,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const [nature, setNature] = useState('')
   const [status, setStatus] = useState('')
   const [isShiny, setIsShiny] = useState(false)
+  const [gender, setGender] = useState('male')
+  const [forms, setForms] = useState([])
   const [showMenu, setShowMenu] = useState(false)
 
   const [evolutions, setEvolutions] = useState(null)
@@ -203,11 +206,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     skipNextEncounterSaveRef.current = true
     setEncounter({ species_id: savedEncounter.species_id, name: savedEncounter.species_name })
     setSearchQuery(savedEncounter.species_name || '')
+    pokemonIdRef.current = savedEncounter.pokemon_id || null
     setPokemonId(savedEncounter.pokemon_id || null)
     setNickname(savedEncounter.nickname || '')
     setNature(savedEncounter.nature || '')
     setStatus(savedEncounter.status || '')
     setIsShiny(savedEncounter.shiny === 'True' || savedEncounter.shiny === true)
+    setGender(savedEncounter.gender || 'male')
   }, [savedEncounter?.pokemon_id])
 
   useEffect(() => {
@@ -230,6 +235,28 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }, [encounter?.species_id, gameId])
 
   useEffect(() => {
+    if (!encounter?.species_id) { setForms([]); return }
+    const controller = new AbortController()
+    apiFetch(`/api/species/${encounter.species_id}/forms`, { signal: controller.signal })
+      .then(res => res.json())
+      .then(data => setForms(Array.isArray(data) ? data : []))
+      .catch(err => { if (err.name !== 'AbortError') setForms([]) })
+    return () => controller.abort()
+  }, [encounter?.species_id])
+
+  // Set gender default from species data when selecting a new (unsaved) encounter
+  useEffect(() => {
+    if (!encounterDetails || pokemonId) return
+    if (encounterDetails.has_gender === 'false') {
+      setGender('none')
+    } else if (encounterDetails.default_gender === 'female') {
+      setGender('female')
+    } else {
+      setGender('male')
+    }
+  }, [encounterDetails?.species_id])
+
+  useEffect(() => {
     if (!encounter?.species_id) return
     if (!['Captured', 'Dead', 'Missed'].includes(status)) return
     if (skipNextEncounterSaveRef.current) {
@@ -248,17 +275,18 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         nature,
         status,
         isShiny,
-        pokemonId
+        pokemonIdRef.current,
+        gender,
       )
         .then(data => {
-          if (data.pokemon_id) setPokemonId(data.pokemon_id)
+          if (data.pokemon_id) { pokemonIdRef.current = data.pokemon_id; setPokemonId(data.pokemon_id) }
           if (onEncounterChange) onEncounterChange()
           if (onPartyChange) onPartyChange()
         })
         .catch(err => console.error('Failed to save encounter:', err))
     }, 600)
     return () => clearTimeout(timer)
-  }, [encounter, nickname, nature, status, isShiny, runId, attemptNumber, row.event_id, row.secondary_sort_order, pokemonId, onEncounterChange])
+  }, [encounter, nickname, nature, status, isShiny, gender, runId, attemptNumber, row.event_id, row.secondary_sort_order, onEncounterChange])
 
   useEffect(() => {
     const canShowTrainerView = viewMode === 'master' || viewMode === 'trainers'
@@ -383,11 +411,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setEncounterDetails(null)
     setSearchQuery('')
     setSearchResults(pool)
+    pokemonIdRef.current = null
     setPokemonId(null)
     setNickname('')
     setNature('')
     setStatus('')
     setIsShiny(false)
+    setGender('male')
+    setForms([])
     setShowMenu(false)
     setActivePanel(null)
   }
@@ -470,6 +501,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setSearchQuery(evo.name)
     setShowEvolve(false)
     setEvolutions(null)
+  }
+
+  const handleFormSelect = (form) => {
+    setEncounter({ species_id: form.species_id, name: form.name })
+    setSearchQuery(form.name)
   }
 
   const handleTrainerVictoryRecorded = (trainerId) => {
@@ -593,7 +629,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               </div>
             )}
             <button
-              onClick={() => { setShowEvolve(false); setEvolutions(null) }}
+              onClick={() => setShowEvolve(false)}
               style={{ marginTop: '20px', padding: '6px 16px', cursor: 'pointer', fontSize: '0.85em' }}
             >
               Cancel
@@ -618,7 +654,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '46px', height: '46px', flex: '0 0 auto', visibility: activePanel === 'encounter' ? 'hidden' : 'visible' }}>
               {encounter?.species_id ? (
-                <Sprite speciesId={encounter.species_id} size={52} shiny={isShiny} />
+                <Sprite speciesId={encounter.species_id} size={52} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : undefined} />
               ) : (
                 <img
                   src="/sprites/Standard/substitute.png"
@@ -791,8 +827,12 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 border: '1px solid var(--border-strong)',
                 borderRadius: '12px',
                 background: 'var(--surface-mid)',
-                minHeight: '200px'
+                aspectRatio: '1 / 1',
+                overflow: 'hidden',
               }}>
+                <div style={{ position: 'absolute', top: '8px', left: '44px', right: '44px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                  <TypeIconRow types={[type1, type2]} height={22} gap={8} placeholder justifyContent="center" />
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsShiny(current => !current)}
@@ -805,7 +845,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     height: '28px',
                     border: '1px solid var(--border-strong)',
                     borderRadius: '8px',
-                    background: isShiny ? '#2d2410' : 'var(--surface-deep)',
+                    background: 'var(--surface-deep)',
                     color: isShiny ? '#f4d35e' : 'var(--text-secondary)',
                     cursor: 'pointer',
                     fontSize: '0.9em',
@@ -814,8 +854,34 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 >
                   ★
                 </button>
+                {encounterDetails?.has_gender === 'true' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (encounterDetails?.one_gender === 'true') return
+                      setGender(g => g === 'female' ? 'male' : 'female')
+                    }}
+                    title={encounterDetails?.one_gender === 'true' ? `Always ${gender}` : `Toggle gender`}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      width: '28px',
+                      height: '28px',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: '8px',
+                      background: 'var(--surface-deep)',
+                      color: gender === 'female' ? '#e84d8a' : '#4d8fe8',
+                      cursor: encounterDetails?.one_gender === 'true' ? 'default' : 'pointer',
+                      fontSize: '1em',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {gender === 'female' ? '♀' : '♂'}
+                  </button>
+                )}
                 {encounter?.species_id ? (
-                  <Sprite speciesId={encounter.species_id} size={200} shiny={isShiny} />
+                  <Sprite speciesId={encounter.species_id} size={200} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : undefined} />
                 ) : (
                   <img
                     src="/sprites/Standard/substitute.png"
@@ -858,14 +924,43 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 })()}
               </div>
 
-              <TypeIconRow
-                types={[type1, type2]}
-                height={22}
-                gap={8}
-                placeholder
-                justifyContent="center"
-                style={{ minHeight: '28px' }}
-              />
+              {forms.length > 0 && (
+                <div style={{
+                  display: 'flex',
+                  gap: '6px',
+                  justifyContent: 'center',
+                  overflowX: forms.length > 4 ? 'auto' : 'visible',
+                  padding: '4px 2px',
+                }}>
+                  {forms.map(form => {
+                    const isCurrent = form.species_id === encounter?.species_id
+                    return (
+                      <button
+                        key={form.species_id}
+                        type="button"
+                        onClick={() => !isCurrent && handleFormSelect(form)}
+                        title={form.name}
+                        style={{
+                          flexShrink: 0,
+                          width: '44px',
+                          height: '44px',
+                          border: isCurrent ? '1px solid var(--accent)' : '1px solid var(--border-strong)',
+                          borderRadius: '8px',
+                          background: isCurrent ? 'var(--accent-bg)' : 'var(--surface-deep)',
+                          cursor: isCurrent ? 'default' : 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Sprite speciesId={form.species_id} size={32} />
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
             </div>
 
             <div style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
@@ -939,13 +1034,12 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 )}
               </div>
 
-              <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px', textAlign: 'center' }}>
-                <div style={{ fontSize: '0.72em',  color: 'var(--text-secondary)', marginBottom: '4px' }}>BST</div>
-                <div style={{ fontSize: '1.7em', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{encounterDetails?.bst ?? '—'}</div>
-              </div>
-
               <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px' }}>
-                <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', marginBottom: '10px' }}>Stat Spread</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '60px 30px 1fr', gap: '8px', alignItems: 'center', paddingBottom: '8px', marginBottom: '10px', borderBottom: '1px solid var(--border-strong)' }}>
+                  <span style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)' }}>BST</span>
+                  <span style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>{encounterDetails?.bst ?? '—'}</span>
+                  <span />
+                </div>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {STAT_ROWS.map(stat => {
                     const value = encounterDetails?.[stat.key]
@@ -998,7 +1092,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
+            <div style={{ display: 'grid', gridTemplateRows: 'auto auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
               <input
                 type="text"
                 placeholder="Nickname"
@@ -1043,6 +1137,23 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 <option value="Missed">Missed</option>
                 <option value="Dead">Dead</option>
               </select>
+
+              <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px' }}>
+                <div style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)', paddingBottom: '8px', marginBottom: '10px', borderBottom: '1px solid var(--border-strong)' }}>
+                  Known Abilities
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {encounterDetails?.ability1 && (
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)' }}>{encounterDetails.ability1}</span>
+                  )}
+                  {encounterDetails?.ability2 && (
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)' }}>{encounterDetails.ability2}</span>
+                  )}
+                  {encounterDetails?.ability3 && (
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)', fontStyle: 'italic' }}>{encounterDetails.ability3}</span>
+                  )}
+                </div>
+              </div>
 
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                 {status === 'Dead' ? (

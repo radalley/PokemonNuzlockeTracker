@@ -165,7 +165,7 @@ export function getEncounters(runId, attemptNumber) {
   return _getState().encounters[attemptKey(runId, attemptNumber)] || {}
 }
 
-export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId) {
+export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId, gender) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const encounterKey = `${locationId}:${Number(bonusLocation || 0)}`
@@ -184,6 +184,7 @@ export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation,
     nature: nature || null,
     status: status || null,
     shiny: Boolean(shiny),
+    gender: gender || null,
   }
 
   // Keep party display data in sync when an encounter evolves or is edited.

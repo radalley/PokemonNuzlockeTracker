@@ -1,19 +1,27 @@
-function Sprite({ speciesId, size = 40, shiny = false, useIcon = false, alt = '' }) {
+function Sprite({ speciesId, size = 40, shiny = false, female = false, useIcon = false, alt = '', style }) {
   if (!speciesId) return <div style={{ width: size, height: size, flexShrink: 0 }} />
-  const folder = shiny ? 'Shiny' : useIcon ? 'Icons' : 'Standard'
-  const fallbackSrc = useIcon ? `/sprites/Standard/${speciesId}.png` : null
+  const baseFolder = shiny ? 'Shiny' : useIcon ? 'Icons' : 'Standard'
+  const src = (female && !useIcon)
+    ? `/sprites/${shiny ? 'Shiny' : 'Standard'}/female/${speciesId}.png`
+    : `/sprites/${baseFolder}/${speciesId}.png`
+  // Fallback chain: female → non-female standard/shiny → useIcon fallback → hidden
+  const standardSrc = `/sprites/${shiny ? 'Shiny' : 'Standard'}/${speciesId}.png`
+  const iconFallback = useIcon ? `/sprites/Standard/${speciesId}.png` : null
   return (
     <img
-      src={`/sprites/${folder}/${speciesId}.png`}
+      src={src}
       width={size}
       height={size}
       alt={alt}
-      style={{ imageRendering: 'pixelated', objectFit: 'contain', flexShrink: 0 }}
+      style={{ imageRendering: 'pixelated', objectFit: 'contain', flexShrink: 0, ...style }}
       onError={e => {
-        if (fallbackSrc && e.currentTarget.src !== window.location.origin + fallbackSrc) {
-          e.currentTarget.src = fallbackSrc
+        const cur = e.currentTarget
+        if (female && !useIcon && cur.src !== window.location.origin + standardSrc) {
+          cur.src = standardSrc
+        } else if (iconFallback && cur.src !== window.location.origin + iconFallback) {
+          cur.src = iconFallback
         } else {
-          e.currentTarget.style.visibility = 'hidden'
+          cur.style.visibility = 'hidden'
         }
       }}
     />

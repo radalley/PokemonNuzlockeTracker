@@ -178,8 +178,8 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
             ← Attempt
           </button>
         )}
-        {onToggleDebug && (
-          <button onClick={onToggleDebug} style={btnStyle}>{debugOpen ? 'Debug −' : 'Debug'}</button>
+        {!debugOpen && onToggleDebug && (
+          <button onClick={onToggleDebug} style={btnStyle}>Debug</button>
         )}
         <button onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>
         <button onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>

@@ -20,7 +20,7 @@ BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
 BASE_LOC_URL = "https://pokeapi.co/api/v2/location/"
 BASE_LOC_AREA_URL = "https://pokeapi.co/api/v2/location-area/"
 ITEM_URL = "https://pokeapi.co/api/v2/item/"
-def download_all_pokemon(start=1, end=151):
+def download_all_pokemon_locs(start=1, end=151):
     for dex_id in range(start, end + 1):
         cache_path = POKE_LOCS_CACHE_DIR / f"{dex_id}.json"
 
@@ -29,6 +29,26 @@ def download_all_pokemon(start=1, end=151):
             continue
 
         url = f"{POKE_LOC_URL}{dex_id}/encounters"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            cache_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            print(f"#{dex_id} saved")
+        else:
+            print(f"#{dex_id} failed: {response.status_code}")
+
+        time.sleep(0.1)  # be polite to the API
+
+def download_all_pokemon_stats(start=1, end=151):
+    for dex_id in range(start, end + 1):
+        cache_path = CACHE_DIR / f"{dex_id}.json"
+
+        if cache_path.exists():
+            print(f"#{dex_id} already cached, skipping")
+            continue
+
+        url = f"{POKE_LOC_URL}{dex_id}"
         response = requests.get(url)
 
         if response.status_code == 200:
@@ -102,7 +122,8 @@ def download_all_items(start=1, end=40):
         time.sleep(0.1)  # be polite to the API
         pass
 
-download_all_pokemon(1, 1025)
+download_all_pokemon_stats(1, 15)
+download_all_pokemon_stats(10000, 10400)
 # download_all_locations()
 # download_all_location_areas()
 # download_all_items()

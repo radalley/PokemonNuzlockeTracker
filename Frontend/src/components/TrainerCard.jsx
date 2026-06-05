@@ -325,8 +325,13 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
                                 </div>
                               )}
                               <div style={{ fontSize: '0.75em', color: 'var(--text-primary)', fontWeight: 'bold', lineHeight: 1.12, paddingRight: '2px' }}>{move.move_name}</div>
-                              <div style={{ display: 'flex', gap: '5px', marginTop: '2px', fontSize: '0.7em', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
-                                <span>{move.damage_class || 'Status'}</span>
+                              <div style={{ display: 'flex', gap: '5px', marginTop: '2px', fontSize: '0.7em', color: 'var(--text-secondary)', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <img
+                                  src={`/sprites/types/${(move.damage_class || 'status').toLowerCase()}.png`}
+                                  alt={move.damage_class || 'status'}
+                                  height={35}
+                                  style={{ height: '35px', width: 'auto', imageRendering: 'auto', flexShrink: 0 }}
+                                />
                                 <span>Pow {move.power ?? '—'}</span>
                                 <span>Acc {move.accuracy ?? '—'}</span>
                               </div>

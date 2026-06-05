@@ -102,8 +102,8 @@ def _build_generation_patch_join(table_name, join_alias, species_expr, generatio
         f'left join lateral (\n'
         f'  select * from {table_name} x\n'
         f'  where x.species_id = {species_expr}\n'
-        f'    and (x.generation is null or x.generation >= coalesce({generation_expr}, 9999))\n'
-        f'  order by case when x.generation is null then 1 else 0 end, x.generation asc\n'
+        f'    and (coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))\n'
+        f'  order by case when coalesce(x.generation, 0) = 0 then 1 else 0 end, x.generation asc\n'
         f'  limit 1\n'
         f') {join_alias} on true\n'
     )
@@ -131,6 +131,8 @@ def get_runs(conn, user_id=None):
         '  r.game_id, '
         '  g.name as game_name, '
         '  g.game_tag, '
+        '  g.generation, '
+        '  g.version_group_id, '
         '  r.name as run_name, '
         '  a.latest_attempt, '
         '  a.total_attempts, '
@@ -149,7 +151,7 @@ def get_runs(conn, user_id=None):
     if user_id is not None:
         query += 'WHERE nullif(r.user_id::text, \'\')::integer = %s '
         params.append(user_id)
-    query += 'ORDER BY r.run_id DESC'
+    query += 'ORDER BY g.game_id ASC, r.run_id DESC'
     runs = conn.execute(query, params).fetchall()
 
     enriched_runs = []
@@ -183,9 +185,9 @@ def get_run_by_id(conn, run_id, attempt_number, user_id=None):
     # return conn.execute('select run_id, runs.name, runs.game_id, games.name as game_name from runs left join games on runs.game_id = games.game_id where runs.run_id = (%s)',(run_id,)).fetchone()
     _ensure_auth_schema(conn)
     query = (
-        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, attempts.starter '
+        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, run.s_ref, run.b_ref, run.pdb_ref, attempts.starter '
         'from ('
-        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id '
+        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id, games.s_ref, games.b_ref, games.pdb_ref '
         '  from runs left join games on nullif(runs.game_id::text, \'\')::integer = nullif(games.game_id::text, \'\')::integer where nullif(runs.run_id::text, \'\')::integer = %s'
         ') as run '
         'left join attempts on run.run_id = attempts.run_id '
@@ -334,17 +336,20 @@ def get_box(conn):
     return conn.execute("select pokemon_id, species_id, canonical_location_id as location_id, level_met, nickname, status, shiny, storage, party_slot, bonus_location, bonus_note from pokebank where attempt_id = (%s) and run_id = (%s) and status = 'Captured'", (state['active_attempt_id'], state['active_run_id'],)).fetchall()
 
 def get_species_search(conn, name):
-    return conn.execute('select name, species_id from species where name like (%s)',('%'+name+'%',)).fetchall()
+    return conn.execute("select name, species_id, valid from species where name like (%s) and valid = 'true'",('%'+name+'%',)).fetchall()
 
 def get_species_summary(conn, species_id, game_id=None):
     game_generation = _get_game_generation(conn, game_id=game_id)
     row = conn.execute(
-        'select s.species_id, s.name, st.type1, st.type2, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
+        'select s.species_id, s.name, st.type1, st.type2, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        's.has_gender, s.has_female, s.default_gender, s.one_gender, '
+        'sa.ability1, sa.ability2, sa.ability3 '
         'from species s '
         + _build_generation_patch_join('species_stats', 'ss', 's.species_id', '%s')
         + _build_generation_patch_join('species_types', 'st', 's.species_id', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 's.species_id', '%s')
         + 'where s.species_id = %s',
-        (game_generation, game_generation, species_id)
+        (game_generation, game_generation, game_generation, species_id)
     ).fetchone()
     return dict(row) if row else None
 
@@ -355,6 +360,44 @@ def get_evolutions(conn, species_id):
         'where e.from_species_id = (%s)',
         (species_id,)
     ).fetchall()
+
+def get_species_forms(conn, species_id):
+    # Check if this species is a parent (has child forms)
+    children = conn.execute(
+        'select s.species_id, s.name from forms f '
+        'join species s on s.species_id = f.child_species_id '
+        'where f.parent_species_id = %s '
+        'order by f.form_id',
+        (species_id,)
+    ).fetchall()
+    if children:
+        parent = conn.execute(
+            'select species_id, name from species where species_id = %s',
+            (species_id,)
+        ).fetchone()
+        result = [{'species_id': parent['species_id'], 'name': parent['name'], 'is_parent': True}]
+        result += [{'species_id': r['species_id'], 'name': r['name'], 'is_parent': False} for r in children]
+        return result
+    # Check if this species is a child form
+    parent_row = conn.execute(
+        'select f.parent_species_id, s.name as parent_name from forms f '
+        'join species s on s.species_id = f.parent_species_id '
+        'where f.child_species_id = %s',
+        (species_id,)
+    ).fetchone()
+    if parent_row:
+        parent_id = parent_row['parent_species_id']
+        siblings = conn.execute(
+            'select s.species_id, s.name from forms f '
+            'join species s on s.species_id = f.child_species_id '
+            'where f.parent_species_id = %s '
+            'order by f.form_id',
+            (parent_id,)
+        ).fetchall()
+        result = [{'species_id': parent_id, 'name': parent_row['parent_name'], 'is_parent': True}]
+        result += [{'species_id': r['species_id'], 'name': r['name'], 'is_parent': False} for r in siblings]
+        return result
+    return []
 
 def _get_attempt_row(conn, run_id, attempt_number):
     return conn.execute(
@@ -629,6 +672,7 @@ def _public_user(row):
         'email': row['email'],
         'display_name': row['display_name'] or row['email'].split('@')[0],
         'created_at': row['created_at'],
+        'account_type': row['account_type'] if 'account_type' in row.keys() else None,
     }
 
 def _ensure_auth_schema(conn):
@@ -661,7 +705,7 @@ def get_user_by_id(conn, user_id):
 def get_or_create_user_by_supabase_id(conn, supabase_id, email=None):
     _ensure_auth_schema(conn)
     row = conn.execute(
-        'select user_id, email, display_name, created_at from users where supabase_id = %s',
+        'select user_id, email, display_name, created_at, account_type from users where supabase_id = %s',
         (supabase_id,)
     ).fetchone()
     if row:
@@ -672,7 +716,7 @@ def get_or_create_user_by_supabase_id(conn, supabase_id, email=None):
     # If this email already exists locally (legacy account), link it instead of inserting.
     if normalized_email:
         existing = conn.execute(
-            'select user_id, email, display_name, created_at, supabase_id '
+            'select user_id, email, display_name, created_at, supabase_id, account_type '
             'from users where lower(email) = %s',
             (normalized_email,)
         ).fetchone()
@@ -701,13 +745,13 @@ def get_or_create_user_by_supabase_id(conn, supabase_id, email=None):
         conn.rollback()
 
     row = conn.execute(
-        'select user_id, email, display_name, created_at from users where supabase_id = %s',
+        'select user_id, email, display_name, created_at, account_type from users where supabase_id = %s',
         (supabase_id,)
     ).fetchone()
 
     if not row and normalized_email:
         row = conn.execute(
-            'select user_id, email, display_name, created_at from users where lower(email) = %s',
+            'select user_id, email, display_name, created_at, account_type from users where lower(email) = %s',
             (normalized_email,)
         ).fetchone()
         if row:
@@ -717,7 +761,7 @@ def get_or_create_user_by_supabase_id(conn, supabase_id, email=None):
             )
             conn.commit()
             row = conn.execute(
-                'select user_id, email, display_name, created_at from users where supabase_id = %s',
+                'select user_id, email, display_name, created_at, account_type from users where supabase_id = %s',
                 (supabase_id,)
             ).fetchone()
 
@@ -1151,22 +1195,35 @@ def drop_pokemon(conn, pokemon_id):
 def get_pokemon_name_from_id(conn, species_id):
     return conn.execute('select name from species where species_id = (%s)',(species_id,)).fetchone()[0]
 
-def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0):
+def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None):
     attempt_id = conn.execute(
         'select attempt_id from attempts where run_id = %s and attempt_number = %s',
         (run_id, attempt_number)
     ).fetchone()['attempt_id']
     if pokemon_id:
         conn.execute(
-            'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s where pokemon_id=%s',
-            (species_id, location_id, nickname, nature, status, shiny, bonus_location, pokemon_id)
+            'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
+            (species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, pokemon_id)
         )
         conn.commit()
         return pokemon_id
     else:
+        # Guard against duplicates: check for an existing record at this location
+        existing = conn.execute(
+            'select pokemon_id from pokebank where run_id=%s and attempt_id=%s and canonical_location_id=%s and coalesce(bonus_location,0)=%s limit 1',
+            (run_id, attempt_id, location_id, bonus_location or 0)
+        ).fetchone()
+        if existing:
+            existing_id = existing['pokemon_id']
+            conn.execute(
+                'update pokebank set species_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
+                (species_id, nickname, nature, status, shiny, bonus_location, gender, existing_id)
+            )
+            conn.commit()
+            return existing_id
         conn.execute(
-            'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location)
+            'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender)
         )
         conn.commit()
         return conn.execute('select currval(pg_get_serial_sequence(''pokebank'', ''pokemon_id''))').fetchone()[0]
@@ -1253,13 +1310,15 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
     
     badges_select = ', pb.badges_earned' if has_badges_earned else ", '' as badges_earned"
     trainers_defeated_select = ', pb.trainers_defeated' if has_trainers_defeated else ", '' as trainers_defeated"
-    
+    has_gender = _has_column(conn, 'pokebank', 'gender')
+    gender_select = ', pb.gender' if has_gender else ", 'male' as gender"
+
     rows = conn.execute(
         f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         f'cl.canonical_location_name as location_name, '
         f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, '
         f'st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, ss.bst'
-        f'{badges_select}{trainers_defeated_select} '
+        f'{badges_select}{trainers_defeated_select}{gender_select} '
         f'from pokebank pb '
         f'join attempts a on nullif(pb.attempt_id::text, \'\')::integer = nullif(a.attempt_id::text, \'\')::integer '
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
@@ -1276,13 +1335,19 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
 
 def get_pokebank_for_attempt(conn, run_id, attempt_number):
     version_group_id = _get_run_version_group_id(conn, run_id)
+    has_badges = conn.execute(
+        "select 1 from information_schema.columns where table_name = 'pokebank' and column_name = 'badges_earned' limit 1"
+    ).fetchone()
+    badges_col = 'pb.badges_earned' if has_badges else "'' as badges_earned"
+    has_gender_col = _has_column(conn, 'pokebank', 'gender')
+    gender_col = 'pb.gender' if has_gender_col else "'male' as gender"
     rows = conn.execute(
         'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         'case '
         '  when coalesce(pb.bonus_location, 0) > 0 then pb.bonus_location '
         '  else coalesce(el.secondary_sort_order, 0) '
         'end as secondary_sort_order, '
-        'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny '
+        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col} '
         'from pokebank pb '
         'join attempts a on pb.attempt_id = a.attempt_id '
         'left join species s on pb.species_id = s.species_id '
@@ -1376,7 +1441,7 @@ def _resolve_move_details(conn, move_id, version_group_id):
     for row in rows:
         r = dict(row)
         vg = r.get('version_group_id')
-        if vg is None:
+        if not vg:  # NULL or 0 both treated as the default/fallback row
             default = r
         elif version_group_id is not None and vg > version_group_id:
             future_candidates.append(r)
@@ -1396,7 +1461,7 @@ def _resolve_move_details(conn, move_id, version_group_id):
         'accuracy': selected['accuracy'],
         'debug_target_version_group_id': version_group_id,
         'debug_selected_version_group_id': selected.get('version_group_id'),
-        'debug_selected_row_type': 'versioned' if selected.get('version_group_id') is not None else 'default',
+        'debug_selected_row_type': 'versioned' if selected.get('version_group_id') else 'default',
     }
 
 def _resolve_explicit_moves(conn, moves_text, version_group_id):
@@ -1411,7 +1476,7 @@ def _resolve_explicit_moves(conn, moves_text, version_group_id):
         move_row = conn.execute(
             'select move_id from moves '
             "where lower(replace(move_name, ' ', '-')) = %s "
-            'order by case when version_group_id is null then 1 else 0 end, version_group_id desc limit 1',
+            'order by case when coalesce(version_group_id, 0) = 0 then 1 else 0 end, version_group_id desc limit 1',
             (move_slug,)
         ).fetchone()
         if not move_row:
