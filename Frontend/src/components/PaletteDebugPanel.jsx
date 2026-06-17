@@ -23,6 +23,8 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
   const [allSpecies, setAllSpecies] = useState([])
   const [brokenIds, setBrokenIds] = useState(new Set())
   const [validFilter, setValidFilter] = useState('all') // 'all' | 'valid' | 'invalid'
+  const [trainerPics, setTrainerPics] = useState([])
+  const [brokenPics, setBrokenPics] = useState(new Set())
 
   useEffect(() => {
     setValues(getComputedVars())
@@ -34,10 +36,18 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
       .then(r => r.json())
       .then(data => setAllSpecies(data))
       .catch(() => {})
+    apiFetch('/api/debug/trainer-pics')
+      .then(r => r.json())
+      .then(data => setTrainerPics(data))
+      .catch(() => {})
   }, [isOpen])
 
   const handleImgError = useCallback((speciesId) => {
     setBrokenIds(prev => new Set(prev).add(speciesId))
+  }, [])
+
+  const handlePicError = useCallback((pic) => {
+    setBrokenPics(prev => new Set(prev).add(pic))
   }, [])
 
   if (!isOpen) return null
@@ -49,7 +59,7 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
       position: 'fixed',
       right: '8px',
       top: '120px',
-      width: '480px',
+      width: '720px',
       zIndex: 900,
       border: '1px solid var(--border-strong)',
       borderRadius: '12px',
@@ -69,7 +79,7 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
         {onToggle && <button onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
       </div>
 
-      {/* Two columns */}
+      {/* Three columns */}
       <div style={{ display: 'flex', gap: '12px', minHeight: 0, flex: 1 }}>
 
         {/* Left: Palette */}
@@ -112,7 +122,7 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
         {/* Divider */}
         <div style={{ width: '1px', background: 'var(--border-strong)', flexShrink: 0 }} />
 
-        {/* Right: Sprite list */}
+        {/* Middle: Pokemon sprite list */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexShrink: 0 }}>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -191,6 +201,57 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
                       inv
                     </div>
                   )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: '1px', background: 'var(--border-strong)', flexShrink: 0 }} />
+
+        {/* Right: Trainer pic list */}
+        <div style={{ width: '180px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexShrink: 0 }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Trainer Pics ({trainerPics.length})
+            </div>
+            {brokenPics.size > 0 && (
+              <div style={{ color: '#e55', fontSize: '0.68rem', fontWeight: 'bold' }}>
+                missing: {brokenPics.size}
+              </div>
+            )}
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {trainerPics.length === 0 && (
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem' }}>Loading…</div>
+            )}
+            {trainerPics.map(pic => {
+              const isBroken = brokenPics.has(pic)
+              return (
+                <div key={pic} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '2px 4px',
+                  borderRadius: '4px',
+                  background: isBroken ? 'rgba(238,85,85,0.12)' : 'transparent',
+                  borderLeft: isBroken ? '2px solid #e55' : '2px solid transparent',
+                  marginBottom: '1px',
+                }}>
+                  <img
+                    src={`/sprites/trainers/gen3/${pic}.png`}
+                    width={40}
+                    height={40}
+                    alt=""
+                    style={{ imageRendering: 'pixelated', objectFit: 'contain', flexShrink: 0, opacity: isBroken ? 0.3 : 1 }}
+                    onError={() => handlePicError(pic)}
+                  />
+                  <div style={{ overflow: 'hidden', flex: 1 }}>
+                    <div style={{ color: isBroken ? '#e55' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.65rem' }}>
+                      {pic}
+                    </div>
+                  </div>
                 </div>
               )
             })}

@@ -49,8 +49,10 @@ TABLE_ORDER = [
     # 'movesets',
     # 'moves',
     # 'species_types',
-    'species_abilities',
+    # 'species_abilities',
     # 'species_stats',
+    'trainer_pokemon',
+    # 'trainer_pool',
 ]
 
 for table in TABLE_ORDER:
@@ -59,7 +61,8 @@ for table in TABLE_ORDER:
     if table.startswith('sqlite_'):
         continue
     # get data
-    sqlite_cur.execute(f"SELECT * FROM {table}")
+    # sqlite_cur.execute(f"SELECT * FROM {table} ")
+    sqlite_cur.execute(f"SELECT * FROM {table} where version_group_id = 6 and load_build = 3")
     rows = sqlite_cur.fetchall()
     if not rows:
         continue

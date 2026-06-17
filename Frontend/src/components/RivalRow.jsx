@@ -8,6 +8,8 @@ function RivalRow({ row, gameId = null, runId = null, attemptId = null, onVictor
         encounterName={row.encounter_name}
         trainerName={row.trainer_name}
         trainerClass={row.trainer_class}
+        trainerPic={row.trainer_pic}
+        hideClass
         trainerItems={row.trainer_items}
         encounterTitle={row.display_name}
         gameId={gameId}

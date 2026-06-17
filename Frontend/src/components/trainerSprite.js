@@ -130,17 +130,23 @@ const CLASS_MAP = {
 }
 
 /**
- * Returns the full src path for a trainer sprite, or null if none available.
- * @param {string} trainerClass - e.g. 'TRAINER_CLASS_LEADER'
- * @param {string} trainerName  - e.g. 'Brock'
+ * Returns the full src path for a trainer sprite.
+ * Uses trainer_pic from the DB as the filename stem (e.g. 'TRAINER_PIC_BROCK' → TRAINER_PIC_BROCK.png).
+ * Falls back to the legacy class/name maps if trainer_pic is absent.
+ * @param {string} trainerPic   - value of trainer_pool.trainer_pic
+ * @param {string} trainerClass - e.g. 'TRAINER_CLASS_LEADER' (fallback)
+ * @param {string} trainerName  - e.g. 'Brock' (fallback)
  */
-export function getTrainerSpriteSrc(trainerClass, trainerName = '') {
-  // Try named trainer first
+export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '') {
+  if (trainerPic) {
+    return `/sprites/trainers/gen3/${trainerPic}.png`
+  }
+  // Fallback: named trainer
   if (trainerName) {
     const stem = NAME_MAP[trainerName]
     if (stem) return `/sprites/trainers/gen3/Spr_FRLG_${stem}.png`
   }
-  // Fall back to class
+  // Fallback: class map
   const stem = CLASS_MAP[trainerClass]
   if (stem) return `/sprites/trainers/gen3/Spr_FRLG_${stem}.png`
   return null

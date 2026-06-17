@@ -1044,7 +1044,7 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     game_row = conn.execute('select version_group_id from games where game_id = %s', (game_id,)).fetchone() if game_id else None
     version_group_id = game_row['version_group_id'] if game_row else None
 
-    script = get_script(conn, starter, version_group_id=version_group_id, run_id=run_id, attempt_number=attempt_number)
+    script = get_script(conn, starter, version_group_id=version_group_id, run_id=run_id, attempt_number=attempt_number, game_id=game_id)
     script_list = [dict(r) for r in script]
 
     attempt_row = conn.execute(
@@ -1072,6 +1072,8 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     if attempt_row and location_ids and version_group_id is not None:
         placeholders = ','.join(['%s'] * len(location_ids))
         # Count all regular trainers (not rematch, not event) for the location, for the correct version_group_id
+        game_id_clause = "and (tp.game_id is null or tp.game_id = %s) " if game_id is not None else "and tp.game_id is null "
+        game_id_param = [game_id] if game_id is not None else []
         trainer_rows = conn.execute(
             f'select tp.canonical_location_id as location_id, '
             f"count(*) as trainer_count, "
@@ -1081,10 +1083,11 @@ def get_attempt_page_data(conn, run_id, attempt_number):
             f'on td.trainer_id = tp.trainer_id and td.run_id = %s and td.attempt_id = %s '
             f"where tp.canonical_location_id in ({placeholders}) "
             f"and tp.version_group_id = %s "
+            f"{game_id_clause}"
             f"and case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
             f"and case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
             f'group by tp.canonical_location_id',
-            [run_id, attempt_row['attempt_id'], *location_ids, version_group_id]
+            [run_id, attempt_row['attempt_id'], *location_ids, version_group_id, *game_id_param]
         ).fetchall()
         available_trainers_by_location = {
             int(row['location_id']): {
@@ -1231,9 +1234,10 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
 def delete_encounter(conn, pokemon_id):
     conn.execute('delete from pokebank where pokemon_id = %s', (pokemon_id,))
     conn.commit()
-def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number=None):
+def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number=None, game_id=None):
     _ensure_bonus_locations_schema(conn)
     boss_filter = ''
+    game_filter = ''
     loc_filter = ''
     bonus_sql = ''
     params = [starter]
@@ -1242,6 +1246,14 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
         boss_filter = 'and eb.version_group_id = %s '
         loc_filter = 'where el.version_group_id = %s '
         params.append(version_group_id)
+
+    if game_id is not None:
+        game_filter = 'and (eb.game_id is null or eb.game_id = %s) '
+        params.append(game_id)
+    else:
+        game_filter = 'and eb.game_id is null '
+
+    if version_group_id is not None:
         params.append(version_group_id)
 
     if run_id is not None and attempt_number is not None:
@@ -1251,7 +1263,7 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
                 'union all '
                 'select nullif(bl.canonical_location_id::text, \'\')::integer as event_id, bl.canonical_name as display_name, '
                 'nullif(bl.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(bl.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, '
-                'bl.event_type, null, null, null, null, 1 as is_bonus_location '
+                'bl.event_type, null, null, null, null, null, 1 as is_bonus_location '
                 'from bonus_locations bl '
                 'where bl.run_id = %s and bl.attempt_id = %s and bl.is_active = 1 '
             )
@@ -1259,12 +1271,13 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
             params.append(attempt_row['attempt_id'])
 
     return conn.execute(
-        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, 0::integer as is_bonus_location '
+        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, 0::integer as is_bonus_location '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
+        f'{game_filter}'
         'union all '
-        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, 0::integer as is_bonus_location '
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, 0::integer as is_bonus_location '
         'from event_locations el '
         'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
         f'{loc_filter}'
@@ -1363,7 +1376,7 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
         result.append(item)
     return result
 
-def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None):
+def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None, game_id=None):
     attempt_id = None
     if run_id is not None and attempt_number is not None:
         attempt_row = conn.execute(
@@ -1372,14 +1385,17 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         ).fetchone()
         attempt_id = attempt_row['attempt_id'] if attempt_row else None
 
-    # Always require version_group_id for correct filtering
-    if version_group_id is None and run_id is not None:
-        vg_row = conn.execute(
-            'select g.version_group_id from runs r join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer where nullif(r.run_id::text, \'\')::integer = %s',
+    # Derive version_group_id and game_id from the run if not provided
+    if (version_group_id is None or game_id is None) and run_id is not None:
+        run_info = conn.execute(
+            'select g.version_group_id, r.game_id from runs r join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer where nullif(r.run_id::text, \'\')::integer = %s',
             (run_id,)
         ).fetchone()
-        if vg_row:
-            version_group_id = vg_row['version_group_id']
+        if run_info:
+            if version_group_id is None:
+                version_group_id = run_info['version_group_id']
+            if game_id is None:
+                game_id = run_info['game_id']
 
     if version_group_id is None:
         raise ValueError('version_group_id is required to fetch trainers for a location')
@@ -1400,11 +1416,17 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
     where_clauses = ["tp.canonical_location_id = %s", "tp.version_group_id = %s"]
     params.append(location_id)
     params.append(version_group_id)
+    # Filter by game_id: include shared rows (null) and rows for this specific game
+    if game_id is not None:
+        where_clauses.append("(tp.game_id is null or tp.game_id = %s)")
+        params.append(game_id)
+    else:
+        where_clauses.append("tp.game_id is null")
     # Only regular trainers
     where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
 
     query = (
-        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, '
+        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         + defeated_select +
         'from trainer_pool tp '
@@ -1546,6 +1568,13 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
         if game_row:
             version_group_id = game_row['version_group_id']
 
+    if version_group_id is not None:
+        tp_vg_filter = 'and (t.version_group_id is null or t.version_group_id = %s) '
+        tp_params = (game_generation, game_generation, game_generation, trainer_name, version_group_id)
+    else:
+        tp_vg_filter = 'and t.version_group_id is null '
+        tp_params = (game_generation, game_generation, game_generation, trainer_name)
+
     rows = conn.execute(
         'select sp.species_id, t.species_name, st.type1, st.type2, sa.ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
         't.iv, t.lvl, t.moves, t.held_item '
@@ -1554,8 +1583,8 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
         + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s')
         + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s')
         + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s')
-        + 'where encounter_name = (%s)',
-        (game_generation, game_generation, game_generation, trainer_name)
+        + f'where encounter_name = (%s) {tp_vg_filter}',
+        tp_params
     ).fetchall()
 
     party = []
@@ -1613,12 +1642,21 @@ def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
 
     rival_ids = set()
     boss_ids = set()
+    run_row = conn.execute('select game_id from runs where run_id = %s', (run_id,)).fetchone()
+    run_game_id = run_row['game_id'] if run_row else None
+
     if defeated_trainer_ids:
         placeholders = ','.join(['%s'] * len(defeated_trainer_ids))
-        boss_rows = conn.execute(
-            f'select trainer_id, event_type from event_bosses where trainer_id in ({placeholders})',
-            defeated_trainer_ids
-        ).fetchall()
+        if run_game_id is not None:
+            boss_rows = conn.execute(
+                f'select trainer_id, event_type from event_bosses where trainer_id in ({placeholders}) and (game_id is null or game_id = %s)',
+                defeated_trainer_ids + [run_game_id]
+            ).fetchall()
+        else:
+            boss_rows = conn.execute(
+                f'select trainer_id, event_type from event_bosses where trainer_id in ({placeholders}) and game_id is null',
+                defeated_trainer_ids
+            ).fetchall()
         for row in boss_rows:
             tid = int(row['trainer_id'])
             etype = (row['event_type'] or '').strip().lower()

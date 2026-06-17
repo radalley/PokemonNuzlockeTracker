@@ -177,11 +177,12 @@ def trainer_list_route(location_id):
     conn = get_db()
     run_id = request.args.get('run_id', type=int)
     attempt_number = request.args.get('attempt_number', type=int)
+    game_id = request.args.get('game_id', type=int)
     if run_id is not None:
         _, error = require_run_access(conn, run_id)
         if error:
             return error
-    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number)
+    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number, game_id=game_id)
     return jsonify([dict(t) for t in trainers])
 
 @app.route('/api/trainer-party/<trainer_name>', methods=['GET'])
@@ -197,6 +198,14 @@ def species_search_route():
     query = request.args.get('q', '')
     species = get_species_search(conn, query)
     return jsonify([dict(s) for s in species])
+
+@app.route('/api/debug/trainer-pics', methods=['GET'])
+def debug_trainer_pics_route():
+    conn = get_db()
+    rows = conn.execute(
+        'select distinct trainer_pic from trainer_pool where trainer_pic is not null and trainer_pic <> \'\' order by trainer_pic asc'
+    ).fetchall()
+    return jsonify([r['trainer_pic'] for r in rows])
 
 @app.route('/api/species/random-feed', methods=['GET'])
 def species_random_feed_route():
@@ -533,7 +542,7 @@ def guest_script_route():
     if not game_id:
         return jsonify({'error': 'game_id required'}), 400
 
-    script_rows = get_script(conn, starter, version_group_id=version_group_id)
+    script_rows = get_script(conn, starter, version_group_id=version_group_id, game_id=game_id)
     script = []
     for row in script_rows:
         data = dict(row)
@@ -548,7 +557,7 @@ def guest_script_route():
         # Recompute from trainer_pool so Postgres/text source data doesn't disable UI.
         if data.get('event_type') == 'Location':
             location_id = int(data['event_id'])
-            trainer_rows = get_trainers_by_location(conn, location_id, version_group_id=version_group_id)
+            trainer_rows = get_trainers_by_location(conn, location_id, version_group_id=version_group_id, game_id=game_id)
             non_event_count = sum(1 for t in trainer_rows if not bool(t.get('is_event')))
             data['trainer_count'] = non_event_count
             data['available_trainer_count'] = non_event_count

@@ -49,7 +49,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = '', encounterTitle = '', showLevelCap = false, gameId = null, runId = null, attemptId = null, trainerId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, runId = null, attemptId = null, trainerId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
   const [open, setOpen] = useState(false)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -106,9 +106,11 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
   const normalizedClass = formattedClass.trim().toLowerCase()
   const normalizedTitle = (encounterTitle || '').trim().toLowerCase()
-  const subtitle = normalizedClass && normalizedTitle && normalizedClass === normalizedTitle
-    ? formattedClass
-    : [formattedClass, encounterTitle].filter(Boolean).join(' - ')
+  const subtitle = hideClass
+    ? (encounterTitle || '')
+    : normalizedClass && normalizedTitle && normalizedClass === normalizedTitle
+      ? formattedClass
+      : [formattedClass, encounterTitle].filter(Boolean).join(' - ')
   const itemTokens = parseTrainerItems(trainerItems)
 
   const openBattleModal = (event) => {
@@ -162,7 +164,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerItems = 
 
         {/* Trainer sprite */}
         {(() => {
-          const src = getTrainerSpriteSrc(trainerClass, trainerName)
+          const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName)
           return src
             ? <img src={src} style={{ height: '80px', width: 'auto', flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
                 alt={trainerName || formattedClass}

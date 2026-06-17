@@ -7,24 +7,27 @@ tSql = cur.execute(f'select encounter_name from trainer_pool').fetchall()
 import re
 a1 = True
 
+ver = 6
+load_build = 3
+
 if a1:
     #file handler
     raw = []
     trainers = []
     tdict = {}
     lines = []
-    with (open('bulk_raw_trainer_parties', 'r') as file):
+    with (open('e_bulk_raw_trainer_parties', 'r') as file):
         tclass = ''
         tname = ''
         items = ''
-        active = False
+        active = True
 
         # .iv = 0,
         # .lvl = 26,
         # .species = SPECIES_MAGNETON,
         # .moves = {MOVE_SPARK, MOVE_THUNDER_WAVE, MOVE_SONIC_BOOM, MOVE_SUPERSONIC},
 
-        iv = ''
+        iv = 0
         lvl = 0
         species = ''
         moves = ''
@@ -32,12 +35,14 @@ if a1:
 
         for line in file:
             #cleanup lines
+            oline = line
             line = line.replace("\n", '').replace(' ','')
             if active:
                 raw.append(line)
             if line == '//Startofactualtrainerdata':
                 active = True
-            if line[:17] == 'staticconststruct':
+            #get emerald/frlg trainer
+            if 'staticconststruct' in line:
                 #trainer found
                 trnr = 'Trainer' + line.split('sParty_')[1].split('[')[0]
                 to_snake_upper = lambda s: re.sub(r'(\d+)', r'_\1', re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2',
@@ -48,30 +53,42 @@ if a1:
                     pass
                 else:
                     trainers.append(trnr)
-            if line[:3] == '.iv':
+
+            #'staticconststructTrainerMonNoItemDefaultMovessParty_Sawyer1[]={'
+            if 'conststruct' in line:
+                #trainer found
+                trnr = 'Trainer' + line.split('Party_')[1].split('[')[0]
+                to_snake_upper = lambda s: re.sub(r'(\d+)', r'_\1', re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2',
+                                                                           re.sub(r'([a-z])([A-Z])', r'\1_\2',
+                                                                                  s))).strip('_').upper()
+                trnr = to_snake_upper(trnr)
+            if '.iv' in line:
                 iv = int(line.split('=')[1].split(',')[0])
-            elif line[:4] == '.lvl':
+            elif '.lvl' in line or '.level' in line:
                 lvl = int(line.split('=')[1].split(',')[0])
-            elif line[:8] == '.species':
+            elif '.species' in line:
                 species = line.split('_')[1].split(',')[0]
             elif line[:6] == '.moves':
-                moves = line.split('{')[1].split('}')[0]
-            elif line[:9] == '.heldItem':
+                # moves = line.split('{')[1].split('}')[0]
+                moves = line.replace('{','').replace('}','').split('=')[1]
+            elif '.heldItem' in line:
                 held_item = line.split('=')[1].split(',')[0]
                 held_item = held_item if held_item != 'ITEM_NONE' else ''
             else:
                 lines.append(line)
 
-            if line == '},':
+            if line == '},' or line == '}':
                 #end of pokemon
+                if 'MAY' in trnr.upper():
+                    pass
                 conn.execute(
                     """
-                    INSERT OR IGNORE INTO trainer_pokemon (encounter_name, species_name, iv, lvl, moves, held_item) VALUES (?, ?, ?, ?, ?, ?);
+                    INSERT OR IGNORE INTO trainer_pokemon (encounter_name, species_name, iv, lvl, moves, held_item, version_group_id, load_build) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
                     """,
-                    (trnr, species, iv, lvl, moves, held_item),
+                    (trnr, species, iv, lvl, moves, held_item, ver, load_build),
                 )
 
-                iv = ''
+                iv = 0
                 lvl = 0
                 species = ''
                 moves = ''
