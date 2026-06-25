@@ -137,9 +137,24 @@ const CLASS_MAP = {
  * @param {string} trainerClass - e.g. 'TRAINER_CLASS_LEADER' (fallback)
  * @param {string} trainerName  - e.g. 'Brock' (fallback)
  */
-export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '') {
+export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '', gameId = null, versionGroupId = null) {
   if (trainerPic) {
-    return `/sprites/trainers/gen3/${trainerPic}.png`
+    if (trainerPic.startsWith('/')) return trainerPic
+    if (trainerPic.includes('/')) {
+      return trainerPic.endsWith('.png')
+        ? `/sprites/trainers/${trainerPic}`
+        : `/sprites/trainers/${trainerPic}.png`
+    }
+    const numericGameId = Number(gameId)
+    const numericVersionGroupId = Number(versionGroupId)
+    const generationFolder =
+      numericVersionGroupId >= 1 && numericVersionGroupId <= 2 ? 'gen1'
+        : numericVersionGroupId >= 3 && numericVersionGroupId <= 4 ? 'gen2'
+          : numericVersionGroupId >= 8 && numericVersionGroupId <= 10 ? 'gen4'
+            : numericGameId >= 1 && numericGameId <= 3 ? 'gen1'
+              : numericGameId >= 4 && numericGameId <= 6 ? 'gen2'
+                : 'gen3'
+    return `/sprites/trainers/${generationFolder}/${trainerPic}.png`
   }
   // Fallback: named trainer
   if (trainerName) {

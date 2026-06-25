@@ -18,6 +18,8 @@ function normalizeItemName(raw) {
     .replace(/^ITEM_/i, '')
     .trim()
 
+  if (/^(none|null|no_item|no item)$/i.test(cleaned)) return null
+
   return cleaned || null
 }
 
@@ -49,7 +51,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, runId = null, attemptId = null, trainerId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
   const [open, setOpen] = useState(false)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -112,6 +114,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       ? formattedClass
       : [formattedClass, encounterTitle].filter(Boolean).join(' - ')
   const itemTokens = parseTrainerItems(trainerItems)
+  const displayedParty = party.filter(Boolean)
 
   const openBattleModal = (event) => {
     event.stopPropagation()
@@ -164,7 +167,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
         {/* Trainer sprite */}
         {(() => {
-          const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName)
+          const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName, gameId, versionGroupId)
           return src
             ? <img src={src} style={{ height: '80px', width: 'auto', flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
                 alt={trainerName || formattedClass}
@@ -179,13 +182,14 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
         </div>
 
         {/* 6 pokemon slot placeholders — hidden when expanded */}
-        {!open && (
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {Array.from({ length: 6 }, (_, i) => {
-              const pokemon = party[i]
+        {!open && displayedParty.length > 0 && (
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {displayedParty.map((pokemon, i) => {
               return (
                 <div key={i} style={{
                   width: '48px', height: '48px', border: '1px solid var(--border-strong)',
+                  borderRadius: '10px', background: 'var(--surface-mid)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)', overflow: 'hidden',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '0.65em', textAlign: 'center', color: 'var(--text-secondary)'
                 }}>
@@ -230,13 +234,14 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
         {enableBattle && runId && attemptId && trainerId && (
           defeated ? (
-            <div style={{ padding: '4px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '4px', flexShrink: 0 }}>
+            <div style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
               Defeated
             </div>
           ) : (
             <button
+              type="button"
               onClick={openBattleModal}
-              style={{ padding: '4px 10px', fontSize: '0.78em', cursor: 'pointer', color: '#7ec8e3', borderColor: '#7ec8e3', flexShrink: 0 }}
+              style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
             >
               Battle
             </button>
@@ -323,17 +328,17 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                             <div key={`${move.move_id}-${idx}`} style={{ position: 'relative', border: '1px solid var(--border-strong)', borderRadius: '5px', padding: '6px 28px 5px 8px', marginBottom: '3px', background: 'var(--surface-mid)', minHeight: '30px' }}>
                               {move.type && (
                                 <div style={{ position: 'absolute', top: '50%', right: '16px', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                                  <TypeIcon type={move.type} height={14} />
+                                  <img
+                                    src={`/sprites/types/${(move.damage_class || 'status').toLowerCase()}.png`}
+                                    alt={move.damage_class || 'status'}
+                                    height={35}
+                                    style={{ height: '35px', width: 'auto', imageRendering: 'auto', flexShrink: 0 }}
+                                  />
                                 </div>
                               )}
                               <div style={{ fontSize: '0.75em', color: 'var(--text-primary)', fontWeight: 'bold', lineHeight: 1.12, paddingRight: '2px' }}>{move.move_name}</div>
                               <div style={{ display: 'flex', gap: '5px', marginTop: '2px', fontSize: '0.7em', color: 'var(--text-secondary)', flexWrap: 'wrap', alignItems: 'center' }}>
-                                <img
-                                  src={`/sprites/types/${(move.damage_class || 'status').toLowerCase()}.png`}
-                                  alt={move.damage_class || 'status'}
-                                  height={35}
-                                  style={{ height: '35px', width: 'auto', imageRendering: 'auto', flexShrink: 0 }}
-                                />
+                                {move.type && <TypeIcon type={move.type} height={14} />}
                                 <span>Pow {move.power ?? '—'}</span>
                                 <span>Acc {move.accuracy ?? '—'}</span>
                               </div>

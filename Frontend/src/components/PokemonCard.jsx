@@ -61,6 +61,24 @@ const BADGE_NAMES = {
   8: 'Earth Badge',
 }
 
+const CARD_ACTION_BUTTON_STYLE = {
+  minHeight: '26px',
+  minWidth: 0,
+  padding: '3px 6px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '10px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  font: 'inherit',
+  fontSize: '0.68em',
+  lineHeight: 1,
+  whiteSpace: 'nowrap',
+}
+
 function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty, onDead, onRevive, onEvolve, runId, attemptId }) {
   const { species_name, nickname, nature, status, shiny, level_met, location_name,
           type1, type2, hp, atk, def, spa, spd, spe, bst } = pokemon
@@ -208,14 +226,17 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
         {runId && attemptId && (
           <div style={{ marginBottom: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px' }}>
             <button
+              type="button"
               onClick={() => setShowDropdown(!showDropdown)}
               style={{
                 width: '100%',
-                padding: '4px 0',
-                fontSize: '0.7em',
+                minHeight: '30px',
+                padding: '4px 8px',
+                fontSize: '0.72em',
                 color: '#7ec8e3',
-                border: 'none',
-                background: 'transparent',
+                border: '1px solid #7ec8e3',
+                borderRadius: '999px',
+                background: 'rgba(126,200,227,0.12)',
                 cursor: 'pointer',
                 textAlign: 'left',
                 display: 'flex',
@@ -302,38 +323,43 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
 
         <div style={{ marginTop: 'auto' }}>
           {(showReviveAction || showPartyAction || showEvolveAction || showDeadAction) && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '4px', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
               {showReviveAction ? (
                 <button
+                  type="button"
                   onClick={() => onRevive(pokemon)}
-                  style={{ gridColumn: '1 / -1', minWidth: 0, padding: '3px 6px', fontSize: '0.75em', cursor: 'pointer', color: '#7ec8e3', borderColor: '#7ec8e3', borderRadius: '6px' }}
+                  style={{ ...CARD_ACTION_BUTTON_STYLE, gridColumn: '1 / -1', color: '#7ec8e3', borderColor: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }}
                 >Revive</button>
               ) : (
                 <>
                   {showPartyAction ? (
                     inParty ? (
                       <button
+                        type="button"
                         onClick={() => onRemoveFromParty(pokemon)}
-                        style={{ minWidth: 0, padding: '3px 6px', fontSize: '0.75em', cursor: 'pointer', color: '#e55', borderColor: '#e55', borderRadius: '6px' }}
-                      >- Party</button>
+                        style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
+                      >Party -</button>
                     ) : (
                       <button
+                        type="button"
                         onClick={() => onAddToParty(pokemon)}
-                        style={{ minWidth: 0, padding: '3px 6px', fontSize: '0.75em', cursor: 'pointer', color: '#5ba85b', borderColor: '#5ba85b', borderRadius: '6px' }}
-                      >+ Party</button>
+                        style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#5ba85b', borderColor: '#5ba85b', background: 'rgba(91,168,91,0.12)' }}
+                      >Party +</button>
                     )
                   ) : <span />}
                   {showEvolveAction ? (
                     <button
+                      type="button"
                       onClick={() => onEvolve(pokemon)}
-                      style={{ minWidth: 0, padding: '3px 6px', fontSize: '0.75em', cursor: 'pointer', color: '#7ec8e3', borderColor: '#7ec8e3', borderRadius: '6px' }}
+                      style={{ ...CARD_ACTION_BUTTON_STYLE, color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}
                     >Evolve</button>
                   ) : <span />}
                   {showDeadAction ? (
                     <button
+                      type="button"
                       onClick={() => onDead(pokemon)}
-                      style={{ minWidth: 0, padding: '3px 6px', fontSize: '0.75em', cursor: 'pointer', color: '#e55', borderColor: '#e55', borderRadius: '6px' }}
-                    >✕ Dead</button>
+                      style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
+                    >Dead</button>
                   ) : <span />}
                 </>
               )}

@@ -10,6 +10,7 @@ function Graveyard() {
   const [runDetails, setRunDetails] = useState(null)
   const [pokemon, setPokemon] = useState([])
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
+  const [statsOpen, setStatsOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -42,10 +43,10 @@ function Graveyard() {
 
   return (
     <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>

@@ -17,6 +17,7 @@ function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictory
         encounterTitle={row.display_name}
         showLevelCap={shouldShowLevelCap}
         gameId={gameId}
+        versionGroupId={row.version_group_id}
         runId={runId}
         attemptId={attemptId}
         trainerId={row.event_id}

@@ -1,0 +1,26 @@
+{
+  "version_group_id": 1,
+  "load_build": 4,
+  "event_locations": 45,
+  "trainer_classes": 47,
+  "party_groups": 47,
+  "party_entries": 391,
+  "pokemon_rows": 994,
+  "map_references": 346,
+  "trainer_rows_with_location": 339,
+  "trainer_rows_without_location": 52,
+  "displayable_non_rematch_trainers": 339,
+  "referenced_trainers_unmapped": 2,
+  "unreferenced_party_entries": 50,
+  "missing_party_groups": [
+    "UNUSED_JUGGLER",
+    "CHIEF"
+  ],
+  "location_methods": {
+    "canon_not_in_event": 2,
+    "direct": 2,
+    "manual": 183,
+    "route": 154,
+    "unreferenced": 50
+  }
+}

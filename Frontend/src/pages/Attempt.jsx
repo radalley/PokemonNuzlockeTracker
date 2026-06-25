@@ -8,6 +8,7 @@ import RivalRow from '../components/RivalRow'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import PaletteDebugPanel from '../components/PaletteDebugPanel'
+import ContactButton from '../components/ContactButton'
 import { getAttemptPageData, getParty, getPokebank, updateStarter as saveStarter } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -114,6 +115,18 @@ function Attempt() {
     }
   }
 
+  useEffect(() => {
+    if (Number(runDetails?.version_group_id) !== 2) return
+    if (['Blue', 'Red', 'Yellow'].includes(currentStarter)) return
+
+    saveStarter(runId, attemptId, 'Yellow')
+      .then(() => {
+        setCurrentStarter('Yellow')
+        setRefreshKey(k => k + 1)
+      })
+      .catch(err => console.error('Failed to update Yellow rival Eevee branch:', err))
+  }, [runDetails?.version_group_id, currentStarter, runId, attemptId])
+
   const capturedSpeciesIds = useMemo(
     () => Object.values(savedEncounters)
       .filter(e => e.status === 'Captured' || e.status === 'Dead')
@@ -174,6 +187,14 @@ function Attempt() {
     : activeFilter === 'trainers'
       ? 'trainers'
       : 'master'
+  const contactContext = {
+    runId,
+    attemptId,
+    gameId: runDetails?.game_id || null,
+    versionGroupId: runDetails?.version_group_id || null,
+    runName: runDetails?.name || null,
+    gameName: runDetails?.game_name || null,
+  }
 
   const visibleScript = useMemo(() => {
     if (activeFilter === 'master') return script
@@ -193,7 +214,7 @@ function Attempt() {
   }
 
   return (
-    <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
+    <div style={{ paddingTop: '120px', paddingBottom: '56px' }}>
       {showDocsMenu && (
         <div
           onClick={() => setShowDocsMenu(false)}
@@ -223,20 +244,6 @@ function Attempt() {
             </div>
             <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Choose a source for {runDetails?.game_name || 'this game'}.
-            </div>
-            <div
-              style={{
-                marginBottom: '16px',
-                padding: '8px 10px',
-                borderRadius: '8px',
-                border: '1px dashed var(--border-strong)',
-                background: 'var(--surface-deep)',
-                fontSize: '0.76rem',
-                color: 'var(--text-secondary)',
-                fontFamily: 'Consolas, monospace',
-              }}
-            >
-              debug game_id={runDetails?.game_id ?? 'n/a'} version_group_id={runDetails?.version_group_id ?? 'n/a'}
             </div>
             <div style={{ display: 'grid', gap: '10px' }}>
               {DOC_SOURCES.map(source => (
@@ -284,7 +291,7 @@ function Attempt() {
       {isAdmin && <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />}
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} />
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} showStarterControls versionGroupId={runDetails?.version_group_id} />
 
         <div style={{ textAlign: 'left' }}>
           <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
@@ -316,9 +323,9 @@ function Attempt() {
         </div>
       </div>
 
-      <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '40px', borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-page)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
-        <button type="button" onClick={() => setShowDocsMenu(true)}>Game Documentation</button>
-        <button>Contact</button>
+      <footer className="attempt-footer">
+        <button className="attempt-footer__button" type="button" onClick={() => setShowDocsMenu(true)}>Game Documentation</button>
+        <ContactButton context={contactContext} className="attempt-footer__button" />
       </footer>
     </div>
   )

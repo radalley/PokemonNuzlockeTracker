@@ -17,7 +17,9 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_pokebank_with_stats, get_attempt_session_stats, create_bonus_location,
                      delete_bonus_location, rename_bonus_location, get_species_summary, get_species_forms,
                      get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
-                     run_belongs_to_user, pokemon_belongs_to_user, wrap_conn)
+                     run_belongs_to_user, pokemon_belongs_to_user, wrap_conn,
+                     create_contact_report, get_contact_reports, update_contact_report,
+                     get_contact_report_stats)
 from backend import _badge_id_for_gym_leader
 
 load_dotenv()
@@ -97,6 +99,17 @@ def require_pokemon_access(conn, pokemon_id):
     if not pokemon_belongs_to_user(conn, pokemon_id, user['user_id']):
         return user, (jsonify({'error': 'Pokemon not found'}), 404)
     return user, None
+
+def require_admin():
+    user, error = require_auth()
+    if error:
+        return None, error
+    if user.get('account_type') != 'admin':
+        return user, (jsonify({'error': 'Admin access required'}), 403)
+    return user, None
+
+def _clean_report_text(value, max_length=4000):
+    return str(value or '').strip()[:max_length]
 
 @app.teardown_appcontext
 def close_db(error):
@@ -226,6 +239,123 @@ def pokebank_random_feed_route():
     limit = request.args.get('limit', default=100, type=int)
     rows = get_pokebank_feed_for_user(conn, user['user_id'], limit=limit)
     return jsonify(rows)
+
+@app.route('/api/contact-report', methods=['POST'])
+def contact_report_route():
+    conn = get_db()
+    data = request.get_json() or {}
+    user = get_current_user()
+
+    report_type = data.get('report_type')
+    valid_report_types = {'bug', 'missing_information', 'incorrect_information', 'general_contact'}
+    if report_type not in valid_report_types:
+        return jsonify({'error': 'Valid report_type required'}), 400
+
+    title = _clean_report_text(data.get('title'), 160)
+    details = _clean_report_text(data.get('details'))
+    reproduction_steps = _clean_report_text(data.get('reproduction_steps'))
+    topic = _clean_report_text(data.get('topic'), 60)
+    page_url = _clean_report_text(data.get('page_url'), 500)
+    user_agent = _clean_report_text(data.get('user_agent'), 500)
+
+    if report_type == 'bug' and not details:
+        return jsonify({'error': 'Bug explanation required'}), 400
+    if report_type in {'missing_information', 'incorrect_information'}:
+        if topic not in {'pokemon', 'trainer', 'other'}:
+            return jsonify({'error': 'Valid topic required'}), 400
+        if not details:
+            return jsonify({'error': 'Information details required'}), 400
+    if report_type == 'general_contact' and not details:
+        return jsonify({'error': 'Message required'}), 400
+
+    run_id = data.get('run_id')
+    attempt_number = data.get('attempt_number')
+    game_id = data.get('game_id')
+    version_group_id = data.get('version_group_id')
+    run_name = _clean_report_text(data.get('run_name'), 200)
+    game_name = _clean_report_text(data.get('game_name'), 120)
+
+    is_local_run = isinstance(run_id, str) and run_id.startswith('local_')
+    if run_id and not is_local_run:
+        if not user:
+            return jsonify({'error': 'Authentication required'}), 401
+        try:
+            numeric_run_id = int(run_id)
+            numeric_attempt = int(attempt_number) if attempt_number else 1
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid run context'}), 400
+        if not run_belongs_to_user(conn, numeric_run_id, user['user_id']):
+            return jsonify({'error': 'Run not found'}), 404
+        run = get_run_by_id(conn, numeric_run_id, numeric_attempt, user_id=user['user_id'])
+        if run:
+            game_id = run['game_id']
+            version_group_id = run['version_group_id']
+            run_name = run['name']
+            game_name = run['game_name']
+
+    report_id = create_contact_report(conn, {
+        'report_type': report_type,
+        'topic': topic if report_type in {'missing_information', 'incorrect_information'} else None,
+        'title': title or None,
+        'details': details,
+        'reproduction_steps': reproduction_steps if report_type == 'bug' else None,
+        'user_id': user['user_id'] if user else None,
+        'run_id': str(run_id) if run_id else None,
+        'attempt_number': int(attempt_number) if str(attempt_number or '').isdigit() else None,
+        'game_id': int(game_id) if str(game_id or '').isdigit() else None,
+        'version_group_id': int(version_group_id) if str(version_group_id or '').isdigit() else None,
+        'run_name': run_name or None,
+        'game_name': game_name or None,
+        'page_url': page_url or None,
+        'user_agent': user_agent or None,
+    })
+
+    return jsonify({'success': True, 'report_id': report_id})
+
+@app.route('/api/admin/contact-reports', methods=['GET'])
+def admin_contact_reports_route():
+    conn = get_db()
+    _, error = require_admin()
+    if error:
+        return error
+    status = request.args.get('status') or None
+    game_id = request.args.get('game_id', type=int)
+    version_group_id = request.args.get('version_group_id', type=int)
+    limit = request.args.get('limit', default=100, type=int)
+    return jsonify(get_contact_reports(
+        conn,
+        status=status,
+        game_id=game_id,
+        version_group_id=version_group_id,
+        limit=limit,
+    ))
+
+@app.route('/api/admin/contact-report-stats', methods=['GET'])
+def admin_contact_report_stats_route():
+    conn = get_db()
+    _, error = require_admin()
+    if error:
+        return error
+    generation = request.args.get('generation', type=int)
+    return jsonify(get_contact_report_stats(conn, generation=generation))
+
+@app.route('/api/admin/contact-reports/<int:report_id>', methods=['PATCH'])
+def admin_update_contact_report_route(report_id):
+    conn = get_db()
+    _, error = require_admin()
+    if error:
+        return error
+    data = request.get_json() or {}
+    result = update_contact_report(
+        conn,
+        report_id,
+        status=data.get('status') if 'status' in data else None,
+        priority=data.get('priority') if 'priority' in data else None,
+        admin_notes=data.get('admin_notes') if 'admin_notes' in data else None,
+    )
+    if not result.get('success'):
+        return jsonify(result), 400
+    return jsonify(result)
 
 @app.route('/api/species/<int:species_id>/summary', methods=['GET'])
 def species_summary_route(species_id):

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
  * Wrapper around fetch that automatically attaches the Supabase JWT
  * as an Authorization header on every request to the Flask backend.
  */
-const API_BASE = import.meta.env.VITE_API_URL || ''
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ''
 
 export async function apiFetch(url, options = {}) {
   const { data: { session } } = await supabase.auth.getSession()

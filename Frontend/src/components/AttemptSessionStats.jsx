@@ -33,21 +33,27 @@ function BadgeStatItem({ badgeIds = [], compact = false }) {
   )
 }
 
-function StarterButton({ label, color, selected, onClick }) {
+function StarterButton({ label, color, selected, onClick, compact = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        flex: 1,
-        padding: '5px 8px',
+        flex: compact ? '1 1 calc(50% - 6px)' : 1,
+        minWidth: 0,
+        padding: compact ? '5px 6px' : '5px 8px',
         backgroundColor: selected ? color : 'var(--surface-deep)',
         border: '1px solid var(--border-strong)',
         borderRadius: '6px',
         cursor: 'pointer',
         color: selected ? '#111' : 'var(--text-secondary)',
         font: 'inherit',
-        fontSize: '0.85em',
+        fontSize: compact ? '0.74em' : '0.85em',
+        lineHeight: 1.2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        boxSizing: 'border-box',
       }}
     >
       {label}
@@ -55,7 +61,19 @@ function StarterButton({ label, color, selected, onClick }) {
   )
 }
 
-function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false, starter = '', onStarterChange = null, isOpen = true, onToggle = null }) {
+const STARTER_OPTIONS = [
+  { label: 'Fire', value: 'Fire', color: '#ff6b6b' },
+  { label: 'Grass', value: 'Grass', color: '#51cf66' },
+  { label: 'Water', value: 'Water', color: '#74c0fc' },
+]
+
+const YELLOW_EEVEE_OPTIONS = [
+  { label: 'Vaporeon', value: 'Blue', color: '#74c0fc' },
+  { label: 'Flareon', value: 'Red', color: '#ff6b6b' },
+  { label: 'Jolteon', value: 'Yellow', color: '#ffd43b' },
+]
+
+function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false, starter = '', onStarterChange = null, showStarterControls = false, isOpen = true, onToggle = null, versionGroupId = null }) {
   const [stats, setStats] = useState(null)
 
   useEffect(() => {
@@ -69,6 +87,8 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
   if (!isOpen) return null
 
   const miniBtn = { padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit', lineHeight: '1.4' }
+  const isYellow = Number(versionGroupId) === 2
+  const starterOptions = isYellow ? YELLOW_EEVEE_OPTIONS : STARTER_OPTIONS
 
   return (
     <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
@@ -77,13 +97,20 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
         {onToggle && <button onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
       </div>
 
-      {onStarterChange && (
+      {showStarterControls && onStarterChange && (
         <div style={{ marginBottom: '10px', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
-          <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Starter</div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <StarterButton label="Fire" color="#ff6b6b" selected={starter === 'Fire'} onClick={() => onStarterChange('Fire')} />
-            <StarterButton label="Grass" color="#51cf66" selected={starter === 'Grass'} onClick={() => onStarterChange('Grass')} />
-            <StarterButton label="Water" color="#74c0fc" selected={starter === 'Water'} onClick={() => onStarterChange('Water')} />
+          <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>{isYellow ? 'Rival Eevee' : 'Starter'}</div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: isYellow ? 'wrap' : 'nowrap', minWidth: 0 }}>
+            {starterOptions.map(option => (
+              <StarterButton
+                key={option.value}
+                label={option.label}
+                color={option.color}
+                selected={starter === option.value}
+                onClick={() => onStarterChange(option.value)}
+                compact={isYellow}
+              />
+            ))}
           </div>
         </div>
       )}

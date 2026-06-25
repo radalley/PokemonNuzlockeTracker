@@ -1,0 +1,22 @@
+{
+  "version_group_id": 4,
+  "load_build": 4,
+  "event_locations": 83,
+  "party_entries": 541,
+  "pokemon_rows": 1254,
+  "map_references": 498,
+  "trainer_rows_with_location": 455,
+  "trainer_rows_without_location": 86,
+  "displayable_non_rematch_trainers": 378,
+  "rematch_trainers": 87,
+  "referenced_trainers_unmapped": 18,
+  "unreferenced_party_entries": 68,
+  "location_methods": {
+    "canon_not_in_event": 12,
+    "direct": 23,
+    "manual": 189,
+    "manual_missing": 6,
+    "route": 243,
+    "unreferenced": 68
+  }
+}

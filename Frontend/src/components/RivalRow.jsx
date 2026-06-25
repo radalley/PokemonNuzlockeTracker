@@ -13,6 +13,7 @@ function RivalRow({ row, gameId = null, runId = null, attemptId = null, onVictor
         trainerItems={row.trainer_items}
         encounterTitle={row.display_name}
         gameId={gameId}
+        versionGroupId={row.version_group_id}
         runId={runId}
         attemptId={attemptId}
         trainerId={row.event_id}

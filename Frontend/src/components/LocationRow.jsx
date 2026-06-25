@@ -1198,6 +1198,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   trainerPic={trainer.trainer_pic}
                   trainerItems={trainer.trainer_items}
                   gameId={gameId}
+                  versionGroupId={trainer.version_group_id}
                   runId={runId}
                   attemptId={attemptNumber}
                   trainerId={trainer.trainer_id}

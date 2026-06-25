@@ -21,6 +21,34 @@ function TypeBadges({ type1, type2 }) {
   )
 }
 
+const MODAL_ACTION_BUTTON_STYLE = {
+  minHeight: '34px',
+  padding: '6px 12px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '999px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  font: 'inherit',
+  fontSize: '0.82em',
+}
+
+const PARTY_SELECT_BUTTON_STYLE = {
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '7px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '999px',
+  padding: '5px 8px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-primary)',
+  cursor: 'pointer',
+  font: 'inherit',
+  textAlign: 'left',
+  transition: 'border-color 0.1s, background-color 0.1s',
+}
+
 
 function BattleCompareModal({
   playerParty = [],
@@ -84,15 +112,14 @@ function BattleCompareModal({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {playerParty.map((mon, idx) => (
-                  <div
+                  <button
+                    type="button"
                     key={mon.pokemon_id}
                     onClick={() => togglePlayer(idx)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '7px',
-                      border: `1px solid ${selectedPlayer === idx ? '#7ec8e3' : 'var(--border)'}`,
-                      borderRadius: '6px', padding: '5px 6px', cursor: 'pointer',
-                      background: selectedPlayer === idx ? 'rgba(126,200,227,0.08)' : 'transparent',
-                      transition: 'border-color 0.1s',
+                      ...PARTY_SELECT_BUTTON_STYLE,
+                      borderColor: selectedPlayer === idx ? '#7ec8e3' : 'var(--border-strong)',
+                      background: selectedPlayer === idx ? 'rgba(126,200,227,0.08)' : 'var(--surface-deep)',
                     }}
                   >
                     <Sprite speciesId={mon.species_id} size={34} shiny={mon.shiny === 'True' || mon.shiny === true} />
@@ -104,7 +131,7 @@ function BattleCompareModal({
                         {mon.species_name}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -207,15 +234,14 @@ function BattleCompareModal({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {opponentParty.map((mon, idx) => (
-                  <div
+                  <button
+                    type="button"
                     key={`${mon.species_id}-${idx}`}
                     onClick={() => toggleOpponent(idx)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: '7px',
-                      border: `1px solid ${selectedOpponent === idx ? '#f2b46b' : 'var(--border)'}`,
-                      borderRadius: '6px', padding: '5px 6px', cursor: 'pointer',
-                      background: selectedOpponent === idx ? 'rgba(242,180,107,0.08)' : 'transparent',
-                      transition: 'border-color 0.1s',
+                      ...PARTY_SELECT_BUTTON_STYLE,
+                      borderColor: selectedOpponent === idx ? '#f2b46b' : 'var(--border-strong)',
+                      background: selectedOpponent === idx ? 'rgba(242,180,107,0.08)' : 'var(--surface-deep)',
                     }}
                   >
                     <Sprite speciesId={mon.species_id} size={34} />
@@ -225,7 +251,7 @@ function BattleCompareModal({
                       </div>
                       <div style={{ fontSize: '0.68em', color: 'var(--text-secondary)' }}>Lvl {mon.lvl}</div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -252,12 +278,14 @@ function BattleCompareModal({
 
         {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px' }}>
-          <button onClick={onClose} style={{ padding: '6px 12px', cursor: 'pointer' }}>Back</button>
+          <button type="button" onClick={onClose} style={MODAL_ACTION_BUTTON_STYLE}>Back</button>
           <button
+            type="button"
             onClick={onMarkVictory}
             disabled={defeated || battleSaving || battleLoading || battleResult?.success}
             style={{
-              padding: '6px 12px',
+              ...MODAL_ACTION_BUTTON_STYLE,
+              background: (defeated || battleResult?.success) ? 'var(--surface-deep)' : 'rgba(91,168,91,0.12)',
               cursor: (defeated || battleResult?.success) ? 'not-allowed' : 'pointer',
               color: (defeated || battleResult?.success) ? 'var(--text-secondary)' : '#5ba85b',
               borderColor: (defeated || battleResult?.success) ? 'var(--border-strong)' : '#5ba85b',

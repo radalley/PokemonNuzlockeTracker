@@ -124,7 +124,7 @@ function NewRun() {
         </label>
 
         <div className="new-run-actions new-run-actions-top">
-          <button onClick={handleCreate}>Create</button>
+          <button type="button" className="page-action-button page-action-button--success" onClick={handleCreate}>Create</button>
         </div>
       </div>
 

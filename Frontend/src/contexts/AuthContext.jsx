@@ -4,6 +4,18 @@ import { apiFetch } from '../utils/api'
 
 const AuthContext = createContext(null)
 
+function userFromSupabaseSession(session) {
+  if (!session?.user) return null
+  const fallbackUser = session.user
+  return {
+    user_id: null,
+    email: fallbackUser.email || '',
+    display_name: fallbackUser.user_metadata?.display_name || fallbackUser.user_metadata?.full_name || fallbackUser.email || 'Signed in',
+    account_type: null,
+    backend_unavailable: true,
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -14,11 +26,20 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     try {
       const response = await apiFetch('/api/auth/me')
+      if (!response.ok) {
+        throw new Error(`Backend auth check failed with ${response.status}`)
+      }
       const data = await response.json()
-      setUser(data.user || null)
+      if (data.user) {
+        setUser(data.user)
+      } else {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(userFromSupabaseSession(session))
+      }
     } catch (error) {
       console.error('Failed to fetch current user:', error)
-      setUser(null)
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(current => current || userFromSupabaseSession(session))
     } finally {
       setLoading(false)
     }

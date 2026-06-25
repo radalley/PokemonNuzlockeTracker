@@ -694,6 +694,161 @@ def _ensure_auth_schema(conn):
     conn.execute('create index if not exists idx_users_supabase_id on users(supabase_id)')
     conn.commit()
 
+def _ensure_contact_reports_schema(conn):
+    _ensure_auth_schema(conn)
+    conn.execute(
+        'create table if not exists contact_reports ('
+        'report_id serial primary key, '
+        'report_type text not null, '
+        'topic text, '
+        'title text, '
+        'details text not null, '
+        'reproduction_steps text, '
+        'status text not null default \'open\', '
+        'priority text not null default \'normal\', '
+        'admin_notes text, '
+        'user_id integer, '
+        'run_id text, '
+        'attempt_number integer, '
+        'game_id integer, '
+        'version_group_id integer, '
+        'run_name text, '
+        'game_name text, '
+        'page_url text, '
+        'user_agent text, '
+        "created_at text not null default to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS'), "
+        "updated_at text not null default to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS'), "
+        'resolved_at text'
+        ')'
+    )
+    conn.execute('create index if not exists idx_contact_reports_status on contact_reports(status)')
+    conn.execute('create index if not exists idx_contact_reports_created_at on contact_reports(created_at)')
+    conn.execute('create index if not exists idx_contact_reports_user_id on contact_reports(user_id)')
+    conn.commit()
+
+def create_contact_report(conn, report):
+    _ensure_contact_reports_schema(conn)
+    row = conn.execute(
+        'insert into contact_reports ('
+        'report_type, topic, title, details, reproduction_steps, user_id, run_id, attempt_number, '
+        'game_id, version_group_id, run_name, game_name, page_url, user_agent'
+        ') values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) '
+        'returning report_id',
+        (
+            report.get('report_type'),
+            report.get('topic'),
+            report.get('title'),
+            report.get('details'),
+            report.get('reproduction_steps'),
+            report.get('user_id'),
+            report.get('run_id'),
+            report.get('attempt_number'),
+            report.get('game_id'),
+            report.get('version_group_id'),
+            report.get('run_name'),
+            report.get('game_name'),
+            report.get('page_url'),
+            report.get('user_agent'),
+        )
+    ).fetchone()
+    conn.commit()
+    return int(row['report_id'])
+
+def get_contact_reports(conn, status=None, game_id=None, version_group_id=None, limit=100):
+    _ensure_contact_reports_schema(conn)
+    params = []
+    where_clauses = []
+    if status:
+        where_clauses.append('cr.status = %s')
+        params.append(status)
+    if game_id is not None:
+        where_clauses.append('cr.game_id = %s')
+        params.append(game_id)
+    if version_group_id is not None:
+        where_clauses.append('cr.version_group_id = %s')
+        params.append(version_group_id)
+    where = f'where {" and ".join(where_clauses)} ' if where_clauses else ''
+    params.append(min(int(limit or 100), 250))
+    rows = conn.execute(
+        'select cr.report_id, cr.report_type, cr.topic, cr.title, cr.details, cr.reproduction_steps, '
+        'cr.status, cr.priority, cr.admin_notes, cr.user_id, u.email as user_email, u.display_name as user_display_name, '
+        'cr.run_id, cr.attempt_number, cr.game_id, cr.version_group_id, cr.run_name, cr.game_name, '
+        'cr.page_url, cr.user_agent, cr.created_at, cr.updated_at, cr.resolved_at '
+        'from contact_reports cr '
+        'left join users u on cr.user_id = u.user_id '
+        f'{where}'
+        'order by cr.report_id desc '
+        'limit %s',
+        params
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+def get_contact_report_stats(conn, generation=None):
+    _ensure_contact_reports_schema(conn)
+    params = []
+    where_clauses = ["g.valid_game = 'valid'"]
+    if generation is not None:
+        where_clauses.append('g.generation = %s')
+        params.append(generation)
+    where = 'where ' + ' and '.join(where_clauses) + ' '
+
+    rows = conn.execute(
+        'select '
+        'coalesce(cr.game_id, g.game_id) as game_id, '
+        'coalesce(cr.version_group_id, g.version_group_id) as version_group_id, '
+        'g.generation, '
+        'coalesce(cr.game_name, g.name, \'Unknown\') as game_name, '
+        'count(cr.report_id) as total_reports, '
+        "sum(case when cr.report_type = 'general_contact' then 1 else 0 end) as general_count, "
+        "sum(case when cr.report_type = 'bug' then 1 else 0 end) as bug_count, "
+        "sum(case when cr.report_type = 'missing_information' then 1 else 0 end) as missing_count, "
+        "sum(case when cr.report_type = 'incorrect_information' then 1 else 0 end) as incorrect_count "
+        'from games g '
+        'left join contact_reports cr on cr.game_id = g.game_id '
+        f'{where}'
+        'group by coalesce(cr.game_id, g.game_id), coalesce(cr.version_group_id, g.version_group_id), g.generation, coalesce(cr.game_name, g.name, \'Unknown\') '
+        'order by g.generation asc, coalesce(cr.version_group_id, g.version_group_id) asc, coalesce(cr.game_id, g.game_id) asc',
+        params
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+def update_contact_report(conn, report_id, status=None, priority=None, admin_notes=None):
+    _ensure_contact_reports_schema(conn)
+    allowed_statuses = {'open', 'reviewing', 'resolved', 'closed'}
+    allowed_priorities = {'low', 'normal', 'high'}
+    updates = ["updated_at = to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS')"]
+    params = []
+
+    if status is not None:
+        if status not in allowed_statuses:
+            return {'success': False, 'error': 'Invalid status'}
+        updates.append('status = %s')
+        params.append(status)
+        if status in {'resolved', 'closed'}:
+            updates.append("resolved_at = coalesce(resolved_at, to_char(current_timestamp, 'YYYY-MM-DD HH24:MI:SS'))")
+        else:
+            updates.append('resolved_at = null')
+
+    if priority is not None:
+        if priority not in allowed_priorities:
+            return {'success': False, 'error': 'Invalid priority'}
+        updates.append('priority = %s')
+        params.append(priority)
+
+    if admin_notes is not None:
+        updates.append('admin_notes = %s')
+        params.append(admin_notes)
+
+    params.append(report_id)
+    row = conn.execute(
+        f'update contact_reports set {", ".join(updates)} where report_id = %s returning report_id',
+        params
+    ).fetchone()
+    conn.commit()
+    if not row:
+        return {'success': False, 'error': 'Report not found'}
+    return {'success': True}
+
 def get_user_by_id(conn, user_id):
     _ensure_auth_schema(conn)
     row = conn.execute(
@@ -1086,6 +1241,11 @@ def get_attempt_page_data(conn, run_id, attempt_number):
             f"{game_id_clause}"
             f"and case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
             f"and case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
+            f"and not exists ("
+            f"  select 1 from event_bosses eb "
+            f"  where eb.trainer_id = tp.trainer_id "
+            f"    and eb.version_group_id = tp.version_group_id"
+            f") "
             f'group by tp.canonical_location_id',
             [run_id, attempt_row['attempt_id'], *location_ids, version_group_id, *game_id_param]
         ).fetchall()
@@ -1263,7 +1423,7 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
                 'union all '
                 'select nullif(bl.canonical_location_id::text, \'\')::integer as event_id, bl.canonical_name as display_name, '
                 'nullif(bl.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(bl.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, '
-                'bl.event_type, null, null, null, null, null, 1 as is_bonus_location '
+                'bl.event_type, null, null, null, null, null, null::integer as version_group_id, 1 as is_bonus_location '
                 'from bonus_locations bl '
                 'where bl.run_id = %s and bl.attempt_id = %s and bl.is_active = 1 '
             )
@@ -1271,13 +1431,13 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
             params.append(attempt_row['attempt_id'])
 
     return conn.execute(
-        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, 0::integer as is_bonus_location '
+        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
         f'{game_filter}'
         'union all '
-        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, 0::integer as is_bonus_location '
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location '
         'from event_locations el '
         'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
         f'{loc_filter}'
@@ -1424,9 +1584,16 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         where_clauses.append("tp.game_id is null")
     # Only regular trainers
     where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+    where_clauses.append(
+        "not exists ("
+        "select 1 from event_bosses eb "
+        "where eb.trainer_id = tp.trainer_id "
+        "and eb.version_group_id = tp.version_group_id"
+        ")"
+    )
 
     query = (
-        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, '
+        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, tp.version_group_id, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         + defeated_select +
         'from trainer_pool tp '

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 function HeaderAuthMenu() {
   const { user, openAuthDialog, logout } = useAuth()
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const wrapperRef = useRef(null)
 
@@ -61,6 +63,18 @@ function HeaderAuthMenu() {
           <button type="button" className="site-header__auth-menu-item is-disabled" disabled title="Settings coming soon">
             Settings
           </button>
+          {user.account_type === 'admin' && (
+            <button
+              type="button"
+              className="site-header__auth-menu-item"
+              onClick={() => {
+                setMenuOpen(false)
+                navigate('/admin/reports')
+              }}
+            >
+              Reports
+            </button>
+          )}
           <button type="button" className="site-header__auth-menu-item" onClick={logout}>
             Sign Out
           </button>

@@ -93,6 +93,9 @@ function Home() {
               Load Game
             </button>
             <button className="home-action-button" onClick={() => navigate('/guides')}>Guides</button>
+            {user?.account_type === 'admin' && (
+              <button className="home-action-button" onClick={() => navigate('/admin/reports')}>Reports</button>
+            )}
           </div>
         </div>
       </main>

@@ -133,8 +133,8 @@ function LoadRunRow({ run, onLoad, onDelete }) {
 
       <td className="load-run-cell load-run-cell--actions">
         <div className="load-run-actions-row">
-          <button type="button" onClick={onLoad} disabled={!run.latest_attempt}>Load</button>
-          <button type="button" className="load-run-delete-button" onClick={onDelete}>Delete</button>
+          <button type="button" className="page-action-button page-action-button--success" onClick={onLoad} disabled={!run.latest_attempt}>Load</button>
+          <button type="button" className="page-action-button page-action-button--danger" onClick={onDelete}>Delete</button>
         </div>
       </td>
     </tr>
@@ -188,10 +188,12 @@ function LoadRun() {
               All data will be lost.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
-              <button onClick={() => setConfirmDelete(null)}>Cancel</button>
+              <button type="button" className="page-action-button" onClick={() => setConfirmDelete(null)}>Cancel</button>
               <button
+                type="button"
+                className="page-action-button page-action-button--danger"
                 onClick={() => handleDeleteRun(confirmDelete)}
-                style={{ backgroundColor: '#c0392b', color: '#fff', border: 'none', padding: '6px 14px', cursor: 'pointer' }}>
+              >
                 Yes, Delete Permanently
               </button>
             </div>

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import HeaderAuthMenu from './HeaderAuthMenu'
+import ContactButton from './ContactButton'
 
 function SiteHeader({ showHomeButton = false, logoClickable = true }) {
   const navigate = useNavigate()
@@ -23,7 +24,10 @@ function SiteHeader({ showHomeButton = false, logoClickable = true }) {
         )}
       </div>
 
-      <HeaderAuthMenu />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <ContactButton className="site-header__auth-button" />
+        <HeaderAuthMenu />
+      </div>
     </header>
   )
 }

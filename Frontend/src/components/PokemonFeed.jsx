@@ -13,6 +13,16 @@ const ROW_PAD_Y_PX = 6
 const MIN_SPRITE_SIZE = 24
 const USER_FEED_LIMIT = 100
 const DEFAULT_FEED_LIMIT = 300
+const FALLBACK_SPECIES_LIMIT = 1025
+
+function buildFallbackSpecies(limit = DEFAULT_FEED_LIMIT) {
+  return shuffleList(
+    Array.from({ length: FALLBACK_SPECIES_LIMIT }, (_, index) => ({
+      species_id: index + 1,
+      name: `Pokemon ${index + 1}`,
+    }))
+  ).slice(0, limit)
+}
 
 function parseBadgeIds(value) {
   if (value == null) return []
@@ -82,6 +92,9 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
           setSpecies(shuffleList(data))
         }
       } catch {
+        if (!cancelled) {
+          setSpecies(buildFallbackSpecies(DEFAULT_FEED_LIMIT))
+        }
       }
     }
 

@@ -8,6 +8,7 @@ import Attempt from './pages/Attempt'
 import Box from './pages/Box'
 import Graveyard from './pages/Graveyard'
 import ResetPassword from './pages/ResetPassword'
+import AdminReports from './pages/AdminReports'
 import ErrorBoundary from './components/ErrorBoundary'
 import AuthDialog from './components/AuthDialog'
 import { AuthProvider } from './contexts/AuthContext'
@@ -27,6 +28,7 @@ function App() {
             <Route path="/box/:runId/:attemptId" element={<Box />} />
             <Route path="/graveyard/:runId/:attemptId" element={<Graveyard />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

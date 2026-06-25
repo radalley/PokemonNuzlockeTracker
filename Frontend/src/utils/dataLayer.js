@@ -298,6 +298,38 @@ export async function renameBonusLocation(runId, attemptNumber, canonicalLocatio
   return res.json()
 }
 
+export async function submitContactReport(report) {
+  const res = await apiFetch('/api/contact-report', {
+    method: 'POST',
+    body: JSON.stringify(report),
+  })
+  return res.json()
+}
+
+export async function getContactReports(filters = {}) {
+  const params = new URLSearchParams()
+  if (filters.status) params.set('status', filters.status)
+  if (filters.gameId) params.set('game_id', filters.gameId)
+  if (filters.versionGroupId) params.set('version_group_id', filters.versionGroupId)
+  const query = params.toString() ? `?${params.toString()}` : ''
+  const res = await apiFetch(`/api/admin/contact-reports${query}`)
+  return res.json()
+}
+
+export async function getContactReportStats(generation = '') {
+  const params = generation ? `?generation=${encodeURIComponent(generation)}` : ''
+  const res = await apiFetch(`/api/admin/contact-report-stats${params}`)
+  return res.json()
+}
+
+export async function updateContactReport(reportId, patch) {
+  const res = await apiFetch(`/api/admin/contact-reports/${reportId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  })
+  return res.json()
+}
+
 export async function getBox(runId, attemptNumber) {
   if (isLocalRun(runId)) {
     const rows = Object.values(guest.getEncounters(runId, attemptNumber))

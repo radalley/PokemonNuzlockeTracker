@@ -14,11 +14,24 @@ import {
   updateEncounterStatus,
 } from '../utils/dataLayer'
 
+const MODAL_BUTTON_STYLE = {
+  minHeight: '34px',
+  padding: '6px 14px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '999px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  font: 'inherit',
+  fontSize: '0.85em',
+}
+
 function Box() {
   const { runId, attemptId } = useParams()
   const [runDetails, setRunDetails] = useState(null)
   const [pokemon, setPokemon] = useState([])
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
+  const [statsOpen, setStatsOpen] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -139,12 +152,14 @@ function Box() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 {evolveOptions.map(opt => (
                   <button
+                    type="button"
                     key={opt.to_species_id}
                     onClick={() => handleConfirmEvolve(opt.to_species_id)}
                     style={{
+                      ...MODAL_BUTTON_STYLE,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      gap: '10px', padding: '8px 16px', fontSize: '0.9em',
-                      cursor: 'pointer', color: '#7ec8e3', borderColor: '#7ec8e3'
+                      gap: '10px', minHeight: '48px',
+                      color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)'
                     }}
                   >
                     <Sprite speciesId={opt.to_species_id} size={48} />
@@ -154,16 +169,17 @@ function Box() {
               </div>
             )}
             <button
+              type="button"
               onClick={() => { setEvolveTarget(null); setEvolveOptions(null) }}
-              style={{ marginTop: '20px', padding: '6px 16px', cursor: 'pointer', fontSize: '0.85em' }}
+              style={{ ...MODAL_BUTTON_STYLE, marginTop: '20px' }}
             >Cancel</button>
           </div>
         </div>
       )}
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt partyRefreshKey={partyRefreshKey} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt partyRefreshKey={partyRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
-        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} />
+        <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
         <div style={{ padding: '20px', textAlign: 'left' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>
