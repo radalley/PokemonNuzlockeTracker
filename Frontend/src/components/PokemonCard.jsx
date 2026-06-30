@@ -39,28 +39,6 @@ const STATUS_STYLE = {
   Missed:   { color: '#888',    label: 'Missed' },
 }
 
-const BADGE_LEADERS = {
-  1: 'Brock',
-  2: 'Misty',
-  3: 'Lt. Surge',
-  4: 'Erika',
-  5: 'Koga',
-  6: 'Sabrina',
-  7: 'Blaine',
-  8: 'Giovanni',
-}
-
-const BADGE_NAMES = {
-  1: 'Boulder Badge',
-  2: 'Cascade Badge',
-  3: 'Thunder Badge',
-  4: 'Rainbow Badge',
-  5: 'Soul Badge',
-  6: 'Marsh Badge',
-  7: 'Volcano Badge',
-  8: 'Earth Badge',
-}
-
 const CARD_ACTION_BUTTON_STYLE = {
   minHeight: '26px',
   minWidth: 0,
@@ -105,14 +83,6 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
       return
     }
 
-    if (localRun) {
-      setBadgeMeta(badgeIds.map(badgeId => ({
-        badge_id: badgeId,
-        badge_name: BADGE_NAMES[badgeId] || `Badge ${badgeId}`,
-      })))
-      return
-    }
-
     apiFetch(`/api/badges?ids=${badgeIds.join(',')}`)
       .then(res => res.json())
       .then(data => setBadgeMeta(Array.isArray(data) ? data : []))
@@ -134,7 +104,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
         rivals_defeated_count: Number(pokemon.rivals_defeated_count || 0),
         badges_earned: badgeIds.map(badgeId => ({
           badge_id: badgeId,
-          badge_name: BADGE_NAMES[badgeId] || `Badge ${badgeId}`,
+          badge_name: badgeMeta.find(badge => Number(badge.badge_id) === badgeId)?.badge_name || `Badge ${badgeId}`,
         })),
       })
       setLoading(false)
@@ -152,7 +122,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
         console.error('Failed to fetch trainer/badge data:', err)
         setLoading(false)
       })
-  }, [showDropdown, runId, attemptId, pokemon.pokemon_id, localRun, badgeIds.join(',')])
+  }, [showDropdown, runId, attemptId, pokemon.pokemon_id, localRun, badgeIds.join(','), badgeMeta])
 
   return (
     <div style={{
@@ -276,7 +246,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
                               {(badge.badge_name || `Badge ${badge.badge_id}`).toLowerCase()}
                             </span>
                             <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', flexShrink: 0 }}>
-                              {(BADGE_LEADERS[badge.badge_id] || 'Leader').toLowerCase()}
+                              {(badge.trainer_name || 'Leader').toLowerCase()}
                             </span>
                           </div>
                         ))}

@@ -51,7 +51,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
   const [open, setOpen] = useState(false)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -138,7 +138,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
     event.stopPropagation()
     if (!runId || !attemptId || !trainerId) return
     setBattleSaving(true)
-    markTrainerVictory(runId, attemptId, trainerId, encounterName, trainerClass, encounterTitle)
+    markTrainerVictory(runId, attemptId, trainerId, bossEventId, badgeId)
       .then(data => {
         setBattleResult(data)
         if (data?.success) {

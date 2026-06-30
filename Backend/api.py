@@ -19,8 +19,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn,
                      create_contact_report, get_contact_reports, update_contact_report,
-                     get_contact_report_stats)
-from backend import _badge_id_for_gym_leader
+                     get_contact_report_stats, get_run_menu_summary, mark_run_opened)
 
 load_dotenv()
 
@@ -143,6 +142,30 @@ def get_runs_route():
         return error
     runs = get_runs(conn, user_id=user['user_id'])
     return jsonify([dict(r) for r in runs])
+
+@app.route('/api/runs/menu-summary', methods=['GET'])
+def run_menu_summary_route():
+    conn = get_db()
+    user, error = require_auth()
+    if error:
+        return error
+    return jsonify(get_run_menu_summary(conn, user['user_id']))
+
+@app.route('/api/runs/<int:run_id>/open', methods=['POST'])
+def mark_run_opened_route(run_id):
+    conn = get_db()
+    user, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    data = request.get_json() or {}
+    attempt_number = data.get('attempt_number')
+    try:
+        attempt_number = int(attempt_number)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Valid attempt_number required'}), 400
+    if not mark_run_opened(conn, run_id, user['user_id'], attempt_number):
+        return jsonify({'error': 'Run or attempt not found'}), 404
+    return jsonify({'success': True})
 
 @app.route('/api/runs/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def get_run_route(run_id, attempt_number):
@@ -602,15 +625,18 @@ def trainer_victory_route(run_id, attempt_number):
     trainer_id = data.get('trainer_id')
     if trainer_id is None:
         return jsonify({'error': 'trainer_id required'}), 400
+    try:
+        trainer_id = int(trainer_id)
+        event_id = int(data['event_id']) if data.get('event_id') is not None else None
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Valid trainer_id and event_id required'}), 400
 
     result = mark_trainer_victory(
         conn,
         run_id,
         attempt_number,
-        int(trainer_id),
-        data.get('trainer_name') or '',
-        data.get('trainer_class') or '',
-        data.get('encounter_title') or '',
+        trainer_id,
+        event_id,
     )
     if not result.get('success'):
         return jsonify(result), 400
@@ -703,18 +729,6 @@ def guest_script_route():
         pools[location_id] = get_encounter_pool(conn, location_id, game_id)
 
     return jsonify({'script': script, 'pools': pools})
-
-
-@app.route('/api/trainer-badge-info', methods=['GET'])
-def trainer_badge_info_route():
-    trainer_name = request.args.get('trainer_name', default='', type=str)
-    trainer_class = request.args.get('trainer_class', default='', type=str)
-    encounter_title = request.args.get('encounter_title', default='', type=str)
-
-    is_gym_leader = 'LEADER' in trainer_class.upper()
-    badge_id = _badge_id_for_gym_leader(trainer_name, encounter_title) if is_gym_leader else None
-    return jsonify({'badge_id': badge_id, 'is_gym_leader': is_gym_leader})
-
 
 
 if __name__ == '__main__':

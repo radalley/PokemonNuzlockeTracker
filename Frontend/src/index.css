@@ -460,7 +460,8 @@ p {
   flex-direction: column;
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .home-feed-layer {
@@ -482,6 +483,7 @@ p {
 }
 
 .home-main-panel {
+  box-sizing: border-box;
   width: min(560px, 100%);
   display: flex;
   flex-direction: column;
@@ -509,11 +511,12 @@ p {
   gap: 12px;
   margin-top: 12px;
   width: 100%;
-  max-width: 320px;
+  max-width: 680px;
 }
 
-.home-actions button {
-  width: 100%;
+.home-actions > .home-action-button {
+  width: min(320px, 100%);
+  align-self: center;
 }
 
 .home-action-button {
@@ -1269,6 +1272,128 @@ p {
   transform: translateY(-1px);
 }
 
+.continue-run-button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 118px;
+  display: grid;
+  grid-template-columns: 118px minmax(150px, 1fr) 110px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  overflow: hidden;
+  color: var(--text-primary);
+  text-align: left;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.14);
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.continue-run-button:hover {
+  border-color: #2f9e68;
+  background: var(--surface-mid);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 2px rgba(47, 158, 104, 0.16);
+  transform: translateY(-1px);
+}
+
+.continue-run-button:focus-visible {
+  outline: 3px solid rgba(47, 158, 104, 0.42);
+  outline-offset: 3px;
+}
+
+.continue-run-button__game {
+  width: 118px;
+  min-height: 68px;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.continue-run-button__game img {
+  display: block;
+  width: 100%;
+  max-height: 68px;
+  object-fit: contain;
+}
+
+.continue-run-button__details {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.continue-run-button__label,
+.continue-run-button__attempt {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.continue-run-button__label {
+  color: #257954;
+  font-weight: 800;
+}
+
+.continue-run-button__details strong {
+  width: 100%;
+  overflow: hidden;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.continue-run-button__badges {
+  min-height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+
+.continue-run-button__badges img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.continue-run-button__badges span {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.continue-run-button__party {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  justify-content: end;
+  gap: 4px;
+}
+
+.continue-run-button__party-slot {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-deep);
+}
+
+.continue-run-button__party-slot.is-filled {
+  border-color: rgba(69, 128, 173, 0.6);
+  background: rgba(69, 128, 173, 0.1);
+}
+
 .new-run-generation-pill.is-selected {
   border-color: #7ec8e3;
   background: rgba(126, 200, 227, 0.12);
@@ -1774,6 +1899,35 @@ p {
   .load-run-cell--latest-attempt {
     min-width: 300px;
   }
+
+  .continue-run-button {
+    grid-template-columns: 108px minmax(0, 1fr);
+    grid-template-areas:
+      "game details"
+      "party party";
+    gap: 10px 14px;
+    padding: 12px;
+  }
+
+  .continue-run-button__game {
+    grid-area: game;
+    width: 108px;
+    min-height: 62px;
+  }
+
+  .continue-run-button__game img {
+    max-height: 62px;
+  }
+
+  .continue-run-button__details {
+    grid-area: details;
+  }
+
+  .continue-run-button__party {
+    grid-area: party;
+    grid-template-columns: repeat(6, 40px);
+    justify-content: center;
+  }
 }
 
 code,
@@ -1807,6 +1961,21 @@ code {
   .home-action-button:hover {
     background: #232835;
     box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+  }
+
+  .continue-run-button {
+    background: #1b1c23;
+    border-color: #343a47;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  }
+
+  .continue-run-button:hover {
+    background: #232835;
+    border-color: #45b985;
+  }
+
+  .continue-run-button__label {
+    color: #68d5a3;
   }
 
   .home-footer {

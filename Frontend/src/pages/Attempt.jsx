@@ -9,7 +9,7 @@ import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import PaletteDebugPanel from '../components/PaletteDebugPanel'
 import ContactButton from '../components/ContactButton'
-import { getAttemptPageData, getParty, getPokebank, updateStarter as saveStarter } from '../utils/dataLayer'
+import { getAttemptPageData, getParty, getPokebank, markRunOpened, updateStarter as saveStarter } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
 
 const EMPTY_POOL = []
@@ -94,6 +94,9 @@ function Attempt() {
         setPools(data?.pools || {})
         setSavedEncounters(data?.encounters || {})
         setAttemptLoaded(true)
+        if (data?.run) {
+          markRunOpened(runId, attemptId).catch(err => console.error('Failed to record opened run:', err))
+        }
       })
       .catch(err => {
         if (err.name === 'AbortError') return

@@ -17,6 +17,8 @@ function RivalRow({ row, gameId = null, runId = null, attemptId = null, onVictor
         runId={runId}
         attemptId={attemptId}
         trainerId={row.event_id}
+        bossEventId={row.boss_event_id}
+        badgeId={row.badge_id}
         enableBattle
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}

@@ -21,6 +21,8 @@ function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictory
         runId={runId}
         attemptId={attemptId}
         trainerId={row.event_id}
+        bossEventId={row.boss_event_id}
+        badgeId={row.badge_id}
         enableBattle
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}

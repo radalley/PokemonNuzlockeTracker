@@ -86,6 +86,52 @@ export function getRuns() {
   })
 }
 
+export function getMenuSummary() {
+  const state = _getState()
+  const runs = state.runs || []
+  if (runs.length === 0) return { has_runs: false, latest_run: null }
+
+  const latestRun = [...runs].sort((left, right) => {
+    const leftTime = Date.parse(left.last_opened_at || left.created_at || '') || 0
+    const rightTime = Date.parse(right.last_opened_at || right.created_at || '') || 0
+    if (rightTime !== leftTime) return rightTime - leftTime
+    return String(right.run_id).localeCompare(String(left.run_id), undefined, { numeric: true })
+  })[0]
+  const attempts = state.attempts[latestRun.run_id] || []
+  const fallbackAttempt = attempts.length
+    ? Math.max(...attempts.map(attempt => Number(attempt.attempt_number)))
+    : null
+  const requestedAttempt = Number(latestRun.last_opened_attempt_number)
+  const attemptNumber = attempts.some(attempt => Number(attempt.attempt_number) === requestedAttempt)
+    ? requestedAttempt
+    : fallbackAttempt
+  if (!attemptNumber) return { has_runs: true, latest_run: null }
+
+  const key = attemptKey(latestRun.run_id, attemptNumber)
+  return {
+    has_runs: true,
+    latest_run: {
+      ...latestRun,
+      attempt_number: attemptNumber,
+      party: state.party[key] || [],
+      badges: state.badges[key] || [],
+    },
+  }
+}
+
+export function markRunOpened(runId, attemptNumber) {
+  const state = _getState()
+  const run = (state.runs || []).find(candidate => String(candidate.run_id) === String(runId))
+  const attemptExists = (state.attempts[runId] || []).some(
+    attempt => Number(attempt.attempt_number) === Number(attemptNumber)
+  )
+  if (!run || !attemptExists) return false
+  run.last_opened_at = new Date().toISOString()
+  run.last_opened_attempt_number = Number(attemptNumber)
+  _setState(state)
+  return true
+}
+
 export function createRun(gameData, runName) {
   const state = _getState()
   const run_id = nextRunId(state)
@@ -100,6 +146,8 @@ export function createRun(gameData, runName) {
     created_at: now,
     beaten_at: null,
     victory_item: '',
+    last_opened_at: now,
+    last_opened_attempt_number: 1,
   }
 
   state.runs.push(run)
@@ -172,7 +220,9 @@ export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation,
   const pokemon_id = existingPokemonId || nextPokemonId(state)
 
   state.encounters[key] = state.encounters[key] || {}
+  const existingEncounter = state.encounters[key][encounterKey] || {}
   state.encounters[key][encounterKey] = {
+    ...existingEncounter,
     pokemon_id,
     species_id: Number(speciesId),
     species_name: speciesName,
@@ -302,17 +352,30 @@ export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = nu
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const defeated = new Set(state.trainers_defeated[key] || [])
+  const isNewVictory = !defeated.has(Number(trainerId))
   defeated.add(Number(trainerId))
   state.trainers_defeated[key] = Array.from(defeated)
 
-  if (badgeId != null) {
+  if (isNewVictory && badgeId != null) {
     const badges = new Set((state.badges[key] || []).map(Number))
     badges.add(Number(badgeId))
     state.badges[key] = Array.from(badges)
+
+    const partyPokemonIds = new Set((state.party[key] || []).map(member => String(member.pokemon_id)))
+    Object.values(state.encounters[key] || {}).forEach(encounter => {
+      if (!partyPokemonIds.has(String(encounter.pokemon_id))) return
+      const earned = Array.isArray(encounter.badges_earned)
+        ? encounter.badges_earned.map(Number)
+        : String(encounter.badges_earned || '').split(',').filter(Boolean).map(Number).filter(Number.isFinite)
+      encounter.badges_earned = Array.from(new Set([...earned, Number(badgeId)])).sort((a, b) => a - b)
+    })
   }
 
   _setState(state)
-  return { success: true, badge_awarded: badgeId ? { badge_id: Number(badgeId) } : null }
+  return {
+    success: true,
+    badge_awarded: isNewVictory && badgeId ? { badge_id: Number(badgeId) } : null,
+  }
 }
 
 export function getSessionStats(runId, attemptNumber) {
@@ -339,8 +402,8 @@ export function getBonusLocations(runId, attemptNumber) {
 
 /**
  * Aggregate all Captured/Dead pokemon across every local run and attempt
- * into a flat feed-compatible list. Badges are sourced from the attempt's
- * badge list and attached to every pokemon in that attempt.
+ * into a flat feed-compatible list. Each Pokemon carries only badges earned
+ * while it was in the party.
  */
 export function getLocalFeedPokemon() {
   const state = _getState()
@@ -352,16 +415,16 @@ export function getLocalFeedPokemon() {
     for (const attempt of attempts) {
       const key = attemptKey(run.run_id, attempt.attempt_number)
       const encounters = Object.values(state.encounters[key] || {})
-      const badgeIds = (state.badges[key] || []).map(Number).sort((a, b) => a - b)
-      const badgesJson = badgeIds.length > 0 ? JSON.stringify(badgeIds) : null
-
       for (const enc of encounters) {
         if (enc.status !== 'Captured' && enc.status !== 'Dead') continue
+        const badgeIds = Array.isArray(enc.badges_earned)
+          ? enc.badges_earned.map(Number).filter(Number.isFinite).sort((a, b) => a - b)
+          : []
         result.push({
           species_id: enc.species_id,
           shiny: Boolean(enc.shiny),
           status: enc.status,
-          badges_earned: badgesJson,
+          badges_earned: badgeIds.length > 0 ? JSON.stringify(badgeIds) : null,
           fromUser: true,
         })
       }

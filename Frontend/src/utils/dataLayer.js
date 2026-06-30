@@ -11,6 +11,25 @@ export async function getRuns(isAuthenticated) {
   return res.json()
 }
 
+export async function getRunMenuSummary(isAuthenticated) {
+  if (!isAuthenticated) return guest.getMenuSummary()
+  const res = await apiFetch('/api/runs/menu-summary')
+  if (!res.ok) throw new Error(`menu-summary failed ${res.status}`)
+  return res.json()
+}
+
+export async function markRunOpened(runId, attemptNumber) {
+  if (isLocalRun(runId)) {
+    return { success: guest.markRunOpened(runId, attemptNumber) }
+  }
+  const res = await apiFetch(`/api/runs/${runId}/open`, {
+    method: 'POST',
+    body: JSON.stringify({ attempt_number: Number(attemptNumber) }),
+  })
+  if (!res.ok) throw new Error(`run-open failed ${res.status}`)
+  return res.json()
+}
+
 export async function createRun(isAuthenticated, gameId, runName, gameData = {}) {
   if (!isAuthenticated) {
     return guest.createRun({ game_id: gameId, ...gameData }, runName)
@@ -127,6 +146,7 @@ export async function getAttemptPageData(runId, attemptNumber) {
   }
 
   const res = await apiFetch(`/api/attempt-page/${runId}/${attemptNumber}`)
+  if (!res.ok) throw new Error(`attempt-page failed ${res.status}`)
   return res.json()
 }
 
@@ -210,33 +230,24 @@ export async function removeFromParty(runId, attemptNumber, pokemonId) {
   return res.json()
 }
 
-export async function markTrainerVictory(runId, attemptNumber, trainerId, trainerName, trainerClass, encounterTitle) {
+export async function markTrainerVictory(runId, attemptNumber, trainerId, eventId = null, badgeId = null) {
   if (isLocalRun(runId)) {
-    let badgeId = null
-    try {
-      const params = new URLSearchParams({
-        trainer_name: trainerName || '',
-        trainer_class: trainerClass || '',
-        encounter_title: encounterTitle || '',
-      })
-      const res = await apiFetch(`/api/trainer-badge-info?${params.toString()}`)
+    const result = guest.markTrainerVictory(runId, attemptNumber, trainerId, badgeId)
+    if (result.badge_awarded) {
+      const res = await apiFetch(`/api/badges?ids=${result.badge_awarded.badge_id}`)
       if (res.ok) {
-        const payload = await res.json()
-        badgeId = payload.badge_id ?? null
+        const badges = await res.json()
+        result.badge_awarded = badges[0] || result.badge_awarded
       }
-    } catch {
-      badgeId = null
     }
-    return guest.markTrainerVictory(runId, attemptNumber, trainerId, badgeId)
+    return result
   }
 
   const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/trainer-victory`, {
     method: 'POST',
     body: JSON.stringify({
       trainer_id: trainerId,
-      trainer_name: trainerName,
-      trainer_class: trainerClass,
-      encounter_title: encounterTitle,
+      event_id: eventId,
     }),
   })
   return res.json()

@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import SiteHeader from '../components/SiteHeader'
 import { useAuth } from '../contexts/AuthContext'
 import PokemonFeed from '../components/PokemonFeed'
-import { getRuns } from '../utils/dataLayer'
+import ContinueRunButton from '../components/ContinueRunButton'
+import { getRunMenuSummary } from '../utils/dataLayer'
 import { apiFetch } from '../utils/api'
 
 function Home() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
   const [hasRuns, setHasRuns] = useState(false)
+  const [latestRun, setLatestRun] = useState(null)
   const [runsLoading, setRunsLoading] = useState(true)
   const [backendReady, setBackendReady] = useState(false)
 
@@ -29,13 +31,15 @@ function Home() {
 
       setRunsLoading(true)
       try {
-        const runs = await getRuns(Boolean(user))
+        const summary = await getRunMenuSummary(Boolean(user))
         if (!cancelled) {
-          setHasRuns(Array.isArray(runs) && runs.length > 0)
+          setHasRuns(Boolean(summary?.has_runs))
+          setLatestRun(summary?.latest_run || null)
         }
       } catch {
         if (!cancelled) {
           setHasRuns(false)
+          setLatestRun(null)
         }
       } finally {
         if (!cancelled) {
@@ -62,7 +66,7 @@ function Home() {
       </div>
 
       <main className="home-main">
-        <div className="home-main-panel">
+        <div className={`home-main-panel${latestRun ? ' has-continuation' : ''}`}>
           <img className="home-logo" src="/sprites/Lockley_Logo.gif" alt="Lockley" />
           <h2>A Multi-Game Pokémon Nuzlocke Tracker</h2>
           <p className="home-auth-note">
@@ -73,6 +77,12 @@ function Home() {
               <p style={{ fontSize: '0.82em', color: 'var(--text-secondary)', margin: '0 0 8px', textAlign: 'center' }}>
                 Connecting to server — this can take up to a minute after inactivity…
               </p>
+            )}
+            {latestRun && (
+              <ContinueRunButton
+                run={latestRun}
+                onContinue={() => navigate(`/attempt/${latestRun.run_id}/${latestRun.attempt_number}`)}
+              />
             )}
             <button
               className={`home-action-button${actionsDisabled ? ' is-disabled' : ''}`}
