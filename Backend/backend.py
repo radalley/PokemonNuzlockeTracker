@@ -927,26 +927,6 @@ def _ensure_auth_schema(conn):
     conn.execute('create index if not exists idx_runs_user_last_opened on runs(user_id, last_opened_at desc)')
     conn.execute('create index if not exists idx_users_email on users(email)')
     conn.execute('create index if not exists idx_users_supabase_id on users(supabase_id)')
-    conn.execute(
-        'update runs target set '
-        'last_opened_at = current_timestamp, '
-        'last_opened_attempt_number = ('
-        '  select max(attempt_number) from attempts where attempts.run_id = target.run_id'
-        ') '
-        'where target.run_id in ('
-        '  select candidate.run_id from runs candidate '
-        '  where candidate.user_id is not null '
-        '  and not exists ('
-        '    select 1 from runs marked '
-        '    where marked.user_id = candidate.user_id and marked.last_opened_at is not null'
-        '  ) '
-        '  and candidate.run_id = ('
-        '    select newest.run_id from runs newest '
-        '    where newest.user_id = candidate.user_id '
-        '    order by newest.created_at desc nulls last, newest.run_id desc limit 1'
-        '  )'
-        ')'
-    )
     conn.commit()
 
 def _ensure_contact_reports_schema(conn):
