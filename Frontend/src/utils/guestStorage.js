@@ -422,6 +422,7 @@ export function getLocalFeedPokemon() {
           : []
         result.push({
           species_id: enc.species_id,
+          nickname: enc.nickname || null,
           shiny: Boolean(enc.shiny),
           status: enc.status,
           badges_earned: badgeIds.length > 0 ? JSON.stringify(badgeIds) : null,
