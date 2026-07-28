@@ -25,7 +25,15 @@ from backend import (get_games, create_run, get_runs, get_script,
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+
+# Lock CORS to known frontend origins via CORS_ORIGINS (comma-separated).
+# Falls back to allow-all so a deploy without the env var doesn't break the
+# frontend; set CORS_ORIGINS on Render to close it.
+_cors_origins = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+if _cors_origins:
+    CORS(app, supports_credentials=True, origins=_cors_origins)
+else:
+    CORS(app, supports_credentials=True)
 
 # JWKS client for asymmetric JWT verification (cached at module level)
 _jwks_client = None
@@ -543,15 +551,6 @@ def pokebank_route(run_id, attempt_id):
     data = get_pokebank_for_attempt(conn, run_id, attempt_id)
     return jsonify(data)
 
-@app.route('/api/debug/trainer-items', methods=['GET'])
-def debug_trainer_items_route():
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT trainer_id, encounter_name, trainer_name, trainer_items "
-        "FROM trainer_pool WHERE trainer_items IS NOT NULL AND trainer_items != '' LIMIT 50"
-    ).fetchall()
-    return jsonify([dict(r) for r in rows])
-
 @app.route('/api/attempt-page/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def attempt_page_route(run_id, attempt_number):
     conn = get_db()
@@ -748,4 +747,6 @@ def guest_script_route():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Local development entry point only — production runs via gunicorn (see
+    # Procfile). The Werkzeug debugger is opt-in so it can never ship enabled.
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
