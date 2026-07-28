@@ -66,6 +66,7 @@ def _cursor(conn):
     return conn.raw.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
 state = {'active_run_id' : None, 'active_attempt_id': None, 'active_game_id': None, 'active_starter': None, 'version_group_id': None}
+_schema_ready = {'auth': False, 'badge': False, 'bonus_locations': False, 'contact_reports': False}
 active_party = {
     1:'',
     2:'',
@@ -197,6 +198,120 @@ def create_run(conn, name, user_id=None):
     new_attempt(conn)
     return row['run_id']
 
+def get_party_for_attempts_bulk(conn, attempt_ids):
+    """
+    Batched equivalent of calling get_party_for_attempt() once per attempt_id.
+
+    A single attempt_ids list can span multiple different games (a user's
+    runs aren't all the same generation), so this can't patch stats/types/
+    abilities using one shared generation value the way a single-attempt
+    query can. Instead it joins each row back through attempts -> runs ->
+    games so every row is patched using *its own* attempt's generation.
+
+    Returns {attempt_id: [party_rows]}.
+    """
+    _ensure_badge_schema(conn)
+    attempt_ids = [a for a in attempt_ids if a is not None]
+    if not attempt_ids:
+        return {}
+    placeholders = ','.join(['%s'] * len(attempt_ids))
+    badges_select = ', ' + _pokemon_badges_text_expr('pb')
+    rows = conn.execute(
+        'select p.attempt_id, p.party_slot, p.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, pb.shiny, '
+        'pb.level_met, st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe'
+        + badges_select + ' '
+        'from party p '
+        'join pokebank pb on p.pokemon_id = pb.pokemon_id '
+        'join species s on pb.species_id = s.species_id '
+        'join attempts patt on p.attempt_id = patt.attempt_id '
+        'join runs prun on patt.run_id = prun.run_id '
+        'left join games pgame on nullif(prun.game_id::text, \'\')::integer = nullif(pgame.game_id::text, \'\')::integer '
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'pgame.generation')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'pgame.generation')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'pgame.generation')
+        + f'where p.attempt_id in ({placeholders}) '
+        + 'order by p.attempt_id, p.party_slot',
+        tuple(attempt_ids)
+    ).fetchall()
+
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(row['attempt_id'], []).append(row)
+    return grouped
+
+
+def get_attempt_session_stats_bulk(conn, attempt_ids):
+    """
+    Batched equivalent of calling get_attempt_session_stats() once per
+    attempt_id. Returns {attempt_id: {badges_earned, badge_ids,
+    trainers_defeated, pokemon_caught, pokemon_dead, pokemon_missed}}
+    (same shape as get_attempt_session_stats minus run_id/attempt_number,
+    which the caller already has).
+    """
+    _ensure_badge_schema(conn)
+    attempt_ids = [a for a in attempt_ids if a is not None]
+    if not attempt_ids:
+        return {}
+    placeholders = ','.join(['%s'] * len(attempt_ids))
+
+    buckets = {
+        attempt_id: {
+            'pokemon_caught': 0, 'pokemon_dead': 0, 'pokemon_missed': 0,
+            'trainers_defeated': 0, 'badge_ids': set(),
+        }
+        for attempt_id in attempt_ids
+    }
+
+    status_rows = conn.execute(
+        f'select attempt_id, status, count(*) as count from pokebank '
+        f'where attempt_id in ({placeholders}) group by attempt_id, status',
+        tuple(attempt_ids)
+    ).fetchall()
+    for row in status_rows:
+        bucket = buckets.get(row['attempt_id'])
+        if bucket is None:
+            continue
+        status = (row['status'] or '').strip().lower()
+        count = int(row['count'] or 0)
+        if status == 'captured':
+            bucket['pokemon_caught'] = count
+        elif status == 'dead':
+            bucket['pokemon_dead'] = count
+        elif status == 'missed':
+            bucket['pokemon_missed'] = count
+
+    trainers_rows = conn.execute(
+        f'select attempt_id, count(distinct trainer_id) as count from trainers_defeated '
+        f'where attempt_id in ({placeholders}) group by attempt_id',
+        tuple(attempt_ids)
+    ).fetchall()
+    for row in trainers_rows:
+        bucket = buckets.get(row['attempt_id'])
+        if bucket is not None:
+            bucket['trainers_defeated'] = int(row['count'] or 0)
+
+    badge_rows = conn.execute(
+        f'select attempt_id, badge_id from attempt_badges where attempt_id in ({placeholders})',
+        tuple(attempt_ids)
+    ).fetchall()
+    for row in badge_rows:
+        bucket = buckets.get(row['attempt_id'])
+        if bucket is not None:
+            bucket['badge_ids'].add(int(row['badge_id']))
+
+    return {
+        attempt_id: {
+            'badges_earned': len(bucket['badge_ids']),
+            'badge_ids': sorted(bucket['badge_ids']),
+            'trainers_defeated': bucket['trainers_defeated'],
+            'pokemon_caught': bucket['pokemon_caught'],
+            'pokemon_dead': bucket['pokemon_dead'],
+            'pokemon_missed': bucket['pokemon_missed'],
+        }
+        for attempt_id, bucket in buckets.items()
+    }
+
+
 def get_runs(conn, user_id=None):
     _ensure_auth_schema(conn)
     query = (
@@ -209,6 +324,7 @@ def get_runs(conn, user_id=None):
         '  g.version_group_id, '
         '  r.name as run_name, '
         '  a.latest_attempt, '
+        '  a.latest_attempt_id, '
         '  a.total_attempts, '
         '  r.created_at, '
         '  coalesce(r.victory, \'false\') as victory_item, '
@@ -216,9 +332,10 @@ def get_runs(conn, user_id=None):
         'FROM runs r '
         'LEFT JOIN games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
         'LEFT JOIN ('
-        '  SELECT run_id, max(attempt_number) as latest_attempt, count(*) as total_attempts '
+        '  SELECT DISTINCT ON (run_id) run_id, attempt_id as latest_attempt_id, attempt_number as latest_attempt, '
+        '    count(*) OVER (PARTITION BY run_id) as total_attempts '
         '  FROM attempts '
-        '  GROUP BY run_id'
+        '  ORDER BY run_id, attempt_number DESC'
         ') a ON r.run_id = a.run_id '
     )
     params = []
@@ -228,26 +345,29 @@ def get_runs(conn, user_id=None):
     query += 'ORDER BY g.game_id ASC, r.run_id DESC'
     runs = conn.execute(query, params).fetchall()
 
+    attempt_ids = [row['latest_attempt_id'] for row in runs if row['latest_attempt_id'] is not None]
+    party_by_attempt = get_party_for_attempts_bulk(conn, attempt_ids)
+    stats_by_attempt = get_attempt_session_stats_bulk(conn, attempt_ids)
+
     enriched_runs = []
     for row in runs:
         run_data = dict(row)
         latest_attempt = run_data.get('latest_attempt')
-        if latest_attempt is not None:
-            latest_party = get_party_for_attempt(conn, run_data['run_id'], latest_attempt)
-            run_data['latest_party'] = [dict(member) for member in latest_party]
-            run_data['latest_attempt_stats'] = get_attempt_session_stats(conn, run_data['run_id'], latest_attempt)
-            attempt_row = conn.execute(
-                'select attempt_id from attempts where run_id = %s and attempt_number = %s',
-                (run_data['run_id'], latest_attempt)
-            ).fetchone()
-            run_data['latest_attempt_badges'] = sorted(
-                _get_attempt_badge_ids(
-                    conn,
-                    attempt_row['attempt_id'],
-                    run_id=run_data['run_id'],
-                    fallback_to_pokebank=True
-                )
-            ) if attempt_row else []
+        attempt_id = run_data.pop('latest_attempt_id', None)
+        if attempt_id is not None:
+            party_rows = party_by_attempt.get(attempt_id, [])
+            run_data['latest_party'] = [dict(member) for member in party_rows]
+            bulk_stats = stats_by_attempt.get(attempt_id)
+            if bulk_stats:
+                run_data['latest_attempt_stats'] = {
+                    'run_id': run_data['run_id'],
+                    'attempt_number': latest_attempt,
+                    **bulk_stats,
+                }
+                run_data['latest_attempt_badges'] = bulk_stats['badge_ids']
+            else:
+                run_data['latest_attempt_stats'] = None
+                run_data['latest_attempt_badges'] = []
         else:
             run_data['latest_party'] = []
             run_data['latest_attempt_stats'] = None
@@ -411,11 +531,11 @@ def get_pokebank_feed_for_user(conn, user_id, limit=360):
     badges_select = _pokemon_badges_text_expr('pb')
 
     rows = conn.execute(
-        f'select pb.species_id, {badges_select}, pb.shiny, pb.status '
+        f'select pb.species_id, pb.nickname, {badges_select}, pb.shiny, pb.status '
         f'from pokebank pb '
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
         f'where r.user_id = %s and (pb.status = %s or pb.status = %s) '
-        f'order by RANDOM() '
+        f'order by case when pb.species_id = 260 and upper(coalesce(pb.nickname, \'\')) = \'MAGNUS\' then 0 else 1 end, RANDOM() '
         f'limit %s',
         (user_id, 'Captured', 'Dead', min(limit, 500))
     ).fetchall()
@@ -527,6 +647,8 @@ def _get_run_version_group_id(conn, run_id):
     return row['version_group_id'] if row else None
 
 def _ensure_bonus_locations_schema(conn):
+    if _schema_ready['bonus_locations']:
+        return
     conn.execute(
         'create table if not exists bonus_locations ('
         'bonus_location_id serial primary key, '
@@ -542,6 +664,7 @@ def _ensure_bonus_locations_schema(conn):
         ')'
     )
     conn.commit()
+    _schema_ready['bonus_locations'] = True
 
 def create_bonus_location(conn, run_id, attempt_number, canonical_location_id):
     _ensure_bonus_locations_schema(conn)
@@ -775,6 +898,8 @@ def _has_constraint(conn, table_name, constraint_name):
     ).fetchone() is not None
 
 def _ensure_badge_schema(conn):
+    if _schema_ready['badge']:
+        return
     conn.execute(
         'create table if not exists schema_migrations ('
         'migration_name text primary key, '
@@ -830,6 +955,7 @@ def _ensure_badge_schema(conn):
     ).fetchone()
     if applied:
         conn.commit()
+        _schema_ready['badge'] = True
         return
 
     for badge_id, badge_name, region in BADGE_DEFINITIONS:
@@ -883,6 +1009,7 @@ def _ensure_badge_schema(conn):
         (migration_name,)
     )
     conn.commit()
+    _schema_ready['badge'] = True
 
 def _pokemon_badges_text_expr(pokemon_alias):
     return (
@@ -906,6 +1033,8 @@ def _public_user(row):
     }
 
 def _ensure_auth_schema(conn):
+    if _schema_ready['auth']:
+        return
     conn.execute(
         'create table if not exists users ('
         'user_id serial primary key, '
@@ -928,8 +1057,11 @@ def _ensure_auth_schema(conn):
     conn.execute('create index if not exists idx_users_email on users(email)')
     conn.execute('create index if not exists idx_users_supabase_id on users(supabase_id)')
     conn.commit()
+    _schema_ready['auth'] = True
 
 def _ensure_contact_reports_schema(conn):
+    if _schema_ready['contact_reports']:
+        return
     _ensure_auth_schema(conn)
     conn.execute(
         'create table if not exists contact_reports ('
@@ -960,6 +1092,7 @@ def _ensure_contact_reports_schema(conn):
     conn.execute('create index if not exists idx_contact_reports_created_at on contact_reports(created_at)')
     conn.execute('create index if not exists idx_contact_reports_user_id on contact_reports(user_id)')
     conn.commit()
+    _schema_ready['contact_reports'] = True
 
 def create_contact_report(conn, report):
     _ensure_contact_reports_schema(conn)
@@ -1577,7 +1710,10 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
             (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender)
         )
         conn.commit()
-        return conn.execute('select currval(pg_get_serial_sequence(''pokebank'', ''pokemon_id''))').fetchone()[0]
+        return conn.execute(
+            'select currval(pg_get_serial_sequence(%s, %s)) as next_id',
+            ('pokebank', 'pokemon_id')
+        ).fetchone()['next_id']
 
 def delete_encounter(conn, pokemon_id):
     conn.execute('delete from pokebank where pokemon_id = %s', (pokemon_id,))
@@ -1613,7 +1749,7 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
                 'select nullif(bl.canonical_location_id::text, \'\')::integer as event_id, bl.canonical_name as display_name, '
                 'nullif(bl.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(bl.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, '
                 'bl.event_type, null, null, null, null, null, null::integer as version_group_id, 1 as is_bonus_location, '
-                'null::integer as boss_event_id, null::integer as badge_id '
+                'null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
                 'from bonus_locations bl '
                 'where bl.run_id = %s and bl.attempt_id = %s and bl.is_active = 1 '
             )
@@ -1621,13 +1757,14 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
             params.append(attempt_row['attempt_id'])
 
     return conn.execute(
-        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location, eb.event_id as boss_event_id, eb.badge_id '
+        'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location, eb.event_id as boss_event_id, eb.badge_id, eb.type_focus, '
+        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id)) as level_cap '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
         f'{game_filter}'
         'union all '
-        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id '
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
         'from event_locations el '
         'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
         f'{loc_filter}'

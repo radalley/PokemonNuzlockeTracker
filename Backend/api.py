@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 import psycopg2
 import psycopg2.extras
+import psycopg2.pool
 from dotenv import load_dotenv
 import time
 from backend import (get_games, create_run, get_runs, get_script,
@@ -52,14 +53,26 @@ def _decode_supabase_jwt(token):
     except Exception:
         return None
 
-def get_db():
-    if 'db' not in g:
+# Connection pool, created lazily and shared for the lifetime of this process
+# (i.e. once per gunicorn worker). Requests borrow a connection from the pool
+# instead of opening a fresh Postgres connection on every request.
+_db_pool = None
+
+def _get_db_pool():
+    global _db_pool
+    if _db_pool is None:
         database_url = os.environ.get('DATABASE_URL')
         if not database_url:
             raise RuntimeError('DATABASE_URL environment variable is not set')
-        raw = psycopg2.connect(database_url)
+        _db_pool = psycopg2.pool.ThreadedConnectionPool(1, 10, database_url)
+    return _db_pool
+
+def get_db():
+    if 'db' not in g:
+        raw = _get_db_pool().getconn()
         raw.cursor().execute("SET search_path TO public")
         raw.commit()
+        g.db_raw = raw
         g.db = wrap_conn(raw)
     return g.db
 
@@ -113,10 +126,13 @@ def _clean_report_text(value, max_length=4000):
 @app.teardown_appcontext
 def close_db(error):
     db = g.pop('db', None)
-    if db is not None:
-        if error:
-            db.rollback()
-        db.close()
+    raw = g.pop('db_raw', None)
+    if db is not None and error:
+        db.rollback()
+    if raw is not None:
+        # Return the connection to the pool instead of closing it, so the
+        # next request on this worker can reuse it.
+        _get_db_pool().putconn(raw)
 
 @app.route('/api/auth/me', methods=['GET'])
 def auth_me_route():
