@@ -38,6 +38,12 @@ env/
 *.sqlite
 *.sqlite3
 Backend/seed_cache/
+seed_cache/
+staged-files.txt
+
+# Binary installers (a stray 48MB .exe once landed in public/sprites)
+*.exe
+*.msi
 
 # Editor directories and files
 .vscode/*
