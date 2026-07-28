@@ -1,0 +1,294 @@
+encounter_name,location_name,trainer_label,source_url
+TRAINER_ACE_TRAINER_F_ANGI,Route 13,Ace Trainer Angi,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_ACE_TRAINER_F_CHEYENNE,Route 1,Ace Trainer Cheyenne,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_ACE_TRAINER_F_JULIET,Route 23,Ace Trainer Juliet,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_ACE_TRAINER_F_JUNKO,Route 14,Ace Trainer Junko,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_ACE_TRAINER_F_LUCCA,Route 22,Ace Trainer Lucca,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_ACE_TRAINER_F_MIKI,Route 23,Ace Trainer Miki,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_ACE_TRAINER_F_SUMMER,Undella Bay,Ace Trainer Summer,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_ACE_TRAINER_M_AUSTIN,Nimbasa City,Ace Trainer Austin,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_ACE_TRAINER_M_DUSTY,Striaton City,Ace Trainer Dusty,https://www.serebii.net/pokearth/unova/striatoncity.shtml
+TRAINER_ACE_TRAINER_M_GRANT,Route 23,Ace Trainer Grant,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_ACE_TRAINER_M_KIPP,Route 14,Ace Trainer Kipp,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_ACE_TRAINER_M_MIGUEL,Route 13,Ace Trainer Miguel,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_ACE_TRAINER_M_SEAN,Route 1,Ace Trainer Sean,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_ACE_TRAINER_M_SHEL,Route 22,Ace Trainer Shel,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_ACE_TRAINER_M_TOM,Route 23,Ace Trainer Tom,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_ARTIST_GOUGH,Village Bridge,Artist Gough,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_ARTIST_HORTON,Route 5,Artist Horton,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_BACKERS_AVA_AYA,Route 5,Backers Ava & Aya,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_BACKERS_CLEO_RIO,Route 12,Backers Cleo & Rio,https://www.serebii.net/pokearth/unova/route12.shtml
+TRAINER_BACKERS_JOE_ROSS,Route 4,Backers Joe & Ross,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_BACKERS_MAY_MAL,Route 3,Backers May & Mal,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_BACKERS_STU_ART,Route 16,Backers Stu & Art,https://www.serebii.net/pokearth/unova/route16.shtml
+TRAINER_BACKPACKER_F_CORIN,Route 15,Backpacker Corin,https://www.serebii.net/pokearth/unova/route15.shtml
+TRAINER_BACKPACKER_F_JILL,Route 1,Backpacker Jill,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_BACKPACKER_F_MYRA,Route 22,Backpacker Myra,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_BACKPACKER_F_RACHEL,Route 4,Backpacker Rachel,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_BACKPACKER_M_CLIFFORD,Route 4,Backpacker Clifford,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_BACKPACKER_M_IVAN,Route 16,Backpacker Ivan,https://www.serebii.net/pokearth/unova/route16.shtml
+TRAINER_BACKPACKER_M_LOWELL,Route 22,Backpacker Lowell,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_BACKPACKER_M_REECE,Route 14,Backpacker Reece,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_BACKPACKER_M_ROLAND,Route 4,Backpacker Roland,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_BACKPACKER_M_SHANE,Route 1,Backpacker Shane,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_BACKPACKER_M_TALON,Route 15,Backpacker Talon,https://www.serebii.net/pokearth/unova/route15.shtml
+TRAINER_BAKER_CHRIS,Village Bridge,Baker Chris,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_BAKER_JENN,Route 5,Baker Jenn,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_BATTLE_GIRL_ALIZE,Route 13,Battle Girl Alize,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_BATTLE_GIRL_AZRA,Route 12,Battle Girl Azra,https://www.serebii.net/pokearth/unova/route12.shtml
+TRAINER_BATTLE_GIRL_BRENDA,Route 23,Battle Girl Brenda,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_BATTLE_GIRL_GLINDA,Route 14,Battle Girl Glinda,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_BATTLE_GIRL_TIFFANY,Route 23,Battle Girl Tiffany,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_BATTLE_GIRL_WENDY,Route 18,Battle Girl Wendy,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_BEAUTY_DECEMBER,Nimbasa City,Beauty December,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_BIKER_PHILLIP,Route 9,Biker Phillip,https://www.serebii.net/pokearth/unova/route9.shtml
+TRAINER_BIKER_STANLEY,Route 4,Biker Stanley,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_BIKER_ZEKE,Route 9,Biker Zeke,https://www.serebii.net/pokearth/unova/route9.shtml
+TRAINER_BLACK_BELT_BENJAMIN,Route 23,Black Belt Benjamin,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_BLACK_BELT_JAY,Route 14,Black Belt Jay,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_BLACK_BELT_JERIEL,Route 12,Black Belt Jeriel,https://www.serebii.net/pokearth/unova/route12.shtml
+TRAINER_BLACK_BELT_KENNETH,Route 21,Black Belt Kenneth,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_BLACK_BELT_LUKE,Route 23,Black Belt Luke,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_BLACK_BELT_WESLEY,Route 13,Black Belt Wesley,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_BLACK_BELT_ZACHARY,Route 18,Black Belt Zachary,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_BOSS_TRAINER_ABED,Black City,Boss Trainer Abed,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_ABIGAIL,White Forest,Boss Trainer Abigail,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_BENGA,White Forest,Boss Trainer Benga,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_BENGA_2,Black City,Boss Trainer Benga,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_BESS,Black City,Boss Trainer Bess,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_BRENT,White Forest,Boss Trainer Brent,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_CARLEIGH,White Forest,Boss Trainer Carleigh,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_CARLEN,Black City,Boss Trainer Carlen,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_DANEIL,White Forest,Boss Trainer Daneil,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_DANELLE,Black City,Boss Trainer Danelle,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_ELIE,White Forest,Boss Trainer Elie,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_ELLAS,Black City,Boss Trainer Ellas,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_FREDERICK,White Forest,Boss Trainer Frederick,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_FREIRA,Black City,Boss Trainer Freira,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_GAIL,White Forest,Boss Trainer Gail,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_GAIUS,Black City,Boss Trainer Gaius,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_HARMON,White Forest,Boss Trainer Harmon,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_HARMONY,Black City,Boss Trainer Harmony,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_IRA,Black City,Boss Trainer Ira,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_IRIA,White Forest,Boss Trainer Iria,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_BOSS_TRAINER_JANNA,Black City,Boss Trainer Janna,https://www.serebii.net/pokearth/unova/blackcity.shtml
+TRAINER_BOSS_TRAINER_JARIEL,White Forest,Boss Trainer Jariel,https://www.serebii.net/pokearth/unova/whiteforest.shtml
+TRAINER_CLERK_F_TRISHA,Nimbasa City,Clerk Trisha,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_CLERK_M_AUGUSTIN,Nimbasa City,Clerk Augustin,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_CYCLIST_F_KRISSA,Route 16,Cyclist Krissa,https://www.serebii.net/pokearth/unova/route16.shtml
+TRAINER_CYCLIST_M_HECTOR,Route 16,Cyclist Hector,https://www.serebii.net/pokearth/unova/route16.shtml
+TRAINER_DANCER_BRIAN,Route 5,Dancer Brian,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_DEPOT_AGENT_HANK,Route 16,Depot Agent Hank,https://www.serebii.net/pokearth/unova/route16.shtml
+TRAINER_DOCTOR_BRAID,Route 21,Doctor Braid,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_DOCTOR_HEATH,Castelia Sewers,Doctor Heath,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_FISHERMAN_ANDREW,Route 4,Fisherman Andrew,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_FISHERMAN_ARNOLD,Moor of Icirrus,Fisherman Arnold,https://www.serebii.net/pokearth/unova/mooroficirrus.shtml
+TRAINER_FISHERMAN_BRUCE,Route 3,Fisherman Bruce,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_FISHERMAN_BUCKY,Route 17,Fisherman Bucky,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_FISHERMAN_DAMON,Route 13,Fisherman Damon,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_FISHERMAN_DEAN,Village Bridge,Fisherman Dean,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_FISHERMAN_EUSTACE,Moor of Icirrus,Fisherman Eustace,https://www.serebii.net/pokearth/unova/mooroficirrus.shtml
+TRAINER_FISHERMAN_HUBERT,Route 4,Fisherman Hubert,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_FISHERMAN_JONES,Route 13,Fisherman Jones,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_FISHERMAN_KENZO,Route 21,Fisherman Kenzo,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_FISHERMAN_LEROY,Route 13,Fisherman Leroy,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_FISHERMAN_LYDON,Route 17,Fisherman Lydon,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_FISHERMAN_MACK,Route 3,Fisherman Mack,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_FISHERMAN_RYDER,Route 8,Fisherman Ryder,https://www.serebii.net/pokearth/unova/route8.shtml
+TRAINER_FISHERMAN_SID,Route 14,Fisherman Sid,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_FISHERMAN_VINCE,Route 13,Fisherman Vince,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_GENTLEMAN_SHELDON,Route 14,Gentleman Sheldon,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_GENTLEMAN_STONEWALL,Village Bridge,Gentleman Stonewall,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_GUITARIST_JANUARY,Nimbasa City,Guitarist January,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_HARLEQUIN_IAN,Route 7,Harlequin Ian,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_HARLEQUIN_PAT,Route 7,Harlequin Pat,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_HIKER_ANDY,Nimbasa City,Hiker Andy,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_HIKER_DON,Route 23,Hiker Don,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_HIKER_DOUG,Route 23,Hiker Doug,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_HIKER_JEROME,Route 20,Hiker Jerome,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_HIKER_JUSTIN,Route 22,Hiker Justin,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_HIKER_STEPHEN,Route 18,Hiker Stephen,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_HOOLIGANS_JIM_CAS,Route 9,Hooligans Jim & Cas,https://www.serebii.net/pokearth/unova/route9.shtml
+TRAINER_HOOLIGANS_ROB_SAL,Route 4,Hooligans Rob & Sal,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_HOOPSTER_DERRICK,Village Bridge,Hoopster Derrick,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_HOOPSTER_NICOLAS,Village Bridge,Hoopster Nicolas,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_JANITOR_BRADY,Castelia Sewers,Janitor Brady,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_JANITOR_FELIX,Castelia Sewers,Janitor Felix,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_JANITOR_ORVILLE,Floccesy Ranch,Janitor Orville,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_LADY_COLETTE,Nimbasa City,Lady Colette,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_LADY_LINA,Route 4,Lady Lina,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_LASS_FLO,Route 7,Lass Flo,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_LASS_HENRIETTA,Route 2,Lass Henrietta,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_LASS_ISABEL,Route 20,Lass Isabel,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_LASS_LURLEEN,Abundant Shrine,Lass Lurleen,https://www.serebii.net/pokearth/unova/abundantshrine.shtml
+TRAINER_LASS_MAI,Route 8,Lass Mai,https://www.serebii.net/pokearth/unova/route8.shtml
+TRAINER_LASS_MALI,Route 2,Lass Mali,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_LASS_MOLLY,Floccesy Ranch,Lass Molly,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_LASS_PERSEPHONE,Nimbasa City,Lass Persephone,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_LASS_SHANNON,Route 3,Lass Shannon,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_MUSICIAN_PRESTON,Route 5,Musician Preston,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_NURSERY_AIDE_AUTUMN,Route 3,Nursery Aide Autumn,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_NURSERY_AIDE_HOLLIE,Route 7,Nursery Aide Hollie,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_NURSERY_AIDE_JUNE,Nimbasa City,Nursery Aide June,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_NURSERY_AIDE_KIMYA,Route 20,Nursery Aide Kimya,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PARASOL_LADY_INGRID,Route 8,Parasol Lady Ingrid,https://www.serebii.net/pokearth/unova/route8.shtml
+TRAINER_PARASOL_LADY_LAURA,Route 13,Parasol Lady Laura,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_PARASOL_LADY_NICOLE,Route 6,Parasol Lady Nicole,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_PARASOL_LADY_TIHANA,Route 6,Parasol Lady Tihana,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_PARASOL_LADY_TYRA,Route 8,Parasol Lady Tyra,https://www.serebii.net/pokearth/unova/route8.shtml
+TRAINER_PKMN_BREEDER_F_APRIL,Route 6,PKMN Breeder April,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_PKMN_BREEDER_F_IRENE,Route 4,PKMN Breeder Irene,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_PKMN_BREEDER_F_MAGNOLIA,Route 11,PKMN Breeder Magnolia,https://www.serebii.net/pokearth/unova/route11.shtml
+TRAINER_PKMN_BREEDER_M_ADDISON,Route 22,PKMN Breeder Addison,https://www.serebii.net/pokearth/unova/route22.shtml
+TRAINER_PKMN_BREEDER_M_GALEN,Lostlorn Forest,PKMN Breeder Galen,https://www.serebii.net/pokearth/unova/lostlornforest.shtml
+TRAINER_PKMN_BREEDER_M_MARCUS,Route 7,PKMN Breeder Marcus,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_PKMN_RANGER_F_AUDRA,Route 1,PKMN Ranger Audra,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_PKMN_RANGER_F_DIANNE,Route 13,PKMN Ranger Dianne,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_PKMN_RANGER_F_ELAINE,Moor of Icirrus,PKMN Ranger Elaine,https://www.serebii.net/pokearth/unova/mooroficirrus.shtml
+TRAINER_PKMN_RANGER_F_LENA,Route 23,PKMN Ranger Lena,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_PKMN_RANGER_F_LOIS,Route 5,PKMN Ranger Lois,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_PKMN_RANGER_F_MALORY,Route 20,PKMN Ranger Malory,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PKMN_RANGER_F_NAOKO,Route 20,PKMN Ranger Naoko,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PKMN_RANGER_F_SERENITY,Lostlorn Forest,PKMN Ranger Serenity,https://www.serebii.net/pokearth/unova/lostlornforest.shtml
+TRAINER_PKMN_RANGER_F_THALIA,Route 11,PKMN Ranger Thalia,https://www.serebii.net/pokearth/unova/route11.shtml
+TRAINER_PKMN_RANGER_M_BRET,Route 20,PKMN Ranger Bret,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PKMN_RANGER_M_CROFTON,Route 11,PKMN Ranger Crofton,https://www.serebii.net/pokearth/unova/route11.shtml
+TRAINER_PKMN_RANGER_M_DARYL,Route 13,PKMN Ranger Daryl,https://www.serebii.net/pokearth/unova/route13.shtml
+TRAINER_PKMN_RANGER_M_FORREST,Lostlorn Forest,PKMN Ranger Forrest,https://www.serebii.net/pokearth/unova/lostlornforest.shtml
+TRAINER_PKMN_RANGER_M_LEAF,Route 20,PKMN Ranger Leaf,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PKMN_RANGER_M_PARKER,Moor of Icirrus,PKMN Ranger Parker,https://www.serebii.net/pokearth/unova/mooroficirrus.shtml
+TRAINER_PKMN_RANGER_M_RICHARD,Route 6,PKMN Ranger Richard,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_PKMN_RANGER_M_RICK,Route 1,PKMN Ranger Rick,https://www.serebii.net/pokearth/unova/route1.shtml
+TRAINER_PKMN_RANGER_M_STEVE,Route 23,PKMN Ranger Steve,https://www.serebii.net/pokearth/unova/route23.shtml
+TRAINER_PKMN_TRAINER_ALDER,Floccesy Town,PKMN Trainer Alder,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_PKMN_TRAINER_BIANCA_2,Nuvema Town,PKMN Trainer Bianca,https://www.serebii.net/pokearth/unova/nuvematown.shtml
+TRAINER_PKMN_TRAINER_BIANCA_3,Nuvema Town,PKMN Trainer Bianca,https://www.serebii.net/pokearth/unova/nuvematown.shtml
+TRAINER_PKMN_TRAINER_BIANCA_4,Nuvema Town,PKMN Trainer Bianca,https://www.serebii.net/pokearth/unova/nuvematown.shtml
+TRAINER_PKMN_TRAINER_CHEREN_3,Route 5,PKMN Trainer Cheren,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_PKMN_TRAINER_CHEREN_4,Route 5,PKMN Trainer Cheren,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_PKMN_TRAINER_CHEREN_5,Route 5,PKMN Trainer Cheren,https://www.serebii.net/pokearth/unova/route5.shtml
+TRAINER_PKMN_TRAINER_COLRESS,Route 4,PKMN Trainer Colress,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_PKMN_TRAINER_CYNTHIA,Undella Town,PKMN Trainer Cynthia,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_NATE,Nimbasa City,PKMN Trainer Nate,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_PKMN_TRAINER_NATE_2,Nimbasa City,PKMN Trainer Nate,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_PKMN_TRAINER_NATE_3,Nimbasa City,PKMN Trainer Nate,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_PKMN_TRAINER_RIVAL,Aspertia City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/aspertiacity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_10,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_11,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_12,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_13,Castelia Sewers,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_PKMN_TRAINER_RIVAL_14,Castelia Sewers,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_PKMN_TRAINER_RIVAL_15,Castelia Sewers,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_PKMN_TRAINER_RIVAL_19,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_2,Aspertia City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/aspertiacity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_20,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_21,Undella Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/undellatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_22,Driftveil City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/driftveilcity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_23,Driftveil City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/driftveilcity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_24,Driftveil City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/driftveilcity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_25,Lacunosa Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/lacunosatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_26,Lacunosa Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/lacunosatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_27,Lacunosa Town,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/lacunosatown.shtml
+TRAINER_PKMN_TRAINER_RIVAL_3,Aspertia City,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/aspertiacity.shtml
+TRAINER_PKMN_TRAINER_RIVAL_4,Floccesy Ranch,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_PKMN_TRAINER_RIVAL_5,Floccesy Ranch,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_PKMN_TRAINER_RIVAL_6,Floccesy Ranch,PKMN Trainer Rival,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_PKMN_TRAINER_ROOD,Driftveil City,PKMN Trainer Rood,https://www.serebii.net/pokearth/unova/driftveilcity.shtml
+TRAINER_PKMN_TRAINER_ROSA,Nimbasa City,PKMN Trainer Rosa,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_PKMN_TRAINER_ROSA_2,Nimbasa City,PKMN Trainer Rosa,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_PKMN_TRAINER_ROSA_3,Nimbasa City,PKMN Trainer Rosa,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_POKEFAN_F_LYDIA,Route 15,Pokéfan Lydia,https://www.serebii.net/pokearth/unova/route15.shtml
+TRAINER_POKEFAN_F_SACHIKO,Route 4,Pokéfan Sachiko,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_POKEFAN_M_ELLIOT,Route 15,Pokéfan Elliot,https://www.serebii.net/pokearth/unova/route15.shtml
+TRAINER_POKEFAN_M_NORBERT,Route 4,Pokéfan Norbert,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_POLICEMAN_BRAVEN,Route 4,Policeman Braven,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_POLICEMAN_DELL,Route 4,Policeman Dell,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_POLICEMAN_NEAGLE,Route 4,Policeman Neagle,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_PRESCHOOLER_F_CHRISSY,Route 7,Preschooler Chrissy,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_PRESCHOOLER_F_EVA,Route 3,Preschooler Eva,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_PRESCHOOLER_F_LIN,Route 20,Preschooler Lin,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PRESCHOOLER_M_ALBERT,Route 20,Preschooler Albert,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_PRESCHOOLER_M_BUSTER,Route 3,Preschooler Buster,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_PRESCHOOLER_M_GREG,Route 7,Preschooler Greg,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_PRESCHOOLER_M_TYRONE,Route 3,Preschooler Tyrone,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_RICH_BOY_KEENAN,Route 4,Rich Boy Keenan,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_RICH_BOY_MARTIN,Nimbasa City,Rich Boy Martin,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_RICH_BOY_ROLAN,Nimbasa City,Rich Boy Rolan,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_ROUGHNECK_CHANCE,Route 9,Roughneck Chance,https://www.serebii.net/pokearth/unova/route9.shtml
+TRAINER_ROUGHNECK_FLETCHER,Nimbasa City,Roughneck Fletcher,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_ROUGHNECK_JOEY,Route 4,Roughneck Joey,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_ROUGHNECK_REESE,Route 9,Roughneck Reese,https://www.serebii.net/pokearth/unova/route9.shtml
+TRAINER_ROUGHNECK_SILVESTER,Route 4,Roughneck Silvester,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_SCHOOL_KID_F_CASSIE,Floccesy Town,School Kid Cassie,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCHOOL_KID_F_CASSIE_2,Floccesy Town,School Kid Cassie,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCHOOL_KID_F_CASSIE_3,Floccesy Town,School Kid Cassie,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCHOOL_KID_F_MARA,Route 6,School Kid Mara,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_SCHOOL_KID_F_MARSHA,Route 3,School Kid Marsha,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_SCHOOL_KID_M_ALVIN,Route 6,School Kid Alvin,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_SCHOOL_KID_M_EDGAR,Route 3,School Kid Edgar,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_SCHOOL_KID_M_SEYMOUR,Floccesy Town,School Kid Seymour,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCHOOL_KID_M_SEYMOUR_2,Floccesy Town,School Kid Seymour,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCHOOL_KID_M_SEYMOUR_3,Floccesy Town,School Kid Seymour,https://www.serebii.net/pokearth/unova/floccesytown.shtml
+TRAINER_SCIENTIST_CAROLINE,Castelia Sewers,Scientist Caroline,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_SCIENTIST_CLARKE,Castelia Sewers,Scientist Clarke,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_SCIENTIST_DUDLEY,P2 Laboratory,Scientist Dudley,https://www.serebii.net/pokearth/unova/p2laboratory.shtml
+TRAINER_SCIENTIST_JACQUES,Route 6,Scientist Jacques,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_SCIENTIST_MARIE,Route 15,Scientist Marie,https://www.serebii.net/pokearth/unova/route15.shtml
+TRAINER_SCIENTIST_MARISSA,Route 6,Scientist Marissa,https://www.serebii.net/pokearth/unova/route6.shtml
+TRAINER_SMASHER_AMY,Village Bridge,Smasher Amy,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_SMASHER_LIZZY,Village Bridge,Smasher Lizzy,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_SOCIALITE_MARIAN,Route 14,Socialite Marian,https://www.serebii.net/pokearth/unova/route14.shtml
+TRAINER_SUBWAY_BOSS_EMMET,Nimbasa City,Subway Boss Emmet,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_SUBWAY_BOSS_INGO,Nimbasa City,Subway Boss Ingo,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_SWIMMER_F_ARISSA,Undella Bay,Swimmer Arissa,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_SWIMMER_F_DARA,Route 17,Swimmer Dara,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_SWIMMER_F_DESIREE,Route 21,Swimmer Desiree,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_SWIMMER_F_KAORU,Route 21,Swimmer Kaoru,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_SWIMMER_F_MITZI,Undella Bay,Swimmer Mitzi,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_SWIMMER_F_RUTH,Route 17,Swimmer Ruth,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_SWIMMER_M_BART,Undella Bay,Swimmer Bart,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_SWIMMER_M_HAROLD,Route 21,Swimmer Harold,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_SWIMMER_M_JEFFERY,Route 17,Swimmer Jeffery,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_SWIMMER_M_KYLE,Route 21,Swimmer Kyle,https://www.serebii.net/pokearth/unova/route21.shtml
+TRAINER_SWIMMER_M_MATT,Undella Bay,Swimmer Matt,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_SWIMMER_M_TIM,Undella Bay,Swimmer Tim,https://www.serebii.net/pokearth/unova/undellabay.shtml
+TRAINER_SWIMMER_M_WRIGHT,Route 17,Swimmer Wright,https://www.serebii.net/pokearth/unova/route17.shtml
+TRAINER_TEAM_PLASMA_GRUNT,Castelia Sewers,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_TEAM_PLASMA_GRUNT_3,Castelia Sewers,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_TEAM_PLASMA_GRUNT_4,Nimbasa City,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_TEAM_PLASMA_GRUNT_41,Opelucid City,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/opelucidcity.shtml
+TRAINER_TEAM_PLASMA_GRUNT_42,Opelucid City,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/opelucidcity.shtml
+TRAINER_TEAM_PLASMA_GRUNT_44,Virbank City,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/virbankcity.shtml
+TRAINER_TEAM_PLASMA_GRUNT_47,Nimbasa City,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/nimbasacity.shtml
+TRAINER_TEAM_PLASMA_GRUNT_48,Route 20,Team Plasma Grunt,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_TEAM_PLASMA_SHADOW_4,Opelucid City,Team Plasma Shadow,https://www.serebii.net/pokearth/unova/opelucidcity.shtml
+TRAINER_TEAM_PLASMA_SHADOW_5,Icirrus City,Team Plasma Shadow,https://www.serebii.net/pokearth/unova/icirruscity.shtml
+TRAINER_TEAM_PLASMA_SHADOW_6,Icirrus City,Team Plasma Shadow,https://www.serebii.net/pokearth/unova/icirruscity.shtml
+TRAINER_TEAM_PLASMA_SHADOW_7,Icirrus City,Team Plasma Shadow,https://www.serebii.net/pokearth/unova/icirruscity.shtml
+TRAINER_TEAM_PLASMA_ZINZOLIN_3,Opelucid City,Team Plasma Zinzolin,https://www.serebii.net/pokearth/unova/opelucidcity.shtml
+TRAINER_TEAM_PLASMA_ZINZOLIN_4,Lacunosa Town,Team Plasma Zinzolin,https://www.serebii.net/pokearth/unova/lacunosatown.shtml
+TRAINER_TWINS_LIA_LILY,Route 20,Twins Lia & Lily,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_TWINS_RAE_ULA,Abundant Shrine,Twins Rae & Ula,https://www.serebii.net/pokearth/unova/abundantshrine.shtml
+TRAINER_TWINS_SOLA_ANA,Route 7,Twins Sola & Ana,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_TWINS_TARA_VAL,Route 4,Twins Tara & Val,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_VETERAN_F_GINA,Route 18,Veteran Gina,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_VETERAN_F_MAYA,Route 18,Veteran Maya,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_VETERAN_F_ORIANA,Route 2,Veteran Oriana,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_VETERAN_M_CHESTER,Route 18,Veteran Chester,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_VETERAN_M_MURPHY,Lostlorn Forest,Veteran Murphy,https://www.serebii.net/pokearth/unova/lostlornforest.shtml
+TRAINER_VETERAN_M_RAYNE,Route 2,Veteran Rayne,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_VETERAN_M_VINCENT,Route 18,Veteran Vincent,https://www.serebii.net/pokearth/unova/route18.shtml
+TRAINER_WAITRESS_BONITA,Route 3,Waitress Bonita,https://www.serebii.net/pokearth/unova/route3.shtml
+TRAINER_WORKER_SCOTT,Castelia Sewers,Worker Scott,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_WORKER_ZACK,Castelia Sewers,Worker Zack,https://www.serebii.net/pokearth/unova/casteliasewers.shtml
+TRAINER_YOUNGSTER_ASTOR,Route 8,Youngster Astor,https://www.serebii.net/pokearth/unova/route8.shtml
+TRAINER_YOUNGSTER_CODY,Route 7,Youngster Cody,https://www.serebii.net/pokearth/unova/route7.shtml
+TRAINER_YOUNGSTER_JAYE,Abundant Shrine,Youngster Jaye,https://www.serebii.net/pokearth/unova/abundantshrine.shtml
+TRAINER_YOUNGSTER_JIMMY,Route 2,Youngster Jimmy,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_YOUNGSTER_KARL,Village Bridge,Youngster Karl,https://www.serebii.net/pokearth/unova/villagebridge.shtml
+TRAINER_YOUNGSTER_KENNY,Floccesy Ranch,Youngster Kenny,https://www.serebii.net/pokearth/unova/floccesyranch.shtml
+TRAINER_YOUNGSTER_MIKEY,Route 2,Youngster Mikey,https://www.serebii.net/pokearth/unova/route2.shtml
+TRAINER_YOUNGSTER_PETEY,Route 20,Youngster Petey,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_YOUNGSTER_SINCLAIR,Route 4,Youngster Sinclair,https://www.serebii.net/pokearth/unova/route4.shtml
+TRAINER_YOUNGSTER_TERRELL,Route 20,Youngster Terrell,https://www.serebii.net/pokearth/unova/route20.shtml
+TRAINER_YOUNGSTER_WES,Abundant Shrine,Youngster Wes,https://www.serebii.net/pokearth/unova/abundantshrine.shtml

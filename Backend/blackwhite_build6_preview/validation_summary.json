@@ -1,0 +1,36 @@
+{
+  "version_group_id": 11,
+  "load_build": 6,
+  "roms": {
+    "black": {
+      "path": "C:\\Users\\radal\\OneDrive\\Pokemon\\Roms\\Pokemon - Black Version (DSi Enhanced)(USA) (E)\\5585 - Pokemon - Black Version (DSi Enhanced)(USA) (E)(SweeTnDs).nds",
+      "game_code": "IRBO",
+      "rom_version": 0,
+      "sha256": "2e40416b8e8183d936084c7be0adeaab4fa3f786a68f90d7291ab77d340f0c1d"
+    },
+    "white": {
+      "path": "C:\\Users\\radal\\OneDrive\\Pokemon\\Roms\\Pokemon - White Version (USA, Europe) (NDSi Enhanced)\\Pokemon - White Version (USA, Europe) (NDSi Enhanced).nds",
+      "game_code": "IRAO",
+      "rom_version": 0,
+      "sha256": "b288bb061fd646894f5059f55cd0a1efb13b4f0cfd3d9e06e9e42a5bd9431ac6"
+    }
+  },
+  "trainer_archives_identical": true,
+  "trainer_rows": 615,
+  "trainer_pokemon_rows": 1304,
+  "battle_type_counts": {
+    "0": 574,
+    "1": 26,
+    "2": 7,
+    "3": 8
+  },
+  "nonzero_form_counts": {
+    "species_413_form_1": 1,
+    "species_413_form_2": 1,
+    "species_550_form_1": 11
+  },
+  "map_reference_rows": 305,
+  "trainers_with_map_references": 291,
+  "located_rows": 239,
+  "database_modified": false
+}
