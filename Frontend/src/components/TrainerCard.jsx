@@ -51,7 +51,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
   const [open, setOpen] = useState(false)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -115,6 +115,12 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       : [formattedClass, encounterTitle].filter(Boolean).join(' - ')
   const itemTokens = parseTrainerItems(trainerItems)
   const displayedParty = party.filter(Boolean)
+  const numericLevelCap = levelCap !== null && levelCap !== undefined && levelCap !== ''
+    ? Number(levelCap)
+    : null
+  const resolvedLevelCap = Number.isFinite(numericLevelCap)
+    ? numericLevelCap
+    : (party.length > 0 ? Math.max(...party.map(p => Number(p.lvl) || 0)) : null)
 
   const openBattleModal = (event) => {
     event.stopPropagation()
@@ -153,6 +159,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
   return (
     <div
+      className="trainer-card"
       style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
       onClick={() => {
         const nextOpen = !open
@@ -163,27 +170,30 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
         }
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div
+        className="trainer-card-summary"
+      >
 
         {/* Trainer sprite */}
         {(() => {
           const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName, gameId, versionGroupId)
           return src
-            ? <img src={src} style={{ height: '80px', width: 'auto', flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
+            ? <img className="trainer-card-summary__sprite" src={src} style={{ height: '80px', width: 'auto', flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
                 alt={trainerName || formattedClass}
                 onError={e => { e.currentTarget.style.visibility = 'hidden' }} />
-            : <div style={{ width: '40px', height: '80px', flexShrink: 0 }} />
+            : <div className="trainer-card-summary__sprite" style={{ width: '40px', height: '80px', flexShrink: 0 }} />
         })()}
 
         {/* Trainer name + title */}
-        <div style={{ minWidth: '130px' }}>
+        <div className="trainer-card-summary__identity" style={{ minWidth: '130px', display: 'grid', gridTemplateColumns: 'minmax(0, auto) auto', alignItems: 'center', justifyContent: 'start', columnGap: '8px' }}>
           <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{trainerName || '—'}</div>
-          <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', marginTop: '2px' }}>{subtitle}</div>
+          {typeFocus && <TypeIcon type={typeFocus} height={18} />}
+          <div style={{ gridColumn: '1 / -1', fontSize: '0.8em', color: 'var(--text-secondary)', marginTop: '2px' }}>{subtitle}</div>
         </div>
 
         {/* 6 pokemon slot placeholders — hidden when expanded */}
-        {!open && displayedParty.length > 0 && (
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+        {!open && (
+          <div className="trainer-card-summary__party" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
             {displayedParty.map((pokemon, i) => {
               return (
                 <div key={i} style={{
@@ -202,7 +212,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
         {/* Item sprites — always visible on the row */}
         {itemTokens.length > 0 && (
-          <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+          <div className="trainer-card-summary__items" style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
             {itemTokens.map((itemName, idx) => {
               const spriteFile = toItemSpriteFile(itemName)
               if (!spriteFile) return null
@@ -220,25 +230,23 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
-        {/* Spacer — pushes level cap, button, and chevron to the right */}
-        <div style={{ flex: 1 }} />
-
-        {showLevelCap && party.length > 0 && (
-          <div style={{ marginRight: '12px', textAlign: 'center', flexShrink: 0 }}>
+        {showLevelCap && resolvedLevelCap !== null && (
+          <div className="trainer-card-summary__cap" style={{ marginRight: '12px', textAlign: 'center', flexShrink: 0 }}>
             <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
             <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
-              Lvl {Math.max(...party.map(p => p.lvl))}
+              Lvl {resolvedLevelCap}
             </div>
           </div>
         )}
 
         {enableBattle && runId && attemptId && trainerId && (
           defeated ? (
-            <div style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
+            <div className="trainer-card-summary__battle" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
               Defeated
             </div>
           ) : (
             <button
+              className="trainer-card-summary__battle"
               type="button"
               onClick={openBattleModal}
               style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
@@ -248,7 +256,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           )
         )}
 
-        <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: '8px' }}>
+        <div className="trainer-card-summary__chevron" style={{ fontSize: '0.8em', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: '8px' }}>
           {open ? '▲' : '▼'}
         </div>
       </div>

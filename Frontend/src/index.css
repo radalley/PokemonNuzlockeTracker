@@ -1149,6 +1149,10 @@ p {
   filter: grayscale(1) saturate(0.2);
 }
 
+.pokemon-feed__sprite.is-user.is-magnus {
+  filter: drop-shadow(0 0 5px rgba(69, 210, 128, 0.98)) drop-shadow(0 0 12px rgba(48, 184, 105, 0.82)) drop-shadow(0 0 24px rgba(35, 145, 82, 0.58));
+}
+
 .pokemon-feed__badge-strip {
   position: absolute;
   left: 50%;
@@ -1943,6 +1947,147 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--surface-deep);
+}
+
+.trainer-card {
+  container-name: trainer-card;
+  container-type: inline-size;
+}
+
+.trainer-card-summary {
+  display: grid;
+  grid-template-columns: 80px minmax(140px, 200px) minmax(318px, 1fr) auto auto auto 16px;
+  align-items: center;
+  column-gap: 16px;
+}
+
+.trainer-card-summary .trainer-card-summary__sprite {
+  grid-column: 1;
+  justify-self: center;
+  max-width: 80px;
+}
+
+.trainer-card-summary .trainer-card-summary__identity {
+  grid-column: 2;
+  min-width: 0 !important;
+}
+
+.trainer-card-summary .trainer-card-summary__identity > div:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trainer-card-summary .trainer-card-summary__party {
+  grid-column: 3;
+  justify-self: stretch;
+  justify-content: flex-start;
+  flex-wrap: nowrap !important;
+  min-height: 56px;
+  padding: 4px 16px;
+  border-left: 1px solid var(--border-strong);
+}
+
+.trainer-card-summary .trainer-card-summary__items {
+  grid-column: 4;
+  justify-self: center;
+}
+
+.trainer-card-summary .trainer-card-summary__cap {
+  grid-column: 5;
+  min-width: 68px;
+  margin-right: 0 !important;
+}
+
+.trainer-card-summary .trainer-card-summary__battle {
+  grid-column: 6;
+}
+
+.trainer-card-summary .trainer-card-summary__chevron {
+  grid-column: 7;
+  margin-left: 0 !important;
+}
+
+@container trainer-card (max-width: 980px) {
+  .trainer-card-summary {
+    grid-template-columns: 80px minmax(0, 1fr) auto auto 16px;
+    row-gap: 10px;
+  }
+
+  .trainer-card-summary .trainer-card-summary__identity {
+    grid-column: 2;
+  }
+
+  .trainer-card-summary .trainer-card-summary__party {
+    grid-column: 2 / 6;
+    grid-row: 2;
+    padding: 10px 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  .trainer-card-summary .trainer-card-summary__items {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .trainer-card-summary .trainer-card-summary__cap {
+    grid-column: 3;
+  }
+
+  .trainer-card-summary .trainer-card-summary__battle {
+    grid-column: 4;
+  }
+
+  .trainer-card-summary .trainer-card-summary__chevron {
+    grid-column: 5;
+  }
+}
+
+@container trainer-card (max-width: 640px) {
+  .trainer-card-summary {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    column-gap: 10px;
+  }
+
+  .trainer-card-summary .trainer-card-summary__sprite {
+    grid-column: 1;
+    max-width: 64px;
+  }
+
+  .trainer-card-summary .trainer-card-summary__identity {
+    grid-column: 2;
+  }
+
+  .trainer-card-summary .trainer-card-summary__party {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__items {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .trainer-card-summary .trainer-card-summary__cap {
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: end;
+  }
+
+  .trainer-card-summary .trainer-card-summary__battle {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .trainer-card-summary .trainer-card-summary__chevron {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

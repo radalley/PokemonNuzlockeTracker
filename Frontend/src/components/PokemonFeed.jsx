@@ -68,6 +68,16 @@ function shuffleList(items) {
   return copy
 }
 
+function isMagnus(item) {
+  return Number(item?.species_id) === 260 && String(item?.nickname || '').trim().toUpperCase() === 'MAGNUS'
+}
+
+function shuffleFeedWithMagnusFirst(items) {
+  const magnus = items.filter(isMagnus)
+  const others = shuffleList(items.filter(item => !isMagnus(item)))
+  return [...magnus, ...others]
+}
+
 function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, className = '' }) {
   const { user, loading: authLoading } = useAuth()
   const [species, setSpecies] = useState([])
@@ -128,7 +138,7 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
       // If not signed in (or Pokebank returned nothing), check local guest storage
       if (userData.length === 0 && hasLocalData()) {
         const local = getLocalFeedPokemon()
-        userData = local.slice(0, USER_FEED_LIMIT)
+        userData = [...local.filter(isMagnus), ...local.filter(item => !isMagnus(item))].slice(0, USER_FEED_LIMIT)
       }
 
       // No user data - leave the default feed as-is
@@ -145,11 +155,11 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
         }
 
         if (!cancelled) {
-          setSpecies(shuffleList([...userData, ...defaultData]))
+          setSpecies(shuffleFeedWithMagnusFirst([...userData, ...defaultData]))
         }
       } catch {
         if (!cancelled) {
-          setSpecies(prev => shuffleList([...userData, ...prev.slice(0, Math.max(0, DEFAULT_FEED_LIMIT - userData.length))]))
+          setSpecies(prev => shuffleFeedWithMagnusFirst([...userData, ...prev.slice(0, Math.max(0, DEFAULT_FEED_LIMIT - userData.length))]))
         }
       }
     }
@@ -245,6 +255,7 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
           const classes = ['pokemon-feed__sprite']
           if (isDead) classes.push('is-dead')
           if (isUser) classes.push('is-user')
+          if (isMagnus(s)) classes.push('is-magnus')
 
           return (
             <div
@@ -253,23 +264,20 @@ function PokemonFeed({ speed = DEFAULT_SPEED, columns = DEFAULT_COLUMNS, classNa
               style={{ width: `${spriteSize}px`, height: `${spriteSize}px` }}
             >
               <Sprite speciesId={s.species_id} size={spriteSize} shiny={Boolean(s.shiny)} />
-              {isUser && (s.nickname || badgeIds.length > 0) && (
+              {isUser && badgeIds.length > 0 && (
                 <div className="pokemon-feed__info-box" aria-hidden="true">
-                  {s.nickname && (
-                    <span className="pokemon-feed__nickname">{s.nickname}</span>
-                  )}
-                  {badgeIds.length > 0 && (
-                    <div className="pokemon-feed__badge-strip">
-                      {badgeIds.map(badgeId => (
-                        <img
-                          key={badgeId}
-                          className="pokemon-feed__badge"
-                          src={`/sprites/Badges/${badgeId}.png`}
-                          alt=""
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <div className="pokemon-feed__badge-strip">
+                    {badgeIds.map(badgeId => (
+                      <img
+                        key={badgeId}
+                        className="pokemon-feed__badge"
+                        src={`/sprites/Badges/${badgeId}.png`}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -151,6 +151,7 @@ export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '', 
       numericVersionGroupId >= 1 && numericVersionGroupId <= 2 ? 'gen1'
         : numericVersionGroupId >= 3 && numericVersionGroupId <= 4 ? 'gen2'
           : numericVersionGroupId >= 8 && numericVersionGroupId <= 10 ? 'gen4'
+            : numericVersionGroupId === 11 || numericVersionGroupId === 14 ? 'gen5'
             : numericGameId >= 1 && numericGameId <= 3 ? 'gen1'
               : numericGameId >= 4 && numericGameId <= 6 ? 'gen2'
                 : 'gen3'

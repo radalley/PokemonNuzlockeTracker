@@ -13,6 +13,8 @@ function Sprite({ speciesId, size = 40, shiny = false, female = false, useIcon =
       width={size}
       height={size}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       style={{ imageRendering: 'pixelated', objectFit: 'contain', flexShrink: 0, ...style }}
       onError={e => {
         const cur = e.currentTarget

@@ -186,6 +186,8 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
                 src={`/sprites/Badges/${badgeId}.png`}
                 alt={badgeById.get(badgeId)?.badge_name || `Badge ${badgeId}`}
                 title={badgeById.get(badgeId)?.badge_name || `Badge ${badgeId}`}
+                loading="lazy"
+                decoding="async"
                 style={{ width: '18px', height: '18px', imageRendering: 'pixelated' }}
               />
             ))}

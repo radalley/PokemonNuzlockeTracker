@@ -1193,13 +1193,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {encounterDetails?.ability1 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)' }}>{encounterDetails.ability1}</span>
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{encounterDetails.ability1}</span>
                   )}
                   {encounterDetails?.ability2 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)' }}>{encounterDetails.ability2}</span>
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{encounterDetails.ability2}</span>
                   )}
                   {encounterDetails?.ability3 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-primary)', fontStyle: 'italic' }}>{encounterDetails.ability3}</span>
+                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{encounterDetails.ability3}</span>
                   )}
                 </div>
               </div>

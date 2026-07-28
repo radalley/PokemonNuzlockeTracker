@@ -1,7 +1,7 @@
 import TrainerCard from './TrainerCard'
 
 function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
-  const shouldShowLevelCap = ['Gym leader', 'Elite Four', 'Champion'].includes(
+  const shouldShowLevelCap = ['gym leader', 'elite four', 'champion'].includes(
     String(row.event_type || '').trim().toLowerCase()
   )
 
@@ -16,6 +16,8 @@ function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictory
         trainerItems={row.trainer_items}
         encounterTitle={row.display_name}
         showLevelCap={shouldShowLevelCap}
+        levelCap={row.level_cap}
+        typeFocus={row.type_focus}
         gameId={gameId}
         versionGroupId={row.version_group_id}
         runId={runId}
