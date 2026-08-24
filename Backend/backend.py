@@ -1946,12 +1946,17 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
 
     query = (
         'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, tp.version_group_id, '
+        'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         + defeated_select +
         'from trainer_pool tp '
         + defeated_join +
+        'left join location_areas la on la.area_id = tp.area_id '
         'where ' + ' and '.join(where_clauses) + ' '
-        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, tp.trainer_id asc"
+        # Trainers standing in the location itself sort before its sub-areas.
+        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, "
+        'case when tp.area_id is null then 0 else 1 end asc, '
+        'la.sort_order asc nulls last, la.area_name asc nulls last, tp.trainer_id asc'
     )
     return conn.execute(query, params).fetchall()
 

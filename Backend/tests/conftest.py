@@ -106,6 +106,16 @@ create table canon_locations (
     canonical_location_name text
 );
 
+create table location_areas (
+    area_id serial primary key,
+    canonical_location_id integer not null,
+    version_group_id integer,
+    area_name text not null,
+    area_kind text not null default 'interior',
+    sort_order integer,
+    source_key text
+);
+
 create table event_locations (
     canonical_location_id integer,
     version_group_id integer,
@@ -173,7 +183,8 @@ create table trainer_pool (
     details text,
     version_group_id integer,
     load_build integer,
-    game_id integer
+    game_id integer,
+    area_id integer
 );
 
 create table trainer_pokemon (
@@ -214,7 +225,7 @@ create table movesets (
 
 TABLES = [
     "party", "pokebank", "bonus_locations", "attempts", "runs",
-    "event_locations", "canon_locations", "games",
+    "event_locations", "canon_locations", "location_areas", "games",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
     "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
 ]

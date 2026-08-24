@@ -47,6 +47,18 @@ python -m etl.pipelines.gen5_event_bosses black2white2 --apply
 Trainers must load before event bosses: bosses resolve their trainer by
 `encounter_name` against the same version group and build.
 
+Some pipelines derive from data already in the database rather than from a
+preview. `derive_location_areas` reads the map reference in each trainer's
+`details` blob and turns it into a `location_areas` row:
+
+```bash
+python -m etl.pipelines.derive_location_areas --apply
+python -m etl.pipelines.derive_location_areas --version-group-id 1
+```
+
+It only fills empty `area_id`s, so curated assignments survive a re-run;
+pass `--reassign` to overwrite them.
+
 ## Adding a data set
 
 Add a manifest to `manifests/` and reuse an existing pipeline if the shape
@@ -79,7 +91,9 @@ have to know badge numbering.
 
 Ported: Gen 5 trainers and event bosses (Black/White, Black 2/White 2). The
 old `load_blackwhite_build6_*.py` and `load_black2white2_build6_*.py` scripts
-now forward here so existing commands keep working.
+now forward here so existing commands keep working. `derive_location_areas`
+is new and covers every version group whose trainers carry map references
+(1, 2, 3, 4, 8, 9, 10 — Gen 3 and Gen 5 previews do not record one).
 
 Not yet ported: the preview *builders* (ROM and decomp extraction) and the
 Gen 1-4 loaders and updaters. They still carry their own absolute paths. Port

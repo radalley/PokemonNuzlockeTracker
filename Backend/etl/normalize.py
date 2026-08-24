@@ -121,6 +121,48 @@ def fix_mojibake(text):
         return text
 
 
+def area_display_name(map_name):
+    """Turn an ETL source map name into a readable area label.
+
+    Handles both spellings the pipelines produce, and keeps floor
+    designators intact rather than splitting them:
+
+        CeladonGym        -> Celadon Gym
+        PokemonTower3F    -> Pokemon Tower 3F
+        RocketHideoutB1F  -> Rocket Hideout B1F
+        canalave_city_gym -> Canalave City Gym
+    """
+    text = (map_name or "").strip()
+    if not text:
+        return ""
+    text = text.replace("_", " ")
+
+    # Pull a trailing floor designator off first so the CamelCase split
+    # doesn't cut "3F" into "3 F".
+    floor = ""
+    match = re.search(r"(B?\d+F)\s*$", text, flags=re.IGNORECASE)
+    if match:
+        floor = match.group(1).upper()
+        text = text[: match.start()]
+
+    text = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", text)
+    text = re.sub(r"\s+", " ", text).strip().title()
+    return f"{text} {floor}".strip()
+
+
+def area_kind(area_name):
+    """Classify an area for display grouping."""
+    name = (area_name or "").lower()
+    if "gym" in name:
+        return "gym"
+    return "interior"
+
+
+def location_match_key(value):
+    """Key for deciding whether two place names refer to the same place."""
+    return re.sub(r"[^a-z0-9]", "", (value or "").lower())
+
+
 PUNCTUATION_FOLD = {
     "‘": "'", "’": "'", "‚": "'", "‛": "'",
     "“": '"', "”": '"', "„": '"',

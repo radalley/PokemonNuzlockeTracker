@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict COeW4XaLgcSGo0y2sjaRHrI4EfiaOzcdTi5HwVCka1idBssfn6XrlJiKZZnQvy0
+\restrict HOIeMeaS46EOF49q9E30Sc3sPsjSt9ay12eH0zCBjbbvdEKjz00GaxEkfyk6WSK
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -381,6 +381,41 @@ CREATE TABLE public.location_alias_map_frlg (
 
 
 --
+-- Name: location_areas; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.location_areas (
+    area_id integer NOT NULL,
+    canonical_location_id integer NOT NULL,
+    version_group_id integer,
+    area_name text NOT NULL,
+    area_kind text DEFAULT 'interior'::text NOT NULL,
+    sort_order integer,
+    source_key text
+);
+
+
+--
+-- Name: location_areas_area_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.location_areas_area_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: location_areas_area_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.location_areas_area_id_seq OWNED BY public.location_areas.area_id;
+
+
+--
 -- Name: locations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -663,7 +698,8 @@ CREATE TABLE public.trainer_pool (
     trainer_double text,
     load_build integer,
     game_id integer,
-    details text
+    details text,
+    area_id integer
 );
 
 
@@ -766,6 +802,13 @@ ALTER TABLE ONLY public.event_bosses ALTER COLUMN event_id SET DEFAULT nextval('
 --
 
 ALTER TABLE ONLY public.event_locations ALTER COLUMN canon_pk SET DEFAULT nextval('public.event_locations_canon_pk_seq'::regclass);
+
+
+--
+-- Name: location_areas area_id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.location_areas ALTER COLUMN area_id SET DEFAULT nextval('public.location_areas_area_id_seq'::regclass);
 
 
 --
@@ -909,6 +952,14 @@ ALTER TABLE ONLY public.games
 
 
 --
+-- Name: location_areas location_areas_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.location_areas
+    ADD CONSTRAINT location_areas_pkey PRIMARY KEY (area_id);
+
+
+--
 -- Name: locations locations_pk; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1048,6 +1099,20 @@ CREATE INDEX idx_contact_reports_user_id ON public.contact_reports USING btree (
 
 
 --
+-- Name: idx_location_areas_identity; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_location_areas_identity ON public.location_areas USING btree (canonical_location_id, COALESCE(version_group_id, '-1'::integer), area_name);
+
+
+--
+-- Name: idx_location_areas_location; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_location_areas_location ON public.location_areas USING btree (canonical_location_id);
+
+
+--
 -- Name: idx_pokemon_badges_badge_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1073,6 +1138,13 @@ CREATE INDEX idx_runs_user_last_opened ON public.runs USING btree (user_id, last
 --
 
 CREATE INDEX idx_trainer_pokemon_trainer_id ON public.trainer_pokemon USING btree (trainer_id);
+
+
+--
+-- Name: idx_trainer_pool_area_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_trainer_pool_area_id ON public.trainer_pool USING btree (area_id);
 
 
 --
@@ -1197,5 +1269,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict COeW4XaLgcSGo0y2sjaRHrI4EfiaOzcdTi5HwVCka1idBssfn6XrlJiKZZnQvy0
+\unrestrict HOIeMeaS46EOF49q9E30Sc3sPsjSt9ay12eH0zCBjbbvdEKjz00GaxEkfyk6WSK
 

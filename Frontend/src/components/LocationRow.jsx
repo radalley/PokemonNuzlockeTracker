@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '../utils/api'
 import Sprite from './Sprite'
 import TrainerCard from './TrainerCard'
@@ -401,6 +401,24 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }, [encounter?.species_id])
 
   const availableTrainers = trainers.filter(t => !t.is_event)
+  // Group by sub-area (gym, building, cave floor). The backend already orders
+  // area-less trainers first, then areas by their sort order, so insertion
+  // order here is the display order.
+  const trainerGroups = useMemo(() => {
+    const groups = []
+    const byArea = new Map()
+    for (const trainer of availableTrainers) {
+      const key = trainer.area_id ?? null
+      if (!byArea.has(key)) {
+        const group = { key, name: trainer.area_name || null, kind: trainer.area_kind || null, trainers: [] }
+        byArea.set(key, group)
+        groups.push(group)
+      }
+      byArea.get(key).trainers.push(trainer)
+    }
+    return groups
+  }, [availableTrainers])
+  const hasNamedAreas = trainerGroups.some(g => g.name)
   // Use the loaded value if trainers are loaded, otherwise use the seed value from row
   const defeatedTrainerCount = trainersLoaded
     ? availableTrainers.filter(t => Boolean(t.is_defeated)).length
@@ -1240,24 +1258,45 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           ) : availableTrainers.length === 0 ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>No trainers at this location.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {availableTrainers.map(trainer => (
-                <TrainerCard
-                  key={trainer.trainer_id}
-                  encounterName={trainer.encounter_name}
-                  trainerName={trainer.trainer_name}
-                  trainerClass={trainer.trainer_class}
-                  trainerPic={trainer.trainer_pic}
-                  trainerItems={trainer.trainer_items}
-                  gameId={gameId}
-                  versionGroupId={trainer.version_group_id}
-                  runId={runId}
-                  attemptId={attemptNumber}
-                  trainerId={trainer.trainer_id}
-                  enableBattle
-                  isDefeated={Boolean(trainer.is_defeated)}
-                  onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
-                />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: hasNamedAreas ? '14px' : '8px' }}>
+              {trainerGroups.map(group => (
+                <div key={group.key ?? 'location'} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {group.name && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '0.72em',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: group.kind === 'gym' ? 'var(--accent)' : 'var(--text-secondary)',
+                    }}>
+                      <span>{group.name}</span>
+                      <span style={{ flex: 1, height: '1px', background: 'var(--border-strong)' }} />
+                      <span style={{ opacity: 0.7 }}>
+                        {group.trainers.filter(t => t.is_defeated).length}/{group.trainers.length}
+                      </span>
+                    </div>
+                  )}
+                  {group.trainers.map(trainer => (
+                    <TrainerCard
+                      key={trainer.trainer_id}
+                      encounterName={trainer.encounter_name}
+                      trainerName={trainer.trainer_name}
+                      trainerClass={trainer.trainer_class}
+                      trainerPic={trainer.trainer_pic}
+                      trainerItems={trainer.trainer_items}
+                      gameId={gameId}
+                      versionGroupId={trainer.version_group_id}
+                      runId={runId}
+                      attemptId={attemptNumber}
+                      trainerId={trainer.trainer_id}
+                      enableBattle
+                      isDefeated={Boolean(trainer.is_defeated)}
+                      onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           )}
