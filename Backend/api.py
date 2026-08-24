@@ -1,4 +1,5 @@
 import os
+import threading
 import jwt
 from jwt import PyJWKClient
 from flask import Flask, jsonify, request, g
@@ -64,22 +65,44 @@ def _decode_supabase_jwt(token):
 # Connection pool, created lazily and shared for the lifetime of this process
 # (i.e. once per gunicorn worker). Requests borrow a connection from the pool
 # instead of opening a fresh Postgres connection on every request.
+#
+# The lock matters: without it, concurrent first requests could each build a
+# pool, and connections handed out by a discarded pool then failed putconn on
+# the surviving one with "trying to put unkeyed connection", leaking the
+# connection.
+_DB_POOL_MAXCONN = 10
+_DB_POOL_WAIT_SECONDS = 30
+
 _db_pool = None
+_db_pool_lock = threading.Lock()
+# psycopg2 pools raise rather than wait once maxconn is reached. The attempt
+# page opens with a burst of parallel party requests, so gate borrowers on a
+# semaphore: over-cap requests queue for a connection instead of 500ing.
+_db_pool_slots = threading.Semaphore(_DB_POOL_MAXCONN)
 
 def _get_db_pool():
     global _db_pool
     if _db_pool is None:
-        database_url = os.environ.get('DATABASE_URL')
-        if not database_url:
-            raise RuntimeError('DATABASE_URL environment variable is not set')
-        _db_pool = psycopg2.pool.ThreadedConnectionPool(1, 10, database_url)
+        with _db_pool_lock:
+            if _db_pool is None:
+                database_url = os.environ.get('DATABASE_URL')
+                if not database_url:
+                    raise RuntimeError('DATABASE_URL environment variable is not set')
+                _db_pool = psycopg2.pool.ThreadedConnectionPool(1, _DB_POOL_MAXCONN, database_url)
     return _db_pool
 
 def get_db():
     if 'db' not in g:
-        raw = _get_db_pool().getconn()
-        raw.cursor().execute("SET search_path TO public")
-        raw.commit()
+        pool = _get_db_pool()
+        if not _db_pool_slots.acquire(timeout=_DB_POOL_WAIT_SECONDS):
+            raise RuntimeError('Timed out waiting for a database connection')
+        try:
+            raw = pool.getconn()
+            raw.cursor().execute("SET search_path TO public")
+            raw.commit()
+        except Exception:
+            _db_pool_slots.release()
+            raise
         g.db_raw = raw
         g.db = wrap_conn(raw)
     return g.db
@@ -139,8 +162,12 @@ def close_db(error):
         db.rollback()
     if raw is not None:
         # Return the connection to the pool instead of closing it, so the
-        # next request on this worker can reuse it.
-        _get_db_pool().putconn(raw)
+        # next request on this worker can reuse it. The slot is released even
+        # if putconn fails, so one bad connection can't shrink the pool.
+        try:
+            _get_db_pool().putconn(raw)
+        finally:
+            _db_pool_slots.release()
 
 @app.route('/api/auth/me', methods=['GET'])
 def auth_me_route():

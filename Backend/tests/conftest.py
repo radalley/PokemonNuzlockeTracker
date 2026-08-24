@@ -58,7 +58,9 @@ create table games (
     name text,
     game_tag text,
     generation integer,
-    version_group_id integer
+    version_group_id integer,
+    valid_game text default 'valid',
+    pool_game_id integer
 );
 
 create table runs (

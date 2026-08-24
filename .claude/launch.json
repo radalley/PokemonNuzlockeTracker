@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "C:\\Users\\radal\\Lockley\\Backend\\venv\\Scripts\\python.exe",
+      "runtimeArgs": ["api.py"],
+      "cwd": "C:\\Users\\radal\\Lockley\\Backend",
+      "port": 5000
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "C:\\Users\\radal\\Lockley\\Frontend",
+      "port": 5174
+    }
+  ]
+}
