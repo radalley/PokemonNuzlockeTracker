@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7fArB76grngOQv0JJAuxUdlsaeBhd9j4qUnZSVAHFkUN8gT074oFaqjOuUVwY5l
+\restrict COeW4XaLgcSGo0y2sjaRHrI4EfiaOzcdTi5HwVCka1idBssfn6XrlJiKZZnQvy0
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -622,7 +622,12 @@ CREATE TABLE public.trainer_pokemon (
     iv integer,
     pk_id integer NOT NULL,
     version_group_id integer,
-    load_build integer
+    load_build integer,
+    trainer_id integer,
+    slot integer,
+    ability text,
+    ability_clean text,
+    nature text
 );
 
 
@@ -1064,6 +1069,13 @@ CREATE INDEX idx_runs_user_last_opened ON public.runs USING btree (user_id, last
 
 
 --
+-- Name: idx_trainer_pokemon_trainer_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_trainer_pokemon_trainer_id ON public.trainer_pokemon USING btree (trainer_id);
+
+
+--
 -- Name: idx_users_email; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1185,5 +1197,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7fArB76grngOQv0JJAuxUdlsaeBhd9j4qUnZSVAHFkUN8gT074oFaqjOuUVwY5l
+\unrestrict COeW4XaLgcSGo0y2sjaRHrI4EfiaOzcdTi5HwVCka1idBssfn6XrlJiKZZnQvy0
 

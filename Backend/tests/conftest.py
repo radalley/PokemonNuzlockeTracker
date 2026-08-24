@@ -159,7 +159,54 @@ create table event_bosses (
 
 create table trainer_pool (
     trainer_id serial primary key,
-    trainer_name text
+    encounter_name text,
+    trainer_name text,
+    trainer_class text,
+    canonical_location_id integer,
+    is_rematch text,
+    is_event text,
+    trainer_items text,
+    trainer_pic text,
+    trainer_double text,
+    details text,
+    version_group_id integer,
+    load_build integer,
+    game_id integer
+);
+
+create table trainer_pokemon (
+    pk_id serial primary key,
+    encounter_name text,
+    species_name text,
+    lvl integer,
+    moves text,
+    held_item text,
+    iv integer,
+    version_group_id integer,
+    load_build integer,
+    trainer_id integer,
+    slot integer,
+    ability text,
+    ability_clean text,
+    nature text
+);
+
+create table moves (
+    move_id integer,
+    move_name text,
+    type text,
+    damage_class text,
+    power integer,
+    accuracy integer,
+    version_group_id integer
+);
+
+create table movesets (
+    species_id integer,
+    move_id integer,
+    learn_method text,
+    learn_level integer,
+    version_group_id integer
 );
 """
 
@@ -167,7 +214,7 @@ TABLES = [
     "party", "pokebank", "bonus_locations", "attempts", "runs",
     "event_locations", "canon_locations", "games",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
-    "event_bosses", "trainer_pool",
+    "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
 ]
 
 
@@ -206,7 +253,7 @@ def db_conn(pg_uri, _schema_initialized):
     cur.execute("select to_regclass('public.bonus_locations') is not null")
     has_bonus_table = cur.fetchone()[0]
     tables_to_clear = [t for t in TABLES if t != "bonus_locations" or has_bonus_table]
-    for badge_table in ("attempt_badges", "pokemon_badges", "badges"):
+    for badge_table in ("attempt_badges", "pokemon_badges", "badges", "schema_migrations"):
         cur.execute(f"select to_regclass('public.{badge_table}') is not null")
         if cur.fetchone()[0]:
             tables_to_clear.append(badge_table)

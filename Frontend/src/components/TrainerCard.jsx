@@ -69,14 +69,18 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
   useEffect(() => {
     setParty([])
     setPartyLoaded(false)
-  }, [encounterName, gameId])
+  }, [encounterName, gameId, trainerId])
 
   useEffect(() => {
-    if (!encounterName || partyLoaded) return
+    const hasTrainerId = trainerId !== null && trainerId !== undefined && trainerId !== ''
+    if ((!encounterName && !hasTrainerId) || partyLoaded) return
 
     const controller = new AbortController()
     const query = gameId ? `?game_id=${gameId}` : ''
-    apiFetch(`/api/trainer-party/${encodeURIComponent(encounterName)}${query}`, { signal: controller.signal })
+    const partyUrl = hasTrainerId
+      ? `/api/trainers/${trainerId}/party${query}`
+      : `/api/trainer-party/${encodeURIComponent(encounterName)}${query}`
+    apiFetch(partyUrl, { signal: controller.signal })
       .then(async res => {
         if (!res.ok) {
           const text = await res.text().catch(() => '')
@@ -96,7 +100,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       })
 
     return () => controller.abort()
-  }, [encounterName, gameId, partyLoaded])
+  }, [encounterName, gameId, trainerId, partyLoaded])
 
   const formattedClass = trainerClass
     ? trainerClass

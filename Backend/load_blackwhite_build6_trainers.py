@@ -144,7 +144,7 @@ ORDER BY encounter_name;
 
 INSERT INTO trainer_pokemon (
   encounter_name, species_name, lvl, moves, held_item, iv,
-  version_group_id, load_build
+  version_group_id, load_build, slot
 )
 SELECT
   nullif(encounter_name, ''),
@@ -154,9 +154,34 @@ SELECT
   nullif(held_item, ''),
   iv,
   version_group_id,
-  load_build
+  load_build,
+  slot
 FROM blackwhite_trainer_pokemon_stage
 ORDER BY encounter_name, slot;
+
+-- encounter_name is validated unique within this build's trainer preview, so
+-- this join links every party row of the build to exactly one trainer.
+UPDATE trainer_pokemon t
+SET trainer_id = tp.trainer_id
+FROM trainer_pool tp
+WHERE t.version_group_id = {VERSION_GROUP_ID}
+  AND t.load_build = {LOAD_BUILD}
+  AND t.trainer_id IS NULL
+  AND tp.version_group_id = {VERSION_GROUP_ID}
+  AND tp.load_build = {LOAD_BUILD}
+  AND tp.encounter_name = t.encounter_name;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM trainer_pokemon
+    WHERE version_group_id = {VERSION_GROUP_ID}
+      AND load_build = {LOAD_BUILD}
+      AND trainer_id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Loaded trainer Pokemon rows are missing trainer_id links';
+  END IF;
+END $$;
 
 SELECT 'trainer_pool_rows' AS metric, count(*) AS value
 FROM trainer_pool

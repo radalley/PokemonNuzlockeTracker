@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import time
 from backend import (get_games, create_run, get_runs, get_script,
                      get_encounter_pool, get_run_by_id, get_trainers_by_location,
-                     get_trainer_parties_by_encounter, get_species_search, update_starter, delete_run,
+                     get_trainer_parties_by_encounter, get_trainer_party_by_id, get_species_search, update_starter, delete_run,
                      get_pokebank_for_attempt, upsert_encounter, delete_encounter, get_evolutions,
                      get_evolution_families, get_attempt_page_data, get_attempts_for_run, create_attempt_for_run,
                      get_party_for_attempt, add_to_party_for_attempt, remove_from_party_for_attempt,
@@ -250,6 +250,15 @@ def trainer_party_route(trainer_name):
     conn = get_db()
     game_id = request.args.get('game_id', type=int)
     party = get_trainer_parties_by_encounter(conn, trainer_name, game_id)
+    return jsonify(party)
+
+@app.route('/api/trainers/<int:trainer_id>/party', methods=['GET'])
+def trainer_party_by_id_route(trainer_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    party = get_trainer_party_by_id(conn, trainer_id, game_id)
+    if party is None:
+        return jsonify({'error': 'Trainer not found'}), 404
     return jsonify(party)
 
 @app.route('/api/species/search', methods=['GET'])

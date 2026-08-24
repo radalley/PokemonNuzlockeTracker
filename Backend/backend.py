@@ -1758,7 +1758,7 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
 
     return conn.execute(
         'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location, eb.event_id as boss_event_id, eb.badge_id, eb.type_focus, '
-        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id)) as level_cap '
+        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.trainer_id = eb.trainer_id or (t.trainer_id is null and t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id))) as level_cap '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
@@ -2076,6 +2076,9 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
         tp_params
     ).fetchall()
 
+    return _assemble_trainer_party(conn, rows, version_group_id)
+
+def _assemble_trainer_party(conn, rows, version_group_id):
     party = []
     for row in rows:
         pokemon = dict(row)
@@ -2099,6 +2102,53 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
             pokemon['debug_moves_source'] = 'moveset_generated'
         party.append(pokemon)
     return party
+
+def get_trainer_party_by_id(conn, trainer_id, game_id=None):
+    """Party for one trainer_pool row, keyed by trainer_id.
+
+    Returns None when the trainer does not exist. Falls back to the legacy
+    encounter-name match (scoped to the trainer's own version group) for party
+    rows whose trainer_id could not be backfilled.
+    """
+    trainer = conn.execute(
+        'select trainer_id, encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer:
+        return None
+
+    game_generation = _get_game_generation(conn, game_id=game_id)
+    version_group_id = trainer['version_group_id']
+    if game_id is not None:
+        game_row = conn.execute('select version_group_id from games where game_id = %s', (game_id,)).fetchone()
+        if game_row and game_row['version_group_id'] is not None:
+            version_group_id = game_row['version_group_id']
+
+    select_sql = (
+        'select sp.species_id, t.species_name, st.type1, st.type2, sa.ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        't.iv, t.lvl, t.moves, t.held_item, t.slot, t.ability as trainer_ability, t.nature as trainer_nature '
+        'from trainer_pokemon t '
+        'left join species sp on t.species_name = sp.name '
+        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s')
+    )
+    rows = conn.execute(
+        select_sql + 'where t.trainer_id = %s order by t.slot asc nulls last, t.pk_id asc',
+        (game_generation, game_generation, game_generation, trainer_id)
+    ).fetchall()
+
+    if not rows:
+        rows = conn.execute(
+            select_sql +
+            'where t.trainer_id is null and t.encounter_name = %s '
+            'and (t.version_group_id is null or t.version_group_id = %s) '
+            'order by t.slot asc nulls last, t.pk_id asc',
+            (game_generation, game_generation, game_generation,
+             trainer['encounter_name'], trainer['version_group_id'])
+        ).fetchall()
+
+    return _assemble_trainer_party(conn, rows, version_group_id)
 
 def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
     """Get trainers defeated and badges earned for a specific pokemon in a run/attempt."""
