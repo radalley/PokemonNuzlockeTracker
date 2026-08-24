@@ -1,13 +1,26 @@
-import load_blackwhite_build6_event_bosses as loader
+"""Deprecated: superseded by etl.pipelines.gen5_event_bosses.
+
+Previously a shim that monkey-patched module constants on the Black/White
+loader. Prefer:
+
+    python -m etl.pipelines.gen5_event_bosses black2white2 --apply
+"""
+import sys
+
+from etl.pipelines import gen5_event_bosses
+
+MANIFEST = "black2white2"
 
 
-loader.PREVIEW = loader.ROOT / "black2white2_build6_preview" / "event_bosses_preview.csv"
-loader.VERSION_GROUP_ID = 14
-loader.LOAD_BUILD = 6
-loader.EXPECTED_ROWS = 57
-loader.EXPECTED_GAME_ROWS = 4
-loader.ALLOWED_GAME_IDS = {"", "21", "22"}
+def main():
+    print(
+        f"NOTE: this script is deprecated; use "
+        f"'python -m etl.pipelines.gen5_event_bosses {MANIFEST}' instead.",
+        file=sys.stderr,
+    )
+    sys.argv = [sys.argv[0], MANIFEST, *sys.argv[1:]]
+    gen5_event_bosses.main()
 
 
 if __name__ == "__main__":
-    loader.main()
+    main()

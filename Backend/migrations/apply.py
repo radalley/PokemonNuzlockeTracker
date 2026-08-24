@@ -16,41 +16,15 @@ at production (Supabase) to apply there; psql location comes from PSQL_PATH,
 the default PostgreSQL 18 install path, or PATH.
 """
 import argparse
-import os
-import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 MIGRATIONS_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = MIGRATIONS_DIR.parent
-DEFAULT_PSQL = r"C:\Program Files\PostgreSQL\18\bin\psql.exe"
+sys.path.insert(0, str(BACKEND_DIR))
 
-
-def database_url():
-    url = os.environ.get("DATABASE_URL")
-    if url:
-        return url
-    env_path = BACKEND_DIR / ".env"
-    if env_path.exists():
-        for line in env_path.read_text(encoding="utf-8", errors="replace").splitlines():
-            match = re.match(r"\s*DATABASE_URL\s*=\s*(.+?)\s*$", line)
-            if match:
-                return match.group(1).strip().strip("\"'")
-    raise RuntimeError("DATABASE_URL not set in the environment or Backend/.env")
-
-
-def psql_path():
-    configured = os.environ.get("PSQL_PATH")
-    if configured:
-        return configured
-    if Path(DEFAULT_PSQL).exists():
-        return DEFAULT_PSQL
-    found = shutil.which("psql")
-    if found:
-        return found
-    raise RuntimeError("psql not found; set PSQL_PATH")
+from etl.config import database_url, psql_path  # noqa: E402
 
 
 def run_psql(url, *args, check=True):
