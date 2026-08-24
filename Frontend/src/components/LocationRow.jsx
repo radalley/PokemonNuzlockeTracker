@@ -331,7 +331,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (activePanel !== 'trainers') return
     if (!canShowTrainerView) return
     const controller = new AbortController()
-    getTrainerList(row.event_id, runId, attemptNumber, controller.signal)
+    getTrainerList(row.event_id, runId, attemptNumber, controller.signal, {
+      gameId,
+      versionGroupId: row.version_group_id,
+    })
       .then(data => {
         setTrainers(data)
         setTrainersLoaded(true)
@@ -340,7 +343,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         if (err.name !== 'AbortError') console.error(err)
       })
     return () => controller.abort()
-  }, [trainersLoaded, activePanel, viewMode, row.event_id, runId, attemptNumber])
+  }, [trainersLoaded, activePanel, viewMode, row.event_id, runId, attemptNumber, gameId, row.version_group_id])
 
   useEffect(() => {
     if (searchQuery.length < 2) {

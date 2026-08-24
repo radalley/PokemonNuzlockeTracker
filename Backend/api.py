@@ -209,10 +209,9 @@ def runs_route():
     if error:
         return error
     data = request.get_json() or {}
-    # set state before calling create_run
-    from backend import state, set_active_game
-    set_active_game(conn, data['game_id'])
-    run_id = create_run(conn, data['run_name'], user_id=user['user_id'])
+    if data.get('game_id') is None:
+        return jsonify({'error': 'game_id is required'}), 400
+    run_id = create_run(conn, data['run_name'], data['game_id'], user_id=user['user_id'])
     return jsonify({'success': True, 'run_id': run_id})
 
 @app.route('/api/script', methods=['GET'])
@@ -238,11 +237,12 @@ def trainer_list_route(location_id):
     run_id = request.args.get('run_id', type=int)
     attempt_number = request.args.get('attempt_number', type=int)
     game_id = request.args.get('game_id', type=int)
+    version_group_id = request.args.get('version_group_id', type=int)
     if run_id is not None:
         _, error = require_run_access(conn, run_id)
         if error:
             return error
-    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number, game_id=game_id)
+    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number, version_group_id=version_group_id, game_id=game_id)
     return jsonify([dict(t) for t in trainers])
 
 @app.route('/api/trainer-party/<trainer_name>', methods=['GET'])
@@ -270,6 +270,9 @@ def species_search_route():
 
 @app.route('/api/debug/trainer-pics', methods=['GET'])
 def debug_trainer_pics_route():
+    _, error = require_admin()
+    if error:
+        return error
     conn = get_db()
     rows = conn.execute(
         'select distinct trainer_pic from trainer_pool where trainer_pic is not null and trainer_pic <> \'\' order by trainer_pic asc'

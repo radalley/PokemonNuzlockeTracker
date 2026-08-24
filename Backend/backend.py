@@ -109,6 +109,16 @@ BADGE_DEFINITIONS = (
     (30, 'Mine Badge', 'Sinnoh'),
     (31, 'Icicle Badge', 'Sinnoh'),
     (32, 'Beacon Badge', 'Sinnoh'),
+    (33, 'Trio Badge', 'Unova'),
+    (34, 'Basic Badge', 'Unova'),
+    (35, 'Insect Badge', 'Unova'),
+    (36, 'Bolt Badge', 'Unova'),
+    (37, 'Quake Badge', 'Unova'),
+    (38, 'Jet Badge', 'Unova'),
+    (39, 'Freeze Badge', 'Unova'),
+    (40, 'Legend Badge', 'Unova'),
+    (41, 'Toxic Badge', 'Unova'),
+    (42, 'Wave Badge', 'Unova'),
 )
 
 EVENT_BADGE_MAPPINGS = (
@@ -147,6 +157,17 @@ EVENT_BADGE_MAPPINGS = (
     ((8, 9), 'canalave city gym', 30),
     ((8, 9), 'snowpoint city gym', 31),
     ((8, 9), 'sunyshore city gym', 32),
+    ((11,), 'striaton city gym', 33),
+    ((11,), 'nacrene city gym', 34),
+    ((11, 14), 'castelia city gym', 35),
+    ((11, 14), 'nimbasa city gym', 36),
+    ((11, 14), 'driftveil city gym', 37),
+    ((11, 14), 'mistralton city gym', 38),
+    ((11,), 'icirrus city gym', 39),
+    ((11, 14), 'opelucid city gym', 40),
+    ((14,), 'aspertia city gym', 34),
+    ((14,), 'virbank city gym', 41),
+    ((14,), 'humilau city gym', 42),
 )
 
 def get_games(conn):
@@ -186,12 +207,14 @@ def set_active_game(conn, game):
     state['active_game_id'] = game
     state['version_group_id'] = conn.execute('select version_group_id from games where game_id = (%s)', (game,)).fetchone()['version_group_id']
 
-def create_run(conn, name, user_id=None):
+def create_run(conn, name, game_id, user_id=None):
     _ensure_auth_schema(conn)
+    if game_id is None:
+        raise ValueError('game_id is required to create a run')
     row = conn.execute(
         "insert into runs (game_id, name, user_id, last_opened_at, last_opened_attempt_number) "
         "values (%s,%s,%s,current_timestamp,1) returning run_id",
-        (state['active_game_id'], name, user_id)
+        (game_id, name, user_id)
     ).fetchone()
     conn.commit()
     set_active_run(row['run_id'])
@@ -1878,6 +1901,13 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
                 version_group_id = run_info['version_group_id']
             if game_id is None:
                 game_id = run_info['game_id']
+
+    if version_group_id is None and game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
 
     if version_group_id is None:
         raise ValueError('version_group_id is required to fetch trainers for a location')
