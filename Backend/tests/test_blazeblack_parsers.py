@@ -80,6 +80,18 @@ def test_species_changes_parse_all_dialects(monkeypatch):
     assert not problems
 
 
+def test_unresolved_member_restriction_is_loud_not_global():
+    doc = """
+Key
+#041 Zubat, #042 Golbat, #169 Crobat
++ Level 5 - Bite (Zubbat)
+"""
+    _, deltas, problems = parse_learnsets.parse(doc)
+    # The typo'd restriction must not silently apply to every member.
+    assert not any(d for d in deltas.values())
+    assert any("unresolved member restriction" in p for p in problems)
+
+
 def test_learnset_parse_all_dialects():
     move_changes, deltas, problems = parse_learnsets.parse(LEARNSET_DOC)
 

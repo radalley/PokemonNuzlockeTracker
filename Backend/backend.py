@@ -2267,7 +2267,10 @@ def _pick_moveset_version_group(conn, species_id, target_version_group_id):
     if not values:
         return None
     if target_version_group_id is None:
-        return max(values)
+        # No game context means vanilla: reserved-range (hack) learnsets
+        # must never win the "newest available" pick.
+        vanilla_values = [v for v in values if v < 1000]
+        return max(vanilla_values) if vanilla_values else max(values)
 
     # A hack's own learnset rows (loaded at its reserved version group) win
     # outright; species the hack left unchanged fall back to the BASE game's

@@ -376,11 +376,13 @@ def build_species_overrides(problems):
     learnset_rows = []
     for sid, delta_list in sorted(learnset_deltas.items()):
         entries = set(vanilla_learnsets.get(sid, []))
+        doc_added = set()
         if not entries:
             problems.append(f"learnset deltas for species {sid} with no vanilla vg-11 learnset")
         for op, level, move_name in delta_list:
             if op == "reset":
                 entries = set()
+                doc_added = set()
                 continue
             move_id = move_id_for(move_name, f"species {sid}")
             if move_id is None:
@@ -389,10 +391,14 @@ def build_species_overrides(problems):
                 # '+/=': shift when the member already knows the move.
                 op = "=" if any(m == move_id for m, _ in entries) else "+"
             if op == "-":
-                entries = {(m, l) for m, l in entries if l != level}
+                # '-' replaces "the move usually learned at that level":
+                # it removes VANILLA entries at the level, never moves the
+                # doc itself added earlier in the block (Natu's Safeguard).
+                entries = {(m, l) for m, l in entries if l != level or (m, l) in doc_added}
             elif op == "=":
                 entries = {(m, l) for m, l in entries if m != move_id}
             entries.add((move_id, level))
+            doc_added.add((move_id, level))
         for move_id, level in sorted(entries, key=lambda e: (e[1], e[0])):
             learnset_rows.append({
                 "species_id": sid, "move_id": move_id, "learn_method": "level-up",

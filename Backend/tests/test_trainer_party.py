@@ -150,6 +150,21 @@ def test_hack_parties_resolve_movesets_against_base_version_group(db_conn):
     assert [m["move_name"] for m in party[0]["resolved_moves"]] == ["Tackle"]
 
 
+def test_no_game_context_never_picks_hack_learnsets(db_conn):
+    """Without game context the moveset pick must stay vanilla: after the
+    Blaze Black overrides load, max(values) would otherwise be vg 1001."""
+    db_conn.execute("insert into species (species_id, name) values (504, 'PATRAT')")
+    db_conn.execute(
+        "insert into movesets (species_id, move_id, learn_method, learn_level, version_group_id) values "
+        "(504, 33, 'level-up', 1, 11), (504, 44, 'level-up', 1, 14), (504, 99, 'level-up', 1, 1001)"
+    )
+    db_conn.commit()
+
+    picked = backend_module._pick_moveset_version_group(db_conn, 504, None)
+
+    assert picked == 14  # newest VANILLA version group, never the hack's
+
+
 def test_hack_override_learnset_abilities_and_move_stats_win(db_conn):
     """Overrides loaded at the hack's version group beat the base fallback:
     an exact vg-1001 learnset, ability override row, and rebalanced move row

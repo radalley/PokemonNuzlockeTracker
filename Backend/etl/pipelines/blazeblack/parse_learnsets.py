@@ -34,8 +34,13 @@ ACCURACY_PATTERN = re.compile(r"(\d+)%\s*(?:accuracy|accurate|accuarcy)", re.IGN
 TYPE_PATTERN = re.compile(r"([A-Za-z]+)-type", re.IGNORECASE)
 
 
+# Doc typos in member-restriction names.
+NAME_TYPOS = {"mineshao": "mienshao"}
+
+
 def _slug(text):
-    return re.sub(r"[^a-z0-9]+", "", (text or "").lower())
+    slug = re.sub(r"[^a-z0-9]+", "", (text or "").lower())
+    return NAME_TYPOS.get(slug, slug)
 
 
 def parse(text):
@@ -153,6 +158,26 @@ def parse(text):
             resolved = [sid for sid, name in header if _slug(name) in {_slug(n) for n in names if n}]
             if resolved:
                 members = resolved
+            elif re.fullmatch(r"(same for all.*|all)", paren.group("only").strip(), re.IGNORECASE):
+                pass  # explicit "everyone" prose
+            else:
+                # "Regular Rotom only" is the base form (the one our species
+                # row represents); other form qualifiers ("Fan Rotom only")
+                # describe forms we do not model, so those lines are skipped.
+                single = names[0] if len(names) == 1 else ""
+                form_match = re.fullmatch(r"(?P<qualifier>\w+)\s+(?P<name>.+)", single or "")
+                base = form_match and next(
+                    (sid for sid, name in header if _slug(name) == _slug(form_match.group("name"))), None)
+                if base is not None and form_match.group("qualifier").lower() in ("regular", "normal"):
+                    members = [base]
+                elif base is not None:
+                    continue  # form-specific line; unrepresentable
+                else:
+                    # A restriction that matches nobody must be loud, not
+                    # silently apply to all.
+                    problems.append(
+                        f"unresolved member restriction for #{header[0][0]:03d}: {line!r}")
+                    continue
             rest = rest[:paren.start()].strip()
 
         delta = LEVEL_FIRST.match(rest) or MOVE_FIRST.match(rest) or BETWEEN.match(rest)
