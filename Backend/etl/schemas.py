@@ -50,6 +50,19 @@ EVENT_BOSS_COLUMNS = [
     ("event_type", "text"),
     ("game_id", "text"),
     ("badge_id", "text"),
+    ("battle_type", "text"),
+    ("is_level_cap", "text"),
+]
+
+ENCOUNTER_POOL_COLUMNS = [
+    ("game_id", "text"),
+    ("location_id", "text"),
+    ("canonical_location_id", "integer"),
+    ("species_id", "integer"),
+    ("min_level", "text"),
+    ("max_level", "text"),
+    ("method", "text"),
+    ("enounter_rate", "integer"),
 ]
 
 

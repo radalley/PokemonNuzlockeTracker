@@ -12,6 +12,46 @@ from .. import manifests, preview, schemas
 from ..loader import Guard, GuardedLoad, Metric, StageTable, loader_cli
 
 
+def _insert_statement(sample_row, vg, build):
+    """INSERT adapted to the columns the preview carries; battle_type and
+    is_level_cap are newer additions older previews lack."""
+    optional = [name for name in ("battle_type", "is_level_cap") if name in sample_row]
+    optional_targets = "".join(f", {name}" for name in optional)
+    optional_exprs = "".join(
+        ", nullif(battle_type, '')" if name == "battle_type"
+        else ", nullif(is_level_cap, '')::boolean"
+        for name in optional
+    )
+    return f"""
+WITH resolved AS (
+  SELECT s.*, tp.trainer_id AS resolved_trainer_id
+  FROM event_boss_stage s
+  JOIN trainer_pool tp
+    ON tp.encounter_name = s.encounter_name
+   AND tp.version_group_id = {vg}
+   AND tp.load_build = {build}
+),
+numbered AS (
+  SELECT r.*,
+         row_number() OVER (
+           ORDER BY sort_order::numeric, encounter_title, starter, encounter_name
+         ) AS row_number,
+         (SELECT coalesce(max(event_id), 0) FROM event_bosses) AS current_max
+  FROM resolved r
+)
+INSERT INTO event_bosses (
+  event_id, trainer_id, sort_order, encounter_title, starter, type_focus,
+  version_group_id, event_type, game_id, badge_id{optional_targets}
+)
+SELECT
+  current_max + row_number, resolved_trainer_id, sort_order, encounter_title,
+  nullif(starter, ''), nullif(type_focus, ''), version_group_id,
+  nullif(event_type, ''), nullif(game_id, '')::integer, nullif(badge_id, '')::integer{optional_exprs}
+FROM numbered
+ORDER BY sort_order::numeric, encounter_title, starter, encounter_name
+"""
+
+
 def validate(manifest, rows):
     preview.expect_row_count(rows, manifest.expected("event_bosses"), "event boss")
     preview.expect_column_value(rows, "version_group_id", manifest.version_group_id, "event boss")
@@ -82,34 +122,7 @@ def build_load(args):
         ],
         guards=guards,
         statements=[
-            f"""
-WITH resolved AS (
-  SELECT s.*, tp.trainer_id AS resolved_trainer_id
-  FROM event_boss_stage s
-  JOIN trainer_pool tp
-    ON tp.encounter_name = s.encounter_name
-   AND tp.version_group_id = {vg}
-   AND tp.load_build = {build}
-),
-numbered AS (
-  SELECT r.*,
-         row_number() OVER (
-           ORDER BY sort_order::numeric, encounter_title, starter, encounter_name
-         ) AS row_number,
-         (SELECT coalesce(max(event_id), 0) FROM event_bosses) AS current_max
-  FROM resolved r
-)
-INSERT INTO event_bosses (
-  event_id, trainer_id, sort_order, encounter_title, starter, type_focus,
-  version_group_id, event_type, game_id, badge_id
-)
-SELECT
-  current_max + row_number, resolved_trainer_id, sort_order, encounter_title,
-  nullif(starter, ''), nullif(type_focus, ''), version_group_id,
-  nullif(event_type, ''), nullif(game_id, '')::integer, nullif(badge_id, '')::integer
-FROM numbered
-ORDER BY sort_order::numeric, encounter_title, starter, encounter_name
-""",
+            _insert_statement(rows[0], vg, build),
             """
 SELECT setval(
   pg_get_serial_sequence('event_bosses', 'event_id'),

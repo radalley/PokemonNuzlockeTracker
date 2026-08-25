@@ -76,6 +76,24 @@ encounters into a playable copy (game-exclusive rows of unmapped base games
 are dropped, never turned shared). New games rows land hidden until launch
 (`--valid-game valid` to expose them).
 
+Blaze Black (WP8) is the first ROM hack, parsed from Drayano's documentation
+rather than a ROM. Convert the RTF docs to UTF-8 text (PowerShell:
+`System.Windows.Forms.RichTextBox` reads the RTF, write `.Text` out as
+UTF-8), put them in `LOCKLEY_ETL_SOURCE_DIR/blazeblack/`, then:
+
+```bash
+python -m etl.pipelines.blazeblack.build_previews   # docs -> preview CSVs
+python -m etl.pipelines.load_trainers blazeblack --apply
+python -m etl.pipelines.gen5_event_bosses blazeblack --apply
+python -m etl.pipelines.load_encounters blazeblack --apply
+```
+
+The preview build resolves every species, move, ability, and location
+against the live database and matches every boss team to the vanilla BW
+skeleton (61/61) -- it exits non-zero on unresolved names, so a clean run
+means the data is load-ready. Rival teams expand into per-starter variants
+using the vanilla starter mapping.
+
 Placement curation (WP5) adds two more:
 
 ```bash

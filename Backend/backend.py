@@ -2113,7 +2113,9 @@ def _normalize_move_constant(move_token):
     token = (move_token or '').strip()
     if token.startswith('MOVE_'):
         token = token[5:]
-    return token.lower().replace('_', '-')
+    # Handles decomp constants (MOVE_QUICK_ATTACK) and display names
+    # (Quick Attack) alike; the lookup compares hyphenated slugs.
+    return token.lower().replace('_', '-').replace(' ', '-')
 
 def _format_label(value):
     if value is None:

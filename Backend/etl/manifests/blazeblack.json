@@ -1,0 +1,32 @@
+﻿{
+  "key": "blazeblack",
+  "label": "Blaze Black / Volt White",
+  "generation": 5,
+  "version_group_id": 1001,
+  "load_build": 7,
+  "is_rom_hack": true,
+  "base": "blackwhite",
+  "game_ids": {
+    "blazeblack": 1001,
+    "voltwhite": 1002
+  },
+  "source": {
+    "type": "docs",
+    "path": "blazeblack",
+    "documents": [
+      "Trainer Rosters.txt",
+      "Important Trainer Rosters.txt",
+      "Wild Pokemon.txt"
+    ],
+    "origin": "Drayano's Blaze Black & Volt White 3.1 documentation, RTF converted to UTF-8 text"
+  },
+  "preview_dir": "blazeblack_build7_preview",
+  "expected": {
+    "trainers": 355,
+    "trainer_pokemon": 1223,
+    "event_bosses": 61,
+    "game_specific_bosses": 4,
+    "encounters": 2036
+  },
+  "allowed_boss_game_ids": ["", "1001", "1002"]
+}
