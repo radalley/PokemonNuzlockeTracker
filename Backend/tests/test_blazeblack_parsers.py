@@ -123,6 +123,8 @@ def patched_vocabularies(monkeypatch):
         "SNIVY", "OSHAWOTT", "TEPIG", "STARLY", "PANSAGE", "PANSEAR", "PANPOUR",
         "VAPOREON", "ABSOL", "NIDORAN M", "NIDORAN F", "MR-MIME", "GASTRODON",
         "BASCULIN", "DRAPION", "SERPERIOR", "VENUSAUR", "MEGANIUM",
+        "SANDILE", "MAROWAK", "VIRIZION", "TORNADUS", "THUNDURUS",
+        "MUSHARNA", "RESHIRAM", "ZEKROM",
     })
     monkeypatch.setattr(reference, "ability_vocabulary", lambda: {
         "Contrary", "Vital Spirit", "Adaptability", "Overgrow", "Torrent",
@@ -334,3 +336,81 @@ def test_wild_parser_attributes_preamble_fused_sections():
     legendary = next(r for r in cave if r["species_id"] == "DRAPION")
     assert legendary["method"] == "legendary"
     assert legendary["min_level"] == "70"
+
+
+WILD_DIALECTS_DOC = """
+Route 1
+
+Grass, Normal: Snivy (20%), Tepig (30%), Basculin (20%), Starly (20%),
+Absol (10%)
+Sand: Sandile (100%)
+
+LEGENDARY ENCOUNTER
+
+Virizion. Level 56
+Rumination Field
+==================================================================
+Route 10
+
+Grass, Normal: Marowak (100%)
+
+LEGENDARY ENCOUNTER
+ /
+Tornadus, Level 40 (Volt White) / Thundurus, Level 40 (Blaze Black)
+Route 10, Main Route
+Grass, Shaking, 1%
+
+SPECIAL ENCOUNTER
+
+Musharna, Level 70
+Dream Basement
+==================================================================
+N's Castle
+
+LEGENDARY ENCOUNTER
+ /
+Reshiram (Blaze Black) | Zekrom (Volt White)
+Level 70
+N's Castle
+==================================================================
+Striaton City
+
+Grass, Normal: Vaporeon (100%)
+"""
+
+
+def test_wild_parser_dialects():
+    rows, problems = parse_wild.parse(WILD_DIALECTS_DOC)
+
+    # An unresolvable location inside an unknown section is loud, not leaked.
+    assert sorted(problems) == [
+        "legendary encounter with no resolvable location: 'Reshiram'",
+        "legendary encounter with no resolvable location: 'Zekrom'",
+    ]
+    assert not any(r["species_id"] in ("RESHIRAM", "ZEKROM") for r in rows)
+
+    route1 = [r for r in rows if r["canonical_location_id"] == 3]
+    # The wrapped slot list continues onto the bare species line.
+    assert any(r["species_id"] == "ABSOL" and r["method"] == "grass-normal" for r in route1)
+    # Single-label desert lines get a default kind.
+    assert any(r["species_id"] == "SANDILE" and r["method"] == "sand-normal" for r in route1)
+    # 'Virizion. Level 56' (period) parses; with no slot line it lands as a
+    # 1%-style static without eating the next section's header.
+    virizion = [r for r in route1 if r["species_id"] == "VIRIZION"]
+    assert {(r["min_level"], r["enounter_rate"]) for r in virizion} == {("56", 1)}
+
+    route10 = [r for r in rows if r["canonical_location_id"] == 20]
+    assert any(r["species_id"] == "MAROWAK" for r in route10)
+    # Inline split-game legendary: one row per named game.
+    split = {(r["species_id"], r["game_id"]) for r in route10
+             if r["species_id"] in ("TORNADUS", "THUNDURUS")}
+    assert split == {("TORNADUS", reference.VOLT_WHITE_GAME_ID),
+                     ("THUNDURUS", reference.BLAZE_BLACK_GAME_ID)}
+    # SPECIAL ENCOUNTER blocks load with their own method label.
+    musharna = [r for r in route10 if r["species_id"] == "MUSHARNA"]
+    assert {r["method"] for r in musharna} == {"special"}
+    assert {r["game_id"] for r in musharna} == set(parse_wild.ALL_GAMES)
+
+    # The section after the unknown one recovers cleanly.
+    striaton = [r for r in rows if r["canonical_location_id"] == 7]
+    assert {r["species_id"] for r in striaton} == {"VAPOREON"}

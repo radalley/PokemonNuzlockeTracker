@@ -65,17 +65,25 @@ python -m etl.pipelines.blazeblack.build_previews
 python -m etl.pipelines.load_trainers blazeblack --apply
 python -m etl.pipelines.gen5_event_bosses blazeblack --apply
 python -m etl.pipelines.load_encounters blazeblack --apply
+python -m etl.pipelines.fill_encounter_gaps blazeblack --apply
 python -m etl.pipelines.load_species_overrides blazeblack --apply
 ```
 
-The preview build must end with `base skeleton matched 61/61` and zero
-problems before the loads. The games land `valid_game='hidden'`: nothing
+`fill_encounter_gaps` inherits base-game pools for locations the docs
+omit (the Starter pool); run it after `load_encounters` or the
+already-loaded guard sees its rows as a partial load.
+
+The preview build must end with `base skeleton matched 61/61` and exactly
+four notes (the N's Castle story capture skipped twice -- no canonical
+location, matching vanilla -- and the custom move Wood Horn twice) before
+the loads. The games land `valid_game='hidden'`: nothing
 user-visible has changed yet.
 
 - [ ] Verify hidden: `/api/games` does not list Blaze Black; counts match
       local (355 trainers / 1,223 party rows, 0 unlinked / 61 bosses /
-      2,036 encounter rows for games 1001+1002 / overrides at vg 1001:
-      649 abilities, 138 stats, 18 types, 8,815 learnset rows, 46 moves).
+      2,312 encounter rows for games 1001+1002, incl. 6 inherited Starter
+      rows / overrides at vg 1001: 649 abilities, 138 stats, 18 types,
+      8,794 learnset rows, 46 moves).
 
 ## 5. Flip
 
