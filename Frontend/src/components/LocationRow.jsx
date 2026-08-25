@@ -149,6 +149,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const [trainers, setTrainers] = useState([])
   const [trainersLoaded, setTrainersLoaded] = useState(false)
+  const [showSpecialTrainers, setShowSpecialTrainers] = useState(false)
 
   const [encounter, setEncounter] = useState(null)
   const [encounterDetails, setEncounterDetails] = useState(null)
@@ -334,6 +335,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     getTrainerList(row.event_id, runId, attemptNumber, controller.signal, {
       gameId,
       versionGroupId: row.version_group_id,
+      includeRematches: showSpecialTrainers,
+      includeEvents: showSpecialTrainers,
     })
       .then(data => {
         setTrainers(data)
@@ -343,7 +346,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         if (err.name !== 'AbortError') console.error(err)
       })
     return () => controller.abort()
-  }, [trainersLoaded, activePanel, viewMode, row.event_id, runId, attemptNumber, gameId, row.version_group_id])
+  }, [trainersLoaded, activePanel, viewMode, row.event_id, runId, attemptNumber, gameId, row.version_group_id, showSpecialTrainers])
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -400,7 +403,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       })
   }, [encounter?.species_id])
 
-  const availableTrainers = trainers.filter(t => !t.is_event)
+  // Regular trainers drive the counts; rematches and one-off event battles
+  // arrive only when the toggle asks for them and render as their own groups.
+  const availableTrainers = trainers.filter(t => !t.is_event && !t.is_rematch)
+  const specialTrainers = trainers.filter(t => t.is_event || t.is_rematch)
   // Group by sub-area (gym, building, cave floor). The backend already orders
   // area-less trainers first, then areas by their sort order, so insertion
   // order here is the display order.
@@ -419,6 +425,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     return groups
   }, [availableTrainers])
   const hasNamedAreas = trainerGroups.some(g => g.name)
+  const specialGroups = useMemo(() => {
+    const rematches = specialTrainers.filter(t => t.is_rematch)
+    const events = specialTrainers.filter(t => t.is_event && !t.is_rematch)
+    const groups = []
+    if (rematches.length) groups.push({ key: 'rematches', name: 'Rematches', trainers: rematches })
+    if (events.length) groups.push({ key: 'events', name: 'Special Battles', trainers: events })
+    return groups
+  }, [specialTrainers])
   // Use the loaded value if trainers are loaded, otherwise use the seed value from row
   const defeatedTrainerCount = trainersLoaded
     ? availableTrainers.filter(t => Boolean(t.is_defeated)).length
@@ -1253,13 +1267,24 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
       {showTrainerView && activePanel === 'trainers' && (
         <div style={{ ...PANEL_STYLE, background: 'var(--surface)', marginTop: '10px', padding: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78em', color: 'var(--text-secondary)', marginBottom: '10px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showSpecialTrainers}
+              onChange={event => {
+                setShowSpecialTrainers(event.target.checked)
+                setTrainersLoaded(false)
+              }}
+            />
+            Show rematches &amp; special battles
+          </label>
           {!trainersLoaded ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>Loading trainers...</div>
-          ) : availableTrainers.length === 0 ? (
+          ) : availableTrainers.length === 0 && specialTrainers.length === 0 ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>No trainers at this location.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: hasNamedAreas ? '14px' : '8px' }}>
-              {trainerGroups.map(group => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: hasNamedAreas || specialGroups.length ? '14px' : '8px' }}>
+              {[...trainerGroups, ...specialGroups].map(group => (
                 <div key={group.key ?? 'location'} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {group.name && (
                     <div style={{

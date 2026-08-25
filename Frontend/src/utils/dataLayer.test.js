@@ -51,6 +51,22 @@ describe('getTrainerList', () => {
     )
   })
 
+  it('requests rematches and special battles only when asked', async () => {
+    guest.getTrainersDefeated.mockReturnValue([])
+
+    await getTrainerList(100, 'local_3', 1, undefined, {
+      gameId: 17,
+      versionGroupId: 11,
+      includeRematches: true,
+      includeEvents: true,
+    })
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      '/api/trainer-list/100?game_id=17&version_group_id=11&include_rematches=1&include_events=1',
+      { signal: undefined },
+    )
+  })
+
   it('sends run identity for authenticated runs', async () => {
     const trainers = await getTrainerList(100, 42, 2, undefined, {
       gameId: 17,

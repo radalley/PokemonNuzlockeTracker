@@ -253,20 +253,21 @@ export async function markTrainerVictory(runId, attemptNumber, trainerId, eventI
   return res.json()
 }
 
-export async function getTrainerList(locationId, runId, attemptNumber, signal, { gameId = null, versionGroupId = null } = {}) {
-  let params
+export async function getTrainerList(locationId, runId, attemptNumber, signal, { gameId = null, versionGroupId = null, includeRematches = false, includeEvents = false } = {}) {
+  const query = new URLSearchParams()
   if (isLocalRun(runId)) {
     // Guest runs have no server-side run row to derive game context from, so
     // the caller must supply it explicitly.
-    const query = new URLSearchParams()
     if (gameId != null) query.set('game_id', gameId)
     if (versionGroupId != null) query.set('version_group_id', versionGroupId)
-    const qs = query.toString()
-    params = qs ? `?${qs}` : ''
   } else {
-    params = `?run_id=${runId}&attempt_number=${attemptNumber}`
+    query.set('run_id', runId)
+    query.set('attempt_number', attemptNumber)
   }
-  const res = await apiFetch(`/api/trainer-list/${locationId}${params}`, { signal })
+  if (includeRematches) query.set('include_rematches', '1')
+  if (includeEvents) query.set('include_events', '1')
+  const qs = query.toString()
+  const res = await apiFetch(`/api/trainer-list/${locationId}${qs ? `?${qs}` : ''}`, { signal })
   const trainers = await res.json()
 
   if (isLocalRun(runId)) {

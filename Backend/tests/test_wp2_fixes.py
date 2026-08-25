@@ -61,6 +61,38 @@ def test_trainer_list_without_context_still_raises(db_conn):
         backend_module.get_trainers_by_location(db_conn, 100)
 
 
+def seed_flagged_trainer(db_conn, *, encounter_name, is_rematch=None, is_event=None):
+    db_conn.execute(
+        "insert into trainer_pool (encounter_name, trainer_name, canonical_location_id, version_group_id, is_rematch, is_event) "
+        "values (%s, %s, 100, 11, %s, %s)",
+        (encounter_name, encounter_name, is_rematch, is_event),
+    )
+    db_conn.commit()
+
+
+def test_rematches_and_events_are_opt_in(db_conn):
+    seed_flagged_trainer(db_conn, encounter_name="TRAINER_REGULAR")
+    seed_flagged_trainer(db_conn, encounter_name="TRAINER_REMATCH", is_rematch="true")
+    seed_flagged_trainer(db_conn, encounter_name="TRAINER_EVENT", is_event="1")
+
+    default = backend_module.get_trainers_by_location(db_conn, 100, version_group_id=11)
+    assert [t["encounter_name"] for t in default] == ["TRAINER_REGULAR"]
+
+    everything = backend_module.get_trainers_by_location(
+        db_conn, 100, version_group_id=11, include_rematches=True, include_events=True
+    )
+    rows = {t["encounter_name"]: dict(t) for t in everything}
+    assert set(rows) == {"TRAINER_REGULAR", "TRAINER_REMATCH", "TRAINER_EVENT"}
+    assert rows["TRAINER_REMATCH"]["is_rematch"] == 1
+    assert rows["TRAINER_EVENT"]["is_event"] == 1
+    assert rows["TRAINER_REGULAR"]["is_rematch"] == 0
+
+    only_rematches = backend_module.get_trainers_by_location(
+        db_conn, 100, version_group_id=11, include_rematches=True
+    )
+    assert {t["encounter_name"] for t in only_rematches} == {"TRAINER_REGULAR", "TRAINER_REMATCH"}
+
+
 # ---------------------------------------------------------------------------
 # Unova badges
 # ---------------------------------------------------------------------------

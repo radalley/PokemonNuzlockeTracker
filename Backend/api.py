@@ -266,11 +266,17 @@ def trainer_list_route(location_id):
     attempt_number = request.args.get('attempt_number', type=int)
     game_id = request.args.get('game_id', type=int)
     version_group_id = request.args.get('version_group_id', type=int)
+    include_rematches = request.args.get('include_rematches', default=0, type=int) == 1
+    include_events = request.args.get('include_events', default=0, type=int) == 1
     if run_id is not None:
         _, error = require_run_access(conn, run_id)
         if error:
             return error
-    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number, version_group_id=version_group_id, game_id=game_id)
+    trainers = get_trainers_by_location(
+        conn, location_id, run_id=run_id, attempt_number=attempt_number,
+        version_group_id=version_group_id, game_id=game_id,
+        include_rematches=include_rematches, include_events=include_events,
+    )
     return jsonify([dict(t) for t in trainers])
 
 @app.route('/api/trainer-party/<trainer_name>', methods=['GET'])

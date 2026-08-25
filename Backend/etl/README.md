@@ -39,10 +39,14 @@ Nothing is hardcoded. Set what a given pipeline needs:
 Dry run is always the default — nothing commits without `--apply`:
 
 ```bash
-python -m etl.pipelines.gen5_trainers blackwhite
-python -m etl.pipelines.gen5_trainers blackwhite --apply
+python -m etl.pipelines.load_trainers redblue
+python -m etl.pipelines.load_trainers crystal --apply
+python -m etl.pipelines.load_trainers blackwhite --apply
 python -m etl.pipelines.gen5_event_bosses black2white2 --apply
 ```
+
+`load_trainers` works for every manifest — the stage adapts to the columns
+the preview actually carries. `gen5_trainers` remains as an alias.
 
 Trainers must load before event bosses: bosses resolve their trainer by
 `encounter_name` against the same version group and build.
@@ -104,12 +108,16 @@ have to know badge numbering.
 
 ## Migration status
 
-Ported: Gen 5 trainers and event bosses (Black/White, Black 2/White 2). The
-old `load_blackwhite_build6_*.py` and `load_black2white2_build6_*.py` scripts
-now forward here so existing commands keep working. `derive_location_areas`
-is new and covers every version group whose trainers carry map references
-(1, 2, 3, 4, 8, 9, 10 — Gen 3 and Gen 5 previews do not record one).
+Ported: trainer loads for every version group with a preview — Gens 1, 2, 4
+(builds 4-5, previously loader-less) and Gen 5 (build 6), all through
+`load_trainers` with a manifest each, verified loading into a fresh database.
+Gen 5 event bosses load through `gen5_event_bosses`. The old
+`load_blackwhite_build6_*.py` scripts forward here so existing commands keep
+working. `derive_location_areas` covers every version group whose trainers
+carry map references (1, 2, 3, 4, 8, 9, 10 — Gen 3 and Gen 5 previews do not
+record one).
 
-Not yet ported: the preview *builders* (ROM and decomp extraction) and the
-Gen 1-4 loaders and updaters. They still carry their own absolute paths. Port
-opportunistically — a pipeline that needs to be re-run is a good reason.
+Not ported: the preview *builders* (ROM and decomp extraction), the Gen 1-4
+event-boss updaters, and Gen 3 (version groups 5-7), which has no previews at
+all — its data predates the preview discipline and re-extraction is the
+outstanding stretch item.

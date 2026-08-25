@@ -1881,7 +1881,7 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
         result.append(item)
     return result
 
-def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None, game_id=None):
+def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None, game_id=None, include_rematches=False, include_events=False):
     attempt_id = None
     if run_id is not None and attempt_number is not None:
         attempt_row = conn.execute(
@@ -1934,8 +1934,13 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         params.append(game_id)
     else:
         where_clauses.append("tp.game_id is null")
-    # Only regular trainers
-    where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+    # Regular trainers by default; rematches and one-off event battles are
+    # opt-in extras. Scripted bosses always stay out -- they render as their
+    # own script rows.
+    if not include_rematches:
+        where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+    if not include_events:
+        where_clauses.append("case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
     where_clauses.append(
         "not exists ("
         "select 1 from event_bosses eb "
@@ -1948,6 +1953,7 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, tp.version_group_id, '
         'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
+        "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_rematch, "
         + defeated_select +
         'from trainer_pool tp '
         + defeated_join +

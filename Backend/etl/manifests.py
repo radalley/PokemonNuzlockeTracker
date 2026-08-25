@@ -105,7 +105,8 @@ def load(key):
     if not path.exists():
         available = ", ".join(sorted(p.stem for p in MANIFEST_DIR.glob("*.json")))
         raise ManifestError(f"No manifest '{key}'. Available: {available or '(none)'}")
-    return Manifest(json.loads(path.read_text(encoding="utf-8")), path)
+    # utf-8-sig tolerates a BOM from Windows-side editors.
+    return Manifest(json.loads(path.read_text(encoding="utf-8-sig")), path)
 
 
 def all_manifests():
