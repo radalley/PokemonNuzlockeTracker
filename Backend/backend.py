@@ -2122,6 +2122,30 @@ def _format_label(value):
         return None
     return str(value).replace('_', ' ').replace('-', ' ').title()
 
+def _moveset_version_group_for(conn, version_group_id):
+    """The version group to resolve movesets and move data against.
+
+    ROM hacks live in the reserved 1000+ range, and the move resolvers assume
+    chronologically ordered vanilla ids -- a raw hack id would select the
+    newest vanilla learnset and modern move stats instead of the base game's.
+    Hacks therefore resolve against their base game's version group.
+    """
+    if version_group_id is None:
+        return None
+    try:
+        vg = int(version_group_id)
+    except (TypeError, ValueError):
+        return version_group_id
+    if vg < 1000:
+        return vg
+    row = conn.execute(
+        'select base.version_group_id from games g '
+        'join games base on base.game_id = g.base_game_id '
+        'where g.version_group_id = %s and base.version_group_id is not null limit 1',
+        (vg,)
+    ).fetchone()
+    return row['version_group_id'] if row else vg
+
 def _resolve_move_details(conn, move_id, version_group_id):
     if move_id is None:
         return None
@@ -2262,7 +2286,7 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
         tp_params
     ).fetchall()
 
-    return _assemble_trainer_party(conn, rows, version_group_id)
+    return _assemble_trainer_party(conn, rows, _moveset_version_group_for(conn, version_group_id))
 
 def _assemble_trainer_party(conn, rows, version_group_id):
     party = []
@@ -2334,7 +2358,7 @@ def get_trainer_party_by_id(conn, trainer_id, game_id=None):
              trainer['encounter_name'], trainer['version_group_id'])
         ).fetchall()
 
-    return _assemble_trainer_party(conn, rows, version_group_id)
+    return _assemble_trainer_party(conn, rows, _moveset_version_group_for(conn, version_group_id))
 
 def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
     """Get trainers defeated and badges earned for a specific pokemon in a run/attempt."""

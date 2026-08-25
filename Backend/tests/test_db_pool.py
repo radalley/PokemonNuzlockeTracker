@@ -50,6 +50,45 @@ def test_burst_over_maxconn_queues_instead_of_failing(pg_uri, monkeypatch, _sche
         api_module._db_pool = None
 
 
+def test_failed_connection_setup_returns_connection_to_pool(monkeypatch):
+    """If a borrowed connection fails its setup (severed by a server restart),
+    get_db must putconn(close=True) it -- otherwise it occupies one of the
+    pool's maxconn slots forever and, after maxconn such events, every
+    request 500s with 'connection pool exhausted' until the worker restarts."""
+
+    class BrokenConnection:
+        def cursor(self):
+            raise RuntimeError("server closed the connection unexpectedly")
+
+    class FakePool:
+        def __init__(self):
+            self.put_calls = []
+            self.conn = BrokenConnection()
+
+        def getconn(self):
+            return self.conn
+
+        def putconn(self, conn, key=None, close=False):
+            self.put_calls.append((conn, close))
+
+    fake = FakePool()
+    monkeypatch.setattr(api_module, "_get_db_pool", lambda: fake)
+    slots = threading.Semaphore(api_module._DB_POOL_MAXCONN)
+    monkeypatch.setattr(api_module, "_db_pool_slots", slots)
+
+    with api_module.app.test_request_context("/"):
+        try:
+            api_module.get_db()
+            raise AssertionError("get_db should have raised")
+        except RuntimeError:
+            pass
+
+    assert fake.put_calls == [(fake.conn, True)]
+    # The semaphore slot must be back: all maxconn permits acquirable.
+    for _ in range(api_module._DB_POOL_MAXCONN):
+        assert slots.acquire(blocking=False)
+
+
 def test_concurrent_pool_init_returns_one_shared_pool(pg_uri, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", pg_uri)
     monkeypatch.setattr(api_module, "_db_pool", None)

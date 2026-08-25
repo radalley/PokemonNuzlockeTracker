@@ -178,7 +178,11 @@ def test_trainers_pipeline_guards_against_double_load():
         rollback=True,
     )
     assert "version_group_id = 11 AND load_build = 6" in sql
-    assert "already loaded" in sql
+    assert "already contains trainer data" in sql
+    # The already-loaded guard must be version-group-wide: no read path
+    # distinguishes load builds, so a (vg, build) guard would let a new
+    # build silently double every trainer over an existing one.
+    assert "EXISTS (SELECT 1 FROM trainer_pool WHERE version_group_id = 11)" in sql
     # Party rows must be linked and the load must abort if any are not.
     assert "SET trainer_id = tp.trainer_id" in sql
     assert "missing trainer_id links" in sql

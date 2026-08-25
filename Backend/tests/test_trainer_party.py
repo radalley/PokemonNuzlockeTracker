@@ -118,6 +118,38 @@ def test_party_by_id_exposes_trainer_ability(db_conn):
     assert party[0]["trainer_ability"] == "Magic Guard"
 
 
+def test_hack_parties_resolve_movesets_against_base_version_group(db_conn):
+    """A ROM hack's reserved version group (1000+) must resolve level-up
+    movesets against its BASE game's version group -- the resolvers assume
+    chronologically ordered vanilla ids, so raw vg 1001 would select the
+    newest vanilla learnset instead of Black/White's."""
+    db_conn.execute(
+        "insert into games (game_id, name, game_tag, generation, version_group_id, valid_game, base_game_id, is_rom_hack) values "
+        "(17, 'Black', 'B', 5, 11, 'valid', null, false), "
+        "(1001, 'Blaze Black', 'BB', 5, 1001, 'valid', 17, true)"
+    )
+    db_conn.execute("insert into species (species_id, name) values (504, 'PATRAT')")
+    # Distinct learnsets for BW (vg 11) and B2W2 (vg 14).
+    db_conn.execute(
+        "insert into movesets (species_id, move_id, learn_method, learn_level, version_group_id) values "
+        "(504, 33, 'level-up', 1, 11), (504, 44, 'level-up', 1, 14)"
+    )
+    db_conn.execute(
+        "insert into moves (move_id, move_name, type, damage_class, power, accuracy, version_group_id) values "
+        "(33, 'Tackle', 'normal', 'physical', 40, 100, null), "
+        "(44, 'Bite', 'dark', 'physical', 60, 100, null)"
+    )
+    db_conn.commit()
+    trainer_id = seed_trainer(db_conn, encounter_name="TRAINER_BB_PATRAT_GUY", version_group_id=1001)
+    seed_party_row(db_conn, encounter_name="TRAINER_BB_PATRAT_GUY", species_name="PATRAT",
+                   version_group_id=1001, trainer_id=trainer_id, slot=1, lvl=5)
+
+    party = backend_module.get_trainer_party_by_id(db_conn, trainer_id, game_id=1001)
+
+    assert party[0]["debug_moveset_selected_version_group_id"] == 11
+    assert [m["move_name"] for m in party[0]["resolved_moves"]] == ["Tackle"]
+
+
 # ---------------------------------------------------------------------------
 # the 20260824 migration backfill
 # ---------------------------------------------------------------------------

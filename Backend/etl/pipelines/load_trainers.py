@@ -109,10 +109,15 @@ def build_load(args):
                 f"OR EXISTS (SELECT 1 FROM trainer_pokemon_stage WHERE version_group_id <> {vg} OR load_build <> {build})",
                 "Stage contains the wrong version group or load build",
             ),
+            # Version-group-wide, not (vg, build)-scoped: no read path ever
+            # distinguishes load builds, so loading build N+1 over existing
+            # rows (or over a --full clone carrying the base's build) would
+            # silently double every trainer. Remove the old build first.
             Guard(
-                f"EXISTS (SELECT 1 FROM trainer_pool WHERE {scope}) "
-                f"OR EXISTS (SELECT 1 FROM trainer_pokemon WHERE {scope})",
-                f"{manifest.label} build {build} trainer data is already loaded",
+                f"EXISTS (SELECT 1 FROM trainer_pool WHERE version_group_id = {vg}) "
+                f"OR EXISTS (SELECT 1 FROM trainer_pokemon WHERE version_group_id = {vg})",
+                f"Version group {vg} already contains trainer data ({manifest.label}); "
+                "delete the existing build before loading a new one",
             ),
         ],
         statements=[

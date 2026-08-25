@@ -97,11 +97,20 @@ def get_db():
         pool = _get_db_pool()
         if not _db_pool_slots.acquire(timeout=_DB_POOL_WAIT_SECONDS):
             raise RuntimeError('Timed out waiting for a database connection')
+        raw = None
         try:
             raw = pool.getconn()
             raw.cursor().execute("SET search_path TO public")
             raw.commit()
         except Exception:
+            # A borrowed connection that fails setup (severed by a server
+            # restart or idle timeout) must go back via putconn(close=True),
+            # or it occupies one of the pool's maxconn slots forever.
+            if raw is not None:
+                try:
+                    pool.putconn(raw, close=True)
+                except Exception:
+                    pass
             _db_pool_slots.release()
             raise
         g.db_raw = raw
