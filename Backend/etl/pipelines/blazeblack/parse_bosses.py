@@ -58,6 +58,7 @@ MOVE_RENAMES = {
     "hijumpkick": "highjumpkick",
     "faintattack": "feintattack",
     "smellingsalt": "smellingsalts",
+    "twinneedle": "twineedle",
 }
 
 

@@ -159,14 +159,16 @@ create table species_stats (
     def integer,
     spa integer,
     spd integer,
-    spe integer
+    spe integer,
+    version_group_id integer
 );
 
 create table species_types (
     species_id integer,
     generation integer,
     type1 text,
-    type2 text
+    type2 text,
+    version_group_id integer
 );
 
 create table species_abilities (
@@ -174,7 +176,8 @@ create table species_abilities (
     generation integer,
     ability1 text,
     ability2 text,
-    ability3 text
+    ability3 text,
+    version_group_id integer
 );
 
 create table trainers_defeated (

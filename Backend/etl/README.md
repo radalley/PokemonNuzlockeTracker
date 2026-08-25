@@ -94,6 +94,16 @@ skeleton (61/61) -- it exits non-zero on unresolved names, so a clean run
 means the data is load-ready. Rival teams expand into per-starter variants
 using the vanilla starter mapping.
 
+The species/learnset override layer ("Pokemon Changes" + "Level Up Move
+Changes") loads via `load_species_overrides`: Regular-mode abilities for
+every species, changed stat spreads and typings, materialized level-up
+learnsets (vanilla vg-11 copy plus the doc's +/-/= deltas, including
+family-grouped and full-restructure blocks), and rebalanced move data --
+all keyed at vg 1001. Read paths prefer exact version-group rows and fall
+back to the base game. Two learnset entries reference Drayano's custom
+move "Wood Horn", which exists nowhere in our move data and is skipped
+with a note.
+
 Placement curation (WP5) adds two more:
 
 ```bash

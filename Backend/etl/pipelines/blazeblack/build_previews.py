@@ -21,7 +21,8 @@ import sys
 from collections import defaultdict
 
 from ... import config, db, preview
-from . import parse_bosses, parse_trainers, parse_wild, reference
+from . import (parse_bosses, parse_learnsets, parse_species_changes,
+               parse_trainers, parse_wild, reference)
 
 PREVIEW_DIR_NAME = "blazeblack_build7_preview"
 STARTER_TO_LINE = {"Grass": "grass", "Fire": "fire", "Water": "water"}
@@ -243,6 +244,187 @@ def build_boss_rows(fights, problems):
     return trainers, pokemon, bosses, len(matched_base)
 
 
+def _pick_gen5_row(rows):
+    """Mirror of the generation patch join's pick for generation 5: the
+    lowest generation >= 5, else the default (generation 0/null) row."""
+    versioned = sorted(
+        (r for r in rows if (r.get("generation") or 0) and int(r["generation"]) >= 5),
+        key=lambda r: int(r["generation"]),
+    )
+    if versioned:
+        return versioned[0]
+    defaults = [r for r in rows if not (r.get("generation") or 0)]
+    return defaults[0] if defaults else None
+
+
+def build_species_overrides(problems):
+    """Materialize the species/learnset override previews from the two docs.
+
+    Learnset deltas apply against the live vanilla BW (vg 11) learnsets;
+    stat and type changes apply against the row the app would pick at
+    generation 5. Everything lands keyed at version group 1001.
+    """
+    vg = reference.VERSION_GROUP_ID
+    changes, change_problems = parse_species_changes.parse(read_doc("Pokemon Changes.txt"))
+    problems += change_problems
+    move_changes, learnset_deltas, learnset_problems = parse_learnsets.parse(
+        read_doc("Level Up Move Changes.txt"))
+    problems += learnset_problems
+
+    # --- reference data -------------------------------------------------
+    move_rows = db.query_rows(
+        "select move_id, move_name, coalesce(type,''), coalesce(damage_class,''), "
+        "coalesce(power::text,''), coalesce(accuracy::text,'') "
+        "from moves where version_group_id is null or version_group_id = 0"
+    )
+    move_by_slug, move_default = {}, {}
+    for move_id, name, mtype, dclass, power, accuracy in move_rows:
+        slug = re.sub(r"[^a-z0-9]+", "", name.lower())
+        move_by_slug.setdefault(slug, int(move_id))
+        move_default[int(move_id)] = {
+            "move_name": name, "type": mtype, "damage_class": dclass,
+            "power": power, "accuracy": accuracy,
+        }
+    for old, new in parse_bosses.MOVE_RENAMES.items():
+        if new in move_by_slug:
+            move_by_slug.setdefault(old, move_by_slug[new])
+
+    type_canon = {}
+    for (value,) in db.query_rows(
+        "select distinct type1 from species_types where type1 is not null and type1 <> ''"
+    ):
+        type_canon.setdefault(value.strip().lower(), value)
+
+    vanilla_learnsets = defaultdict(list)
+    for species_id, move_id, level in db.query_rows(
+        "select species_id, move_id, learn_level from movesets "
+        "where learn_method = 'level-up' and version_group_id = 11"
+    ):
+        vanilla_learnsets[int(species_id)].append((int(move_id), int(level)))
+
+    stats_rows, types_rows = defaultdict(list), defaultdict(list)
+    for row in db.query_rows(
+        "select species_id, coalesce(generation, 0), bst, hp, atk, def, spa, spd, spe "
+        "from species_stats where version_group_id is null"
+    ):
+        stats_rows[int(row[0])].append({
+            "generation": int(row[1]), "bst": row[2], "hp": row[3], "atk": row[4],
+            "def": row[5], "spa": row[6], "spd": row[7], "spe": row[8],
+        })
+    for row in db.query_rows(
+        "select species_id, coalesce(generation, 0), coalesce(type1,''), coalesce(type2,'') "
+        "from species_types where version_group_id is null"
+    ):
+        types_rows[int(row[0])].append({
+            "generation": int(row[1]), "type1": row[2], "type2": row[3],
+        })
+
+    # Custom moves Drayano added to the ROM; they exist nowhere in our move
+    # data, so their learnset entries are skipped with a note.
+    known_custom_moves = {"woodhorn"}
+
+    def move_id_for(name, context):
+        slug = re.sub(r"[^a-z0-9]+", "", name.lower())
+        if slug in known_custom_moves:
+            problems.append(f"note: custom hack move {name!r} skipped ({context})")
+            return None
+        move_id = move_by_slug.get(slug)
+        if move_id is None:
+            problems.append(f"unresolved override move {name!r} ({context})")
+        return move_id
+
+    # --- abilities (all species, Regular mode) --------------------------
+    ability_rows = [{
+        "species_id": sid,
+        "generation": "",
+        "ability1": c["ability1"] or "",
+        "ability2": c["ability2"] or "",
+        "ability3": "",
+        "version_group_id": vg,
+    } for sid, c in sorted(changes.items()) if c["ability1"]]
+
+    # --- stats (changed species; complete rows with recomputed bst) -----
+    stat_override_rows = []
+    for sid, c in sorted(changes.items()):
+        if not c["stats"]:
+            continue
+        base = _pick_gen5_row(stats_rows.get(sid, []))
+        if base is None:
+            problems.append(f"stat change for species {sid} with no vanilla stats row")
+            continue
+        merged = {k: int(base[k] or 0) for k in ("hp", "atk", "def", "spa", "spd", "spe")}
+        merged.update(c["stats"])
+        stat_override_rows.append({
+            "species_id": sid, "generation": "",
+            "bst": sum(merged.values()), **merged, "version_group_id": vg,
+        })
+
+    # --- types (the retyped species) ------------------------------------
+    type_override_rows = []
+    for sid, c in sorted(changes.items()):
+        if not c["types"]:
+            continue
+        type1, type2 = c["types"]
+        type_override_rows.append({
+            "species_id": sid, "generation": "",
+            "type1": type_canon.get(type1.lower(), type1),
+            "type2": type_canon.get(type2.lower(), type2) if type2 else "",
+            "version_group_id": vg,
+        })
+
+    # --- learnsets (vanilla copy + deltas, changed species only) --------
+    learnset_rows = []
+    for sid, delta_list in sorted(learnset_deltas.items()):
+        entries = set(vanilla_learnsets.get(sid, []))
+        if not entries:
+            problems.append(f"learnset deltas for species {sid} with no vanilla vg-11 learnset")
+        for op, level, move_name in delta_list:
+            if op == "reset":
+                entries = set()
+                continue
+            move_id = move_id_for(move_name, f"species {sid}")
+            if move_id is None:
+                continue
+            if op == "auto":
+                # '+/=': shift when the member already knows the move.
+                op = "=" if any(m == move_id for m, _ in entries) else "+"
+            if op == "-":
+                entries = {(m, l) for m, l in entries if l != level}
+            elif op == "=":
+                entries = {(m, l) for m, l in entries if m != move_id}
+            entries.add((move_id, level))
+        for move_id, level in sorted(entries, key=lambda e: (e[1], e[0])):
+            learnset_rows.append({
+                "species_id": sid, "move_id": move_id, "learn_method": "level-up",
+                "learn_level": level, "version_group_id": vg,
+            })
+
+    # --- move rebalances -------------------------------------------------
+    move_override_rows = []
+    seen_moves = set()
+    for change in move_changes:
+        move_id = move_id_for(change["name"], "move rebalance")
+        if move_id is None or move_id in seen_moves:
+            continue
+        seen_moves.add(move_id)
+        base = dict(move_default[move_id])
+        if change["power"] is not None:
+            base["power"] = change["power"]
+        if change["accuracy"] is not None:
+            base["accuracy"] = change["accuracy"]
+        if change["type"] is not None:
+            base["type"] = type_canon.get(change["type"].lower(), change["type"].lower())
+        move_override_rows.append({"move_id": move_id, **base, "version_group_id": vg})
+
+    return {
+        "species_abilities": ability_rows,
+        "species_stats": stat_override_rows,
+        "species_types": type_override_rows,
+        "movesets": learnset_rows,
+        "moves": move_override_rows,
+    }
+
+
 def main():
     problems = []
 
@@ -267,11 +449,16 @@ def main():
     for name in duplicate_names:
         problems.append(f"duplicate encounter_name: {name}")
 
+    overrides = build_species_overrides(problems)
+
     out = config.preview_dir(PREVIEW_DIR_NAME)
     preview.write_csv(out / "trainer_pool_preview.csv", trainers, list(trainers[0]))
     preview.write_csv(out / "trainer_pokemon_preview.csv", pokemon, list(pokemon[0]))
     preview.write_csv(out / "event_bosses_preview.csv", boss_rows, list(boss_rows[0]))
     preview.write_csv(out / "encounter_pool_preview.csv", wild_rows, list(wild_rows[0]))
+    for name, rows in overrides.items():
+        if rows:
+            preview.write_csv(out / f"{name}_override_preview.csv", rows, list(rows[0]))
 
     placed = sum(1 for t in trainers if t["canonical_location_id"])
     summary = {
@@ -286,12 +473,14 @@ def main():
         "base_boss_rows_total": len(reference.base_bosses()),
         "located_rows": placed,
         "encounter_rows": len(wild_rows),
+        "override_rows": {name: len(rows) for name, rows in overrides.items()},
         "problems": problems,
     }
     preview.write_summary(out / "validation_summary.json", summary)
 
     print(f"trainers={len(trainers)} (rosters {len(roster_trainers)}, bosses {len(boss_trainers)}), "
           f"pokemon={len(pokemon)}, bosses={len(boss_rows)}, encounters={len(wild_rows)}")
+    print("overrides: " + ", ".join(f"{name}={len(rows)}" for name, rows in overrides.items()))
     print(f"base skeleton matched {matched_base}/{len(reference.base_bosses())}; "
           f"placed {placed}/{len(trainers)}")
     if problems:

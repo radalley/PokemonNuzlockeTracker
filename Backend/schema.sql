@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 9RQqzbm6sO2y7Ez3wfeOgSkK70erhaQdu1RBUfZE6g6TshSCWFkFdmmYaWNBNp5
+\restrict mcFwjXhhsCgzrmLMhT8k7BAHE0aIZvtpDOMb9nOQ3U2Etkxh4QJZHdPlTzvdQEC
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -612,7 +612,8 @@ CREATE TABLE public.species_abilities (
     ability2 text,
     ability3 text,
     generation numeric,
-    ability_pk integer NOT NULL
+    ability_pk integer NOT NULL,
+    version_group_id integer
 );
 
 
@@ -630,7 +631,8 @@ CREATE TABLE public.species_stats (
     spd integer NOT NULL,
     spe integer NOT NULL,
     generation numeric,
-    pk_id integer
+    pk_id integer,
+    version_group_id integer
 );
 
 
@@ -643,7 +645,8 @@ CREATE TABLE public.species_types (
     type1 text,
     type2 text,
     generation numeric,
-    type_pk integer NOT NULL
+    type_pk integer NOT NULL,
+    version_group_id integer
 );
 
 
@@ -1188,6 +1191,27 @@ CREATE INDEX idx_runs_user_last_opened ON public.runs USING btree (user_id, last
 
 
 --
+-- Name: idx_species_abilities_vg; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_species_abilities_vg ON public.species_abilities USING btree (version_group_id) WHERE (version_group_id IS NOT NULL);
+
+
+--
+-- Name: idx_species_stats_vg; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_species_stats_vg ON public.species_stats USING btree (version_group_id) WHERE (version_group_id IS NOT NULL);
+
+
+--
+-- Name: idx_species_types_vg; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_species_types_vg ON public.species_types USING btree (version_group_id) WHERE (version_group_id IS NOT NULL);
+
+
+--
 -- Name: idx_trainer_pokemon_trainer_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1323,5 +1347,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9RQqzbm6sO2y7Ez3wfeOgSkK70erhaQdu1RBUfZE6g6TshSCWFkFdmmYaWNBNp5
+\unrestrict mcFwjXhhsCgzrmLMhT8k7BAHE0aIZvtpDOMb9nOQ3U2Etkxh4QJZHdPlTzvdQEC
 

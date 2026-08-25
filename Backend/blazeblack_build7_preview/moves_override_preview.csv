@@ -1,0 +1,47 @@
+move_id,move_name,type,damage_class,power,accuracy,version_group_id
+42,Pin Missile,bug,physical,25,95,1001
+131,Spike Cannon,normal,physical,25,100,1001
+4,Comet Punch,normal,physical,25,85,1001
+292,Arm Thrust,fighting,physical,25,100,1001
+71,Absorb,grass,special,50,100,1001
+72,Mega Drain,grass,special,50,100,1001
+510,Incinerate,fire,special,50,100,1001
+522,Struggle Bug,bug,special,50,100,1001
+239,Twister,dragon,special,50,100,1001
+555,Snarl,dark,special,60,95,1001
+15,Cut,grass,physical,60,100,1001
+325,Shadow Punch,ghost,physical,70,,1001
+443,Magnet Bomb,steel,physical,70,,1001
+351,Shock Wave,electric,special,70,,1001
+17,Wing Attack,flying,physical,75,100,1001
+172,Flame Wheel,fire,physical,75,100,1001
+423,Ice Fang,ice,physical,75,95,1001
+424,Fire Fang,fire,physical,75,95,1001
+422,Thunder Fang,electric,physical,75,95,1001
+523,Bulldoze,ground,physical,80,100,1001
+421,Shadow Claw,ghost,physical,80,100,1001
+157,Rock Slide,rock,physical,80,95,1001
+507,Sky Drop,flying,physical,80,100,1001
+537,Steamroller,bug,physical,80,100,1001
+7,Fire Punch,fire,physical,80,100,1001
+9,Thunder Punch,electric,physical,80,100,1001
+8,Ice Punch,ice,physical,80,100,1001
+70,Strength,rock,physical,85,100,1001
+127,Waterfall,water,physical,85,100,1001
+412,Energy Ball,grass,special,90,100,1001
+399,Dark Pulse,dark,special,90,100,1001
+247,Shadow Ball,ghost,special,90,100,1001
+532,Horn Leech,grass,physical,90,100,1001
+302,Needle Arm,grass,physical,90,100,1001
+408,Power Gem,rock,special,90,100,1001
+556,Icicle Crash,ice,physical,90,100,1001
+91,Dig,ground,physical,100,100,1001
+291,Dive,water,physical,100,100,1001
+19,Fly,flying,physical,100,100,1001
+519,Fire Pledge,fire,special,100,100,1001
+518,Water Pledge,water,special,100,100,1001
+520,Grass Pledge,grass,special,100,100,1001
+539,Night Daze,dark,special,100,90,1001
+549,Glaciate,ice,special,100,100,1001
+553,Freeze Shock,ice,physical,180,90,1001
+554,Ice Burn,ice,special,180,90,1001

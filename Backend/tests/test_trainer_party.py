@@ -150,6 +150,56 @@ def test_hack_parties_resolve_movesets_against_base_version_group(db_conn):
     assert [m["move_name"] for m in party[0]["resolved_moves"]] == ["Tackle"]
 
 
+def test_hack_override_learnset_abilities_and_move_stats_win(db_conn):
+    """Overrides loaded at the hack's version group beat the base fallback:
+    an exact vg-1001 learnset, ability override row, and rebalanced move row
+    all apply -- while vanilla Black (vg 11) sees none of them."""
+    db_conn.execute(
+        "insert into games (game_id, name, game_tag, generation, version_group_id, valid_game, base_game_id, is_rom_hack) values "
+        "(17, 'Black', 'B', 5, 11, 'valid', null, false), "
+        "(1001, 'Blaze Black', 'BB', 5, 1001, 'valid', 17, true)"
+    )
+    db_conn.execute("insert into species (species_id, name) values (12, 'BUTTERFREE')")
+    db_conn.execute(
+        "insert into species_abilities (species_id, generation, ability1, version_group_id) values "
+        "(12, 0, 'Compoundeyes', null), (12, null, 'Tinted Lens', 1001)"
+    )
+    db_conn.execute(
+        "insert into movesets (species_id, move_id, learn_method, learn_level, version_group_id) values "
+        "(12, 71, 'level-up', 1, 11), (12, 403, 'level-up', 1, 1001)"
+    )
+    # Rock Slide-style rebalance: default row + a vg-1001 override.
+    db_conn.execute(
+        "insert into moves (move_id, move_name, type, damage_class, power, accuracy, version_group_id) values "
+        "(71, 'Absorb', 'grass', 'special', 20, 100, null), "
+        "(403, 'Air Slash', 'flying', 'special', 75, 95, null), "
+        "(403, 'Air Slash', 'flying', 'special', 80, 100, 1001)"
+    )
+    db_conn.commit()
+
+    hack_trainer = seed_trainer(db_conn, encounter_name="TRAINER_BB_BUG_GUY", version_group_id=1001)
+    seed_party_row(db_conn, encounter_name="TRAINER_BB_BUG_GUY", species_name="BUTTERFREE",
+                   version_group_id=1001, trainer_id=hack_trainer, slot=1, lvl=10)
+    vanilla_trainer = seed_trainer(db_conn, encounter_name="TRAINER_BW_BUG_GUY", version_group_id=11)
+    seed_party_row(db_conn, encounter_name="TRAINER_BW_BUG_GUY", species_name="BUTTERFREE",
+                   version_group_id=11, trainer_id=vanilla_trainer, slot=1, lvl=10)
+
+    hack = backend_module.get_trainer_party_by_id(db_conn, hack_trainer, game_id=1001)
+    vanilla = backend_module.get_trainer_party_by_id(db_conn, vanilla_trainer, game_id=17)
+
+    # Hack: vg-1001 learnset, override ability, rebalanced move values.
+    assert hack[0]["debug_moveset_selected_version_group_id"] == 1001
+    assert hack[0]["ability1"] == "Tinted Lens"
+    hack_move = hack[0]["resolved_moves"][0]
+    assert (hack_move["move_name"], hack_move["power"], hack_move["accuracy"]) == ("Air Slash", 80, 100)
+
+    # Vanilla: base learnset, base ability, base move values.
+    assert vanilla[0]["debug_moveset_selected_version_group_id"] == 11
+    assert vanilla[0]["ability1"] == "Compoundeyes"
+    vanilla_move = vanilla[0]["resolved_moves"][0]
+    assert (vanilla_move["move_name"], vanilla_move["power"]) == ("Absorb", 20)
+
+
 # ---------------------------------------------------------------------------
 # the 20260824 migration backfill
 # ---------------------------------------------------------------------------

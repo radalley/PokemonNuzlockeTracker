@@ -7,7 +7,102 @@ names) ran against the real docs and database before loading.
 """
 import pytest
 
-from etl.pipelines.blazeblack import parse_bosses, parse_trainers, parse_wild, reference
+from etl.pipelines.blazeblack import (parse_bosses, parse_learnsets,
+                                      parse_species_changes, parse_trainers,
+                                      parse_wild, reference)
+
+
+SPECIES_CHANGES_DOC = """
+#216 Teddiursa - #217 Ursaring
+Ability One: Pickup (Teddiursa) / Guts (Ursaring)
+Ability Two: Honey Gather (Teddiursa) / Sheer Force (Ursaring)
+
+#351 Castform
+Ability One: Colour Change
+Ability Two: Colour Change
+
+#012 Butterfree
+Special Attack: 80 à 95
+Speed: 70 à 90
+Total: 385 à 420
+Ability One: Compoundeyes
+Ability Two: Tinted Lens
+
+#083 Farfetch'd
+Type: Fighting / Flying
+Ability One: Defiant
+Ability Two: Defiant
+"""
+
+LEARNSET_DOC = """
+General Attack Changes
+Rock Slide is now 80 power and 95% accurate.
+Fire, Water and Grass Pledge are now 100 power.
+
+Key
++ means the move is totally new to the level up set.
+- means the move has replaced the move usually learned at that level.
+
+#006 Charizard
++ Level 1 - Crunch
+- Level 41 - Dragon Pulse
+= Level 61 - Inferno
++ Belly Drum - Level 83
+
+#041 Zubat, #042 Golbat, #169 Crobat
++ Level 1 - Flail (Zubat)
+= Level 16 - Wing Attack
++ Level 49 / 63 / 63 - Nasty Plot
++ Level 21 / 24 - Aqua Jet (Zubat and Golbat only)
++ Level 17 - Reflect, Light Screen (Crobat)
+"""
+
+
+def test_species_changes_parse_all_dialects(monkeypatch):
+    monkeypatch.setattr(parse_species_changes, "ability_canon", lambda: {
+        "pickup": "Pickup", "guts": "Guts", "honeygather": "Honey Gather",
+        "sheerforce": "Sheer Force", "colorchange": "Color Change",
+        "compoundeyes": "Compoundeyes", "tintedlens": "Tinted Lens",
+        "defiant": "Defiant",
+    })
+    monkeypatch.setattr(parse_species_changes, "_species_name_to_id", lambda: {
+        "teddiursa": 216, "ursaring": 217,
+    })
+    changes, problems = parse_species_changes.parse(SPECIES_CHANGES_DOC)
+
+    assert changes[216]["ability1"] == "Pickup"
+    assert changes[217]["ability1"] == "Guts"
+    assert changes[217]["ability2"] == "Sheer Force"
+    # British spelling resolves through the alias map.
+    assert changes[351]["ability1"] == "Color Change"
+    assert changes[12]["stats"] == {"spa": 95, "spe": 90}
+    assert changes[83]["types"] == ("Fighting", "Flying")
+    assert not problems
+
+
+def test_learnset_parse_all_dialects():
+    move_changes, deltas, problems = parse_learnsets.parse(LEARNSET_DOC)
+
+    assert not problems
+    names = {c["name"]: c for c in move_changes}
+    assert names["Rock Slide"]["power"] == 80
+    assert names["Rock Slide"]["accuracy"] == 95
+    assert {"Fire Pledge", "Water Pledge", "Grass Pledge"} <= set(names)
+
+    assert deltas[6] == [
+        ("+", 1, "Crunch"), ("-", 41, "Dragon Pulse"),
+        ("=", 61, "Inferno"), ("+", 83, "Belly Drum"),
+    ]
+    # Family header: restriction, all-members, per-member levels,
+    # restricted-zip levels, comma pairs.
+    assert ("+", 1, "Flail") in deltas[41]
+    assert ("+", 1, "Flail") not in deltas[42]
+    assert ("=", 16, "Wing Attack") in deltas[41] and ("=", 16, "Wing Attack") in deltas[169]
+    assert ("+", 49, "Nasty Plot") in deltas[41]
+    assert ("+", 63, "Nasty Plot") in deltas[42] and ("+", 63, "Nasty Plot") in deltas[169]
+    assert ("+", 21, "Aqua Jet") in deltas[41] and ("+", 24, "Aqua Jet") in deltas[42]
+    assert not any(m == "Aqua Jet" for _, _, m in deltas[169])
+    assert ("+", 17, "Reflect") in deltas[169] and ("+", 17, "Light Screen") in deltas[169]
 
 
 @pytest.fixture(autouse=True)

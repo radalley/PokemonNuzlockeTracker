@@ -1,0 +1,24 @@
+{
+  "base_boss_rows_matched": 61,
+  "base_boss_rows_total": 61,
+  "boss_trainers": 82,
+  "encounter_rows": 2036,
+  "event_boss_rows": 61,
+  "load_build": 7,
+  "located_rows": 284,
+  "override_rows": {
+    "moves": 46,
+    "movesets": 8815,
+    "species_abilities": 649,
+    "species_stats": 138,
+    "species_types": 18
+  },
+  "problems": [
+    "note: custom hack move 'Wood Horn' skipped (species 127)",
+    "note: custom hack move 'Wood Horn' skipped (species 214)"
+  ],
+  "roster_trainers": 273,
+  "trainer_pokemon_rows": 1223,
+  "trainer_rows": 355,
+  "version_group_id": 1001
+}

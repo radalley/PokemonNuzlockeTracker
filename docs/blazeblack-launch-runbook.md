@@ -65,6 +65,7 @@ python -m etl.pipelines.blazeblack.build_previews
 python -m etl.pipelines.load_trainers blazeblack --apply
 python -m etl.pipelines.gen5_event_bosses blazeblack --apply
 python -m etl.pipelines.load_encounters blazeblack --apply
+python -m etl.pipelines.load_species_overrides blazeblack --apply
 ```
 
 The preview build must end with `base skeleton matched 61/61` and zero
@@ -73,7 +74,8 @@ user-visible has changed yet.
 
 - [ ] Verify hidden: `/api/games` does not list Blaze Black; counts match
       local (355 trainers / 1,223 party rows, 0 unlinked / 61 bosses /
-      2,036 encounter rows for games 1001+1002).
+      2,036 encounter rows for games 1001+1002 / overrides at vg 1001:
+      649 abilities, 138 stats, 18 types, 8,815 learnset rows, 46 moves).
 
 ## 5. Flip
 

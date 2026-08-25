@@ -197,13 +197,34 @@ def _get_game_generation(conn, game_id=None, run_id=None):
         return row['generation'] if row else None
     return None
 
-def _build_generation_patch_join(table_name, join_alias, species_expr, generation_expr):
+def _build_generation_patch_join(table_name, join_alias, species_expr, generation_expr, version_group_expr=None):
+    """Pick the species row for a game context.
+
+    Rows tagged with a version_group_id are exact overrides for that version
+    group (a ROM hack's rewrites) and win outright when the caller supplies
+    one; untagged rows keep the generation-based semantics. Callers without
+    game context never see override rows.
+    """
+    if version_group_expr is None:
+        vg_filter = 'x.version_group_id is null'
+    else:
+        vg_filter = (
+            f'(x.version_group_id = {version_group_expr} '
+            f'or (x.version_group_id is null '
+            f'and (coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))))'
+        )
+    generation_filter = (
+        f'(coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))'
+        if version_group_expr is None else 'true'
+    )
     return (
         f'left join lateral (\n'
         f'  select * from {table_name} x\n'
         f'  where x.species_id = {species_expr}\n'
-        f'    and (coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))\n'
-        f'  order by case when coalesce(x.generation, 0) = 0 then 1 else 0 end, x.generation asc\n'
+        f'    and {vg_filter}\n'
+        f'    and {generation_filter}\n'
+        f'  order by case when x.version_group_id is not null then 0 else 1 end,\n'
+        f'           case when coalesce(x.generation, 0) = 0 then 1 else 0 end, x.generation asc\n'
         f'  limit 1\n'
         f') {join_alias} on true\n'
     )
@@ -254,9 +275,9 @@ def get_party_for_attempts_bulk(conn, attempt_ids):
         'join attempts patt on p.attempt_id = patt.attempt_id '
         'join runs prun on patt.run_id = prun.run_id '
         'left join games pgame on nullif(prun.game_id::text, \'\')::integer = nullif(pgame.game_id::text, \'\')::integer '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'pgame.generation')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'pgame.generation')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'pgame.generation')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
         + f'where p.attempt_id in ({placeholders}) '
         + 'order by p.attempt_id, p.party_slot',
         tuple(attempt_ids)
@@ -837,6 +858,12 @@ def get_party_for_attempt(conn, run_id, attempt_number):
         return []
     attempt_id = row['attempt_id']
     game_generation = _get_game_generation(conn, run_id=run_id)
+    run_vg_row = conn.execute(
+        'select g.version_group_id from runs r '
+        'join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
+        'where nullif(r.run_id::text, \'\')::integer = %s', (run_id,)
+    ).fetchone()
+    run_vg = run_vg_row['version_group_id'] if run_vg_row else None
 
     badges_select = ', ' + _pokemon_badges_text_expr('pb')
     return conn.execute(
@@ -846,12 +873,12 @@ def get_party_for_attempt(conn, run_id, attempt_number):
         'from party p '
         'join pokebank pb on p.pokemon_id = pb.pokemon_id '
         'join species s on pb.species_id = s.species_id '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', '%s')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', '%s')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', '%s')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', '%s', '%s')
         + 'where p.attempt_id = %s '
         + 'order by p.party_slot',
-        (game_generation, game_generation, game_generation, attempt_id)
+        (run_vg, game_generation, run_vg, game_generation, run_vg, game_generation, attempt_id)
     ).fetchall()
 
 def add_to_party_for_attempt(conn, run_id, attempt_number, pokemon_id):
@@ -1857,9 +1884,9 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
         f'join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
         f'left join species s on pb.species_id = s.species_id '
         f'left join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(pb.canonical_location_id::text, \'\')::integer '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'g.generation')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'g.generation')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'g.generation')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'g.generation', 'g.version_group_id')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'g.generation', 'g.version_group_id')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'g.generation', 'g.version_group_id')
         + f'where nullif(pb.run_id::text, \'\')::integer = %s and nullif(a.attempt_number::text, \'\')::integer = %s',
         (run_id, attempt_number)
     ).fetchall()
@@ -2152,6 +2179,7 @@ def _resolve_move_details(conn, move_id, version_group_id):
 
     default = None
     future_candidates = []
+    exact_override = None
 
     rows = conn.execute(
         'select move_id, move_name, type, damage_class, power, accuracy, version_group_id '
@@ -2159,17 +2187,37 @@ def _resolve_move_details(conn, move_id, version_group_id):
         (move_id,)
     ).fetchall()
 
+    # A hack's rebalanced move row (stored at its reserved 1000+ version
+    # group) wins outright; otherwise hacks resolve past-values against
+    # their base game's chronology. Vanilla targets never treat a same-vg
+    # past-value row as an override -- a row keyed at vg X records the
+    # change AT X, which games at or after X do not use.
+    try:
+        raw_target = int(version_group_id) if version_group_id is not None else None
+    except (TypeError, ValueError):
+        raw_target = None
+    hack_target = raw_target if raw_target is not None and raw_target >= 1000 else None
+    version_group_id = _moveset_version_group_for(conn, version_group_id)
+
     for row in rows:
         r = dict(row)
         vg = r.get('version_group_id')
+        if hack_target is not None and vg == hack_target:
+            exact_override = r
         if not vg:  # NULL or 0 both treated as the default/fallback row
             default = r
-        elif version_group_id is not None and vg > version_group_id:
+        elif vg < 1000 and version_group_id is not None and vg > version_group_id:
+            # Reserved-range (hack) rows never act as vanilla past-values.
             future_candidates.append(r)
 
     # moves.past_values are stored keyed by the version group where the change happened;
     # for an older game, pick the nearest change row above the target version group.
-    selected = min(future_candidates, key=lambda x: x['version_group_id']) if future_candidates else default
+    if exact_override is not None:
+        selected = exact_override
+    elif future_candidates:
+        selected = min(future_candidates, key=lambda x: x['version_group_id'])
+    else:
+        selected = default
     if not selected:
         return None
 
@@ -2221,7 +2269,16 @@ def _pick_moveset_version_group(conn, species_id, target_version_group_id):
     if target_version_group_id is None:
         return max(values)
 
-    eligible = [v for v in values if v <= target_version_group_id]
+    # A hack's own learnset rows (loaded at its reserved version group) win
+    # outright; species the hack left unchanged fall back to the BASE game's
+    # chronology -- raw hack ids (1000+) would otherwise select the newest
+    # vanilla learnset instead of the base game's.
+    target = int(target_version_group_id)
+    if target in values:
+        return target
+    target = _moveset_version_group_for(conn, target)
+
+    eligible = [v for v in values if v <= target]
     if eligible:
         return max(eligible)
     return min(values)
@@ -2269,24 +2326,27 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
 
     if version_group_id is not None:
         tp_vg_filter = 'and (t.version_group_id is null or t.version_group_id = %s) '
-        tp_params = (game_generation, game_generation, game_generation, trainer_name, version_group_id)
+        tp_params = (version_group_id, game_generation, version_group_id, game_generation,
+                     version_group_id, game_generation, trainer_name, version_group_id)
     else:
         tp_vg_filter = 'and t.version_group_id is null '
-        tp_params = (game_generation, game_generation, game_generation, trainer_name)
+        tp_params = (None, game_generation, None, game_generation,
+                     None, game_generation, trainer_name)
 
     rows = conn.execute(
-        'select sp.species_id, t.species_name, st.type1, st.type2, sa.ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        'select sp.species_id, t.species_name, st.type1, st.type2, '
+        'coalesce(t.ability, sa.ability1) as ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
         't.iv, t.lvl, t.moves, t.held_item '
         'from trainer_pokemon t '
         'left join species sp on t.species_name = sp.name '
-        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s')
+        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
         + f'where encounter_name = (%s) {tp_vg_filter}',
         tp_params
     ).fetchall()
 
-    return _assemble_trainer_party(conn, rows, _moveset_version_group_for(conn, version_group_id))
+    return _assemble_trainer_party(conn, rows, version_group_id)
 
 def _assemble_trainer_party(conn, rows, version_group_id):
     party = []
@@ -2335,17 +2395,20 @@ def get_trainer_party_by_id(conn, trainer_id, game_id=None):
             version_group_id = game_row['version_group_id']
 
     select_sql = (
-        'select sp.species_id, t.species_name, st.type1, st.type2, sa.ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        'select sp.species_id, t.species_name, st.type1, st.type2, '
+        'coalesce(t.ability, sa.ability1) as ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
         't.iv, t.lvl, t.moves, t.held_item, t.slot, t.ability as trainer_ability, t.nature as trainer_nature '
         'from trainer_pokemon t '
         'left join species sp on t.species_name = sp.name '
-        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s')
+        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
     )
+    join_params = (version_group_id, game_generation, version_group_id, game_generation,
+                   version_group_id, game_generation)
     rows = conn.execute(
         select_sql + 'where t.trainer_id = %s order by t.slot asc nulls last, t.pk_id asc',
-        (game_generation, game_generation, game_generation, trainer_id)
+        (*join_params, trainer_id)
     ).fetchall()
 
     if not rows:
@@ -2354,11 +2417,10 @@ def get_trainer_party_by_id(conn, trainer_id, game_id=None):
             'where t.trainer_id is null and t.encounter_name = %s '
             'and (t.version_group_id is null or t.version_group_id = %s) '
             'order by t.slot asc nulls last, t.pk_id asc',
-            (game_generation, game_generation, game_generation,
-             trainer['encounter_name'], trainer['version_group_id'])
+            (*join_params, trainer['encounter_name'], trainer['version_group_id'])
         ).fetchall()
 
-    return _assemble_trainer_party(conn, rows, _moveset_version_group_for(conn, version_group_id))
+    return _assemble_trainer_party(conn, rows, version_group_id)
 
 def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
     """Get trainers defeated and badges earned for a specific pokemon in a run/attempt."""
