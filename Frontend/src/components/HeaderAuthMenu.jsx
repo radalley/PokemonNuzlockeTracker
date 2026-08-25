@@ -75,6 +75,18 @@ function HeaderAuthMenu() {
               Reports
             </button>
           )}
+          {user.account_type === 'admin' && (
+            <button
+              type="button"
+              className="site-header__auth-menu-item"
+              onClick={() => {
+                setMenuOpen(false)
+                navigate('/admin/placement')
+              }}
+            >
+              Placement
+            </button>
+          )}
           <button type="button" className="site-header__auth-menu-item" onClick={logout}>
             Sign Out
           </button>

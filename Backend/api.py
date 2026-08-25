@@ -21,7 +21,8 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn,
                      create_contact_report, get_contact_reports, update_contact_report,
-                     get_contact_report_stats, get_run_menu_summary, mark_run_opened)
+                     get_contact_report_stats, get_run_menu_summary, mark_run_opened,
+                     get_placement_summary, get_unplaced_trainers, apply_trainer_placements)
 
 load_dotenv()
 
@@ -294,6 +295,51 @@ def species_search_route():
     query = request.args.get('q', '')
     species = get_species_search(conn, query)
     return jsonify([dict(s) for s in species])
+
+@app.route('/api/admin/placement/summary', methods=['GET'])
+def admin_placement_summary_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    return jsonify([dict(r) for r in get_placement_summary(conn)])
+
+@app.route('/api/admin/placement/unplaced', methods=['GET'])
+def admin_placement_unplaced_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    version_group_id = request.args.get('version_group_id', type=int)
+    if version_group_id is None:
+        return jsonify({'error': 'version_group_id is required'}), 400
+    limit = min(request.args.get('limit', default=100, type=int), 500)
+    offset = max(request.args.get('offset', default=0, type=int), 0)
+    only_suggested = request.args.get('only_suggested', default=0, type=int) == 1
+    trainers = get_unplaced_trainers(
+        conn, version_group_id, limit=limit, offset=offset, only_suggested=only_suggested
+    )
+    return jsonify(trainers)
+
+@app.route('/api/admin/placement', methods=['POST'])
+def admin_placement_apply_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json() or {}
+    version_group_id = data.get('version_group_id')
+    placements = data.get('placements')
+    if version_group_id is None or not isinstance(placements, list) or not placements:
+        return jsonify({'error': 'version_group_id and a non-empty placements list are required'}), 400
+    if len(placements) > 200:
+        return jsonify({'error': 'At most 200 placements per request'}), 400
+    try:
+        results = apply_trainer_placements(conn, int(version_group_id), placements)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify({'success': True, 'applied': results})
 
 @app.route('/api/debug/trainer-pics', methods=['GET'])
 def debug_trainer_pics_route():

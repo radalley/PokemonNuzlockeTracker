@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HOIeMeaS46EOF49q9E30Sc3sPsjSt9ay12eH0zCBjbbvdEKjz00GaxEkfyk6WSK
+\restrict 8fubCPk9X7gKqzR0BkNzp9gW24qMMzdPlHS59ahHjAP3XNRxCt78r5N0a3SicyO
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -188,6 +188,19 @@ CREATE SEQUENCE public.contact_reports_report_id_seq
 --
 
 ALTER SEQUENCE public.contact_reports_report_id_seq OWNED BY public.contact_reports.report_id;
+
+
+--
+-- Name: curated_trainer_placements; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.curated_trainer_placements (
+    version_group_id integer NOT NULL,
+    trainer_key text NOT NULL,
+    canonical_location_id integer,
+    area_id integer,
+    decided_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
 
 
 --
@@ -645,6 +658,20 @@ ALTER TABLE public.species_types ALTER COLUMN type_pk ADD GENERATED ALWAYS AS ID
 
 
 --
+-- Name: trainer_placement_suggestions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.trainer_placement_suggestions (
+    version_group_id integer NOT NULL,
+    trainer_key text NOT NULL,
+    canonical_location_id integer NOT NULL,
+    area_name text,
+    source text NOT NULL,
+    detail text
+);
+
+
+--
 -- Name: trainer_pokemon; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -904,6 +931,14 @@ ALTER TABLE ONLY public.contact_reports
 
 
 --
+-- Name: curated_trainer_placements curated_trainer_placements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curated_trainer_placements
+    ADD CONSTRAINT curated_trainer_placements_pkey PRIMARY KEY (version_group_id, trainer_key);
+
+
+--
 -- Name: encounter_pool encounter_id; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1024,6 +1059,14 @@ ALTER TABLE ONLY public.species
 
 
 --
+-- Name: trainer_placement_suggestions trainer_placement_suggestions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trainer_placement_suggestions
+    ADD CONSTRAINT trainer_placement_suggestions_pkey PRIMARY KEY (version_group_id, trainer_key, canonical_location_id, source);
+
+
+--
 -- Name: trainer_pool trainer_pool_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1110,6 +1153,13 @@ CREATE UNIQUE INDEX idx_location_areas_identity ON public.location_areas USING b
 --
 
 CREATE INDEX idx_location_areas_location ON public.location_areas USING btree (canonical_location_id);
+
+
+--
+-- Name: idx_placement_suggestions_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_placement_suggestions_key ON public.trainer_placement_suggestions USING btree (version_group_id, trainer_key);
 
 
 --
@@ -1269,5 +1319,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HOIeMeaS46EOF49q9E30Sc3sPsjSt9ay12eH0zCBjbbvdEKjz00GaxEkfyk6WSK
+\unrestrict 8fubCPk9X7gKqzR0BkNzp9gW24qMMzdPlHS59ahHjAP3XNRxCt78r5N0a3SicyO
 

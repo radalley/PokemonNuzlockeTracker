@@ -16,6 +16,7 @@ const Box = lazy(() => import('./pages/Box'))
 const Graveyard = lazy(() => import('./pages/Graveyard'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const AdminReports = lazy(() => import('./pages/AdminReports'))
+const AdminPlacement = lazy(() => import('./pages/AdminPlacement'))
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               <Route path="/graveyard/:runId/:attemptId" element={<Graveyard />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/placement" element={<AdminPlacement />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

@@ -106,6 +106,25 @@ create table canon_locations (
     canonical_location_name text
 );
 
+create table curated_trainer_placements (
+    version_group_id integer not null,
+    trainer_key text not null,
+    canonical_location_id integer,
+    area_id integer,
+    decided_at timestamp with time zone not null default current_timestamp,
+    primary key (version_group_id, trainer_key)
+);
+
+create table trainer_placement_suggestions (
+    version_group_id integer not null,
+    trainer_key text not null,
+    canonical_location_id integer not null,
+    area_name text,
+    source text not null,
+    detail text,
+    primary key (version_group_id, trainer_key, canonical_location_id, source)
+);
+
 create table location_areas (
     area_id serial primary key,
     canonical_location_id integer not null,
@@ -226,6 +245,7 @@ create table movesets (
 TABLES = [
     "party", "pokebank", "bonus_locations", "attempts", "runs",
     "event_locations", "canon_locations", "location_areas", "games",
+    "curated_trainer_placements", "trainer_placement_suggestions",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
     "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
 ]

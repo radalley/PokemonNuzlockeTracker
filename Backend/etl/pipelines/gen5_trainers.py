@@ -11,7 +11,7 @@ Unlike the originals, trainer_pokemon rows are linked to trainer_pool by
 trainer_id at load time (WP1) and carry their slot, so party order is
 explicit rather than implied by insertion order.
 """
-from .. import manifests, preview, schemas
+from .. import curation, manifests, preview, schemas
 from ..loader import Guard, GuardedLoad, Metric, StageTable, loader_cli
 
 
@@ -128,6 +128,8 @@ BEGIN
   END IF;
 END $link$
 """,
+            # Human placement decisions outlive re-extraction.
+            curation.apply_curated_placements_sql(vg, load_build=build),
         ],
         metrics=[
             Metric("trainer_pool_rows", f"SELECT count(*) FROM trainer_pool WHERE {scope}"),
@@ -144,6 +146,7 @@ END $link$
                 "linked_party_rows",
                 f"SELECT count(*) FROM trainer_pokemon WHERE {scope} AND trainer_id IS NOT NULL",
             ),
+            Metric("curated_placements", curation.curated_metric_sql(vg)),
         ],
     )
 

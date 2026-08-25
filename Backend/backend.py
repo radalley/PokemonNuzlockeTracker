@@ -1960,6 +1960,137 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
     )
     return conn.execute(query, params).fetchall()
 
+def get_placement_summary(conn):
+    """Per-version-group placement progress for the admin surface."""
+    return conn.execute(
+        'select tp.version_group_id, '
+        'count(*) as total_trainers, '
+        'count(*) filter (where tp.canonical_location_id is not null) as placed, '
+        'count(*) filter (where tp.canonical_location_id is null) as unplaced, '
+        'count(distinct tp.encounter_name) filter ('
+        '  where tp.canonical_location_id is null and s.trainer_key is not null'
+        ') as unplaced_with_suggestions, '
+        'count(distinct c.trainer_key) as curated '
+        'from trainer_pool tp '
+        'left join trainer_placement_suggestions s '
+        '  on s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name '
+        'left join curated_trainer_placements c '
+        '  on c.version_group_id = tp.version_group_id and c.trainer_key = tp.encounter_name '
+        'where tp.version_group_id is not null '
+        'group by tp.version_group_id order by tp.version_group_id'
+    ).fetchall()
+
+def get_unplaced_trainers(conn, version_group_id, limit=100, offset=0, only_suggested=False):
+    """Unplaced trainers for one version group, with their suggestions."""
+    suggested_filter = (
+        'and exists (select 1 from trainer_placement_suggestions s '
+        'where s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name) '
+    ) if only_suggested else ''
+    trainers = conn.execute(
+        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.details, '
+        "case when lower(coalesce(tp.is_rematch::text, '')) in ('1','true','t','yes') then 1 else 0 end as is_rematch "
+        'from trainer_pool tp '
+        'where tp.version_group_id = %s and tp.canonical_location_id is null '
+        + suggested_filter +
+        'order by tp.encounter_name asc limit %s offset %s',
+        (version_group_id, limit, offset)
+    ).fetchall()
+    trainer_list = [dict(t) for t in trainers]
+    if not trainer_list:
+        return trainer_list
+
+    keys = [t['encounter_name'] for t in trainer_list]
+    placeholders = ','.join(['%s'] * len(keys))
+    suggestion_rows = conn.execute(
+        'select s.trainer_key, s.canonical_location_id, cl.canonical_location_name, '
+        's.area_name, s.source, s.detail, '
+        'exists (select 1 from event_locations el '
+        '  where el.canonical_location_id = s.canonical_location_id '
+        '  and el.version_group_id = s.version_group_id) as in_script '
+        'from trainer_placement_suggestions s '
+        'join canon_locations cl on cl.canonical_location_id = s.canonical_location_id '
+        f'where s.version_group_id = %s and s.trainer_key in ({placeholders}) '
+        'order by s.trainer_key, s.source, cl.canonical_location_name',
+        (version_group_id, *keys)
+    ).fetchall()
+    by_key = {}
+    for row in suggestion_rows:
+        by_key.setdefault(row['trainer_key'], []).append({
+            'canonical_location_id': row['canonical_location_id'],
+            'location_name': row['canonical_location_name'],
+            'area_name': row['area_name'],
+            'source': row['source'],
+            'detail': row['detail'],
+            'in_script': bool(row['in_script']),
+        })
+    for trainer in trainer_list:
+        trainer['suggestions'] = by_key.get(trainer['encounter_name'], [])
+    return trainer_list
+
+def apply_trainer_placements(conn, version_group_id, placements):
+    """Apply admin placement decisions.
+
+    Each placement: {trainer_key, canonical_location_id, area_id | area_name}.
+    Writes trainer_pool AND curated_trainer_placements, so re-extraction
+    re-applies the decision. Returns per-placement results.
+    """
+    results = []
+    for placement in placements:
+        trainer_key = placement.get('trainer_key')
+        location_id = placement.get('canonical_location_id')
+        if not trainer_key or location_id is None:
+            raise ValueError('Each placement needs trainer_key and canonical_location_id')
+        location = conn.execute(
+            'select canonical_location_id from canon_locations where canonical_location_id = %s',
+            (location_id,)
+        ).fetchone()
+        if not location:
+            raise ValueError(f'Unknown canonical_location_id {location_id}')
+
+        area_id = placement.get('area_id')
+        area_name = (placement.get('area_name') or '').strip()
+        if area_id is None and area_name:
+            existing = conn.execute(
+                'select area_id from location_areas '
+                'where canonical_location_id = %s and coalesce(version_group_id, -1) = %s and area_name = %s',
+                (location_id, version_group_id, area_name)
+            ).fetchone()
+            if existing:
+                area_id = existing['area_id']
+            else:
+                area_kind = 'gym' if 'gym' in area_name.lower() else 'interior'
+                area_id = conn.execute(
+                    'insert into location_areas (canonical_location_id, version_group_id, area_name, area_kind) '
+                    'values (%s, %s, %s, %s) returning area_id',
+                    (location_id, version_group_id, area_name, area_kind)
+                ).fetchone()['area_id']
+
+        updated = conn.execute(
+            'update trainer_pool set canonical_location_id = %s, area_id = %s '
+            'where version_group_id = %s and encounter_name = %s '
+            'returning trainer_id',
+            (location_id, area_id, version_group_id, trainer_key)
+        ).fetchall()
+        if not updated:
+            raise ValueError(f'No trainer matches {trainer_key} in version group {version_group_id}')
+        conn.execute(
+            'insert into curated_trainer_placements '
+            '(version_group_id, trainer_key, canonical_location_id, area_id, decided_at) '
+            'values (%s, %s, %s, %s, current_timestamp) '
+            'on conflict (version_group_id, trainer_key) do update set '
+            'canonical_location_id = excluded.canonical_location_id, '
+            'area_id = excluded.area_id, decided_at = excluded.decided_at',
+            (version_group_id, trainer_key, location_id, area_id)
+        )
+        results.append({
+            'trainer_key': trainer_key,
+            'canonical_location_id': location_id,
+            'area_id': area_id,
+            'trainers_updated': len(updated),
+        })
+    conn.commit()
+    return results
+
 def _normalize_move_constant(move_token):
     token = (move_token or '').strip()
     if token.startswith('MOVE_'):

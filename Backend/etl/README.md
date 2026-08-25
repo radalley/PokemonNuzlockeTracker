@@ -59,6 +59,21 @@ python -m etl.pipelines.derive_location_areas --version-group-id 1
 It only fills empty `area_id`s, so curated assignments survive a re-run;
 pass `--reassign` to overwrite them.
 
+Placement curation (WP5) adds two more:
+
+```bash
+python -m etl.pipelines.build_placement_suggestions --apply   # rebuild advisory suggestions
+python -m etl.pipelines.apply_curated_placements --version-group-id 11 --apply
+```
+
+`build_placement_suggestions` mines candidate notes and map references from
+`trainer_pool.details`, the Gen 5 previews' `map_reference_details.csv`, and
+the B2W2 Serebii cross-check into `trainer_placement_suggestions` for the
+`/admin/placement` surface. Suggestions are advisory; humans accept them.
+`apply_curated_placements` re-applies accepted decisions
+(`curated_trainer_placements`) outside a loader run; the Gen 5 loaders embed
+the same statement, so re-extraction never loses curation.
+
 ## Adding a data set
 
 Add a manifest to `manifests/` and reuse an existing pipeline if the shape
