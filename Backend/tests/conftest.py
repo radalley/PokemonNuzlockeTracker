@@ -114,6 +114,11 @@ create table curated_trainer_placements (
     canonical_location_id integer,
     area_id integer,
     decided_at timestamp with time zone not null default current_timestamp,
+    status text not null default 'placed',
+    is_rematch boolean,
+    is_event boolean,
+    game_id integer,
+    note text,
     primary key (version_group_id, trainer_key)
 );
 

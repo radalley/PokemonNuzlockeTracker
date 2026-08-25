@@ -149,7 +149,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const [trainers, setTrainers] = useState([])
   const [trainersLoaded, setTrainersLoaded] = useState(false)
-  const [showSpecialTrainers, setShowSpecialTrainers] = useState(false)
+  // A venue whose whole roster is rematch/event trainers (stadiums, the
+  // cruise, League rematches) opens straight onto its special groups
+  // instead of an empty "No trainers" state.
+  const [showSpecialTrainers, setShowSpecialTrainers] = useState(
+    Number(row.trainer_count ?? 0) === 0 && Number(row.special_trainer_count ?? 0) > 0)
 
   const [encounter, setEncounter] = useState(null)
   const [encounterDetails, setEncounterDetails] = useState(null)
@@ -439,11 +443,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     : Number(row.trainer_count ?? 0) - Number(row.available_trainer_count ?? 0)
   const hasSeedTrainerCount = row.trainer_count != null
   const initialTrainerCount = Number(row.trainer_count ?? 0)
+  const initialSpecialCount = Number(row.special_trainer_count ?? 0)
   const trainerCount = trainersLoaded ? availableTrainers.length : initialTrainerCount
-  // Allow first load only when trainer counts are unknown; honor explicit zero counts.
+  // Allow first load only when trainer counts are unknown; honor explicit zero
+  // counts. A location whose roster is all rematch/event trainers (stadiums,
+  // the cruise, League rematches) still opens its panel for the special groups.
   const trainerButtonDisabled = trainersLoaded
-    ? availableTrainers.length === 0
-    : (hasSeedTrainerCount && initialTrainerCount === 0)
+    ? (availableTrainers.length === 0 && specialTrainers.length === 0 && initialSpecialCount === 0)
+    : (hasSeedTrainerCount && initialTrainerCount === 0 && initialSpecialCount === 0)
   const inParty = pokemonId ? partyPokemonIds.has(pokemonId) : false
   const summaryName = nickname || encounter?.name || 'Encounter'
   const type1 = encounterDetails?.type1 || null
@@ -750,7 +757,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
         {showTrainerView && (
           <SummaryButton disabled={trainerButtonDisabled} active={activePanel === 'trainers'} onClick={() => togglePanel('trainers')} style={{ whiteSpace: 'nowrap' }}>
-            Trainers {defeatedTrainerCount}/{trainerCount}
+            Trainers {defeatedTrainerCount}/{trainerCount}{(() => {
+              const special = trainersLoaded && showSpecialTrainers ? specialTrainers.length : initialSpecialCount
+              return special > 0 ? ` +${special}★` : ''
+            })()}
           </SummaryButton>
         )}
 

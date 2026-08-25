@@ -1603,21 +1603,26 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     available_trainers_by_location = {}
     if attempt_row and location_ids and version_group_id is not None:
         placeholders = ','.join(['%s'] * len(location_ids))
-        # Count all regular trainers (not rematch, not event) for the location, for the correct version_group_id
+        # Regular trainers (not rematch, not event) drive the progress counts;
+        # rematch/event trainers count separately so venue rows (stadiums,
+        # cruise, League rematches) still surface in the trainer filter.
         game_id_clause = "and (tp.game_id is null or tp.game_id = %s) " if game_id is not None else "and tp.game_id is null "
         game_id_param = [game_id] if game_id is not None else []
+        special_case = (
+            "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') "
+            "  or lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end"
+        )
         trainer_rows = conn.execute(
             f'select tp.canonical_location_id as location_id, '
-            f"count(*) as trainer_count, "
-            f"count(case when td.trainer_id is null then 1 end) as available_trainer_count "
+            f"count(case when {special_case} = 0 then 1 end) as trainer_count, "
+            f"count(case when {special_case} = 0 and td.trainer_id is null then 1 end) as available_trainer_count, "
+            f"count(case when {special_case} = 1 then 1 end) as special_trainer_count "
             f'from trainer_pool tp '
             f'left join trainers_defeated td '
             f'on td.trainer_id = tp.trainer_id and td.run_id = %s and td.attempt_id = %s '
             f"where tp.canonical_location_id in ({placeholders}) "
             f"and tp.version_group_id = %s "
             f"{game_id_clause}"
-            f"and case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
-            f"and case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
             f"and not exists ("
             f"  select 1 from event_bosses eb "
             f"  where eb.trainer_id = tp.trainer_id "
@@ -1630,6 +1635,7 @@ def get_attempt_page_data(conn, run_id, attempt_number):
             int(row['location_id']): {
                 'trainer_count': int(row['trainer_count'] or 0),
                 'available_trainer_count': int(row['available_trainer_count'] or 0),
+                'special_trainer_count': int(row['special_trainer_count'] or 0),
             }
             for row in trainer_rows
         }
@@ -1640,6 +1646,7 @@ def get_attempt_page_data(conn, run_id, attempt_number):
         trainer_meta = available_trainers_by_location.get(int(row['event_id']), None)
         row['trainer_count'] = trainer_meta['trainer_count'] if trainer_meta else 0
         row['available_trainer_count'] = trainer_meta['available_trainer_count'] if trainer_meta else 0
+        row['special_trainer_count'] = trainer_meta['special_trainer_count'] if trainer_meta else 0
         row['has_available_trainers'] = bool(row['available_trainer_count'])
 
     pools = {}
@@ -2006,19 +2013,34 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
     return conn.execute(query, params).fetchall()
 
 def get_placement_summary(conn):
-    """Per-version-group placement progress for the admin surface."""
+    """Per-version-group placement progress for the admin surface.
+
+    An unplaced trainer is only a real gap when it is neither excluded by
+    curation (unused ROM data) nor attached to a scripted boss event
+    (those display through the boss skeleton, never a location panel).
+    """
+    # No join against trainer_placement_suggestions: its grain is one row per
+    # (trainer, candidate location, source), which would fan out every count.
     return conn.execute(
         'select tp.version_group_id, '
         'count(*) as total_trainers, '
         'count(*) filter (where tp.canonical_location_id is not null) as placed, '
         'count(*) filter (where tp.canonical_location_id is null) as unplaced, '
-        'count(distinct tp.encounter_name) filter ('
-        '  where tp.canonical_location_id is null and s.trainer_key is not null'
+        "count(*) filter (where tp.canonical_location_id is null and c.status = 'excluded') as excluded, "
+        'count(*) filter (where tp.canonical_location_id is null '
+        "  and coalesce(c.status, '') <> 'excluded' "
+        '  and exists (select 1 from event_bosses eb where eb.trainer_id = tp.trainer_id)'
+        ') as boss_linked, '
+        'count(*) filter (where tp.canonical_location_id is null '
+        "  and coalesce(c.status, '') <> 'excluded' "
+        '  and not exists (select 1 from event_bosses eb where eb.trainer_id = tp.trainer_id)'
+        ') as actionable_gaps, '
+        'count(*) filter (where tp.canonical_location_id is null '
+        '  and exists (select 1 from trainer_placement_suggestions s '
+        '    where s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name)'
         ') as unplaced_with_suggestions, '
-        'count(distinct c.trainer_key) as curated '
+        'count(c.trainer_key) as curated '
         'from trainer_pool tp '
-        'left join trainer_placement_suggestions s '
-        '  on s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name '
         'left join curated_trainer_placements c '
         '  on c.version_group_id = tp.version_group_id and c.trainer_key = tp.encounter_name '
         'where tp.version_group_id is not null '

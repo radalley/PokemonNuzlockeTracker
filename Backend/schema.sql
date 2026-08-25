@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mcFwjXhhsCgzrmLMhT8k7BAHE0aIZvtpDOMb9nOQ3U2Etkxh4QJZHdPlTzvdQEC
+\restrict PemEa92n1XoFoBBzoyTbSdiIWewHgoE1jbeeoHM1P8Xe3rWBvwm1j3lQUZcoO5d
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -199,7 +199,12 @@ CREATE TABLE public.curated_trainer_placements (
     trainer_key text NOT NULL,
     canonical_location_id integer,
     area_id integer,
-    decided_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    decided_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    status text DEFAULT 'placed'::text NOT NULL,
+    is_rematch boolean,
+    is_event boolean,
+    game_id integer,
+    note text
 );
 
 
@@ -1347,5 +1352,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mcFwjXhhsCgzrmLMhT8k7BAHE0aIZvtpDOMb9nOQ3U2Etkxh4QJZHdPlTzvdQEC
+\unrestrict PemEa92n1XoFoBBzoyTbSdiIWewHgoE1jbeeoHM1P8Xe3rWBvwm1j3lQUZcoO5d
 

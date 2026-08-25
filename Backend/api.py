@@ -828,10 +828,16 @@ def guest_script_route():
         # Recompute from trainer_pool so Postgres/text source data doesn't disable UI.
         if data.get('event_type') == 'Location':
             location_id = int(data['event_id'])
-            trainer_rows = get_trainers_by_location(conn, location_id, version_group_id=version_group_id, game_id=game_id)
-            non_event_count = sum(1 for t in trainer_rows if not bool(t.get('is_event')))
-            data['trainer_count'] = non_event_count
-            data['available_trainer_count'] = non_event_count
+            trainer_rows = get_trainers_by_location(
+                conn, location_id, version_group_id=version_group_id, game_id=game_id,
+                include_rematches=True, include_events=True)
+            special_count = sum(
+                1 for t in trainer_rows
+                if int(t.get('is_event') or 0) or int(t.get('is_rematch') or 0))
+            regular_count = len(trainer_rows) - special_count
+            data['trainer_count'] = regular_count
+            data['available_trainer_count'] = regular_count
+            data['special_trainer_count'] = special_count
         script.append(data)
 
     pools = {}

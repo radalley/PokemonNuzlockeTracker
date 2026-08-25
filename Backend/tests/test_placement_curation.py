@@ -252,6 +252,65 @@ def test_curated_placements_reapply_after_reload(db_conn):
     assert row["area_id"] is not None
 
 
+def test_curated_flags_and_game_apply_to_pool(db_conn):
+    """Curated is_rematch/is_event/game_id land on trainer_pool as '1'/'0'
+    text and integer; NULL curated flags leave extractor values alone."""
+    seed_world(db_conn)
+    flagged = seed_unplaced(db_conn, key="TRAINER_STADIUM")
+    untouched = seed_unplaced(db_conn, key="TRAINER_ROUTE")
+    db_conn.execute(
+        "update trainer_pool set is_rematch = 'extractor', is_event = 'extractor' "
+        "where trainer_id = %s", (untouched,))
+    db_conn.execute(
+        "insert into curated_trainer_placements "
+        "(version_group_id, trainer_key, canonical_location_id, status, is_rematch, is_event, game_id) "
+        "values (1, 'TRAINER_STADIUM', 54, 'placed', true, false, 17), "
+        "       (1, 'TRAINER_ROUTE', 3, 'placed', null, null, null)")
+    db_conn.commit()
+
+    db_conn.execute(curation.apply_curated_placements_sql(1))
+    db_conn.commit()
+
+    row = db_conn.execute(
+        "select canonical_location_id, is_rematch, is_event, game_id "
+        "from trainer_pool where trainer_id = %s", (flagged,)).fetchone()
+    assert row["canonical_location_id"] == 54
+    assert row["is_rematch"] == "1"
+    assert row["is_event"] == "0"
+    assert row["game_id"] == 17
+    row = db_conn.execute(
+        "select canonical_location_id, is_rematch, is_event, game_id "
+        "from trainer_pool where trainer_id = %s", (untouched,)).fetchone()
+    assert row["canonical_location_id"] == 3
+    assert row["is_rematch"] == "extractor"
+    assert row["is_event"] == "extractor"
+    assert row["game_id"] is None
+
+
+def test_summary_separates_excluded_and_boss_linked(db_conn):
+    """Unplaced trainers resolve out of the gap count when curated
+    'excluded' or attached to a scripted boss event."""
+    seed_world(db_conn)
+    seed_unplaced(db_conn, key="TRAINER_REAL_GAP")
+    seed_unplaced(db_conn, key="TRAINER_PLACEHOLDER")
+    boss_id = seed_unplaced(db_conn, key="TRAINER_BOSS")
+    db_conn.execute(
+        "insert into curated_trainer_placements (version_group_id, trainer_key, status, note) "
+        "values (1, 'TRAINER_PLACEHOLDER', 'excluded', 'unused ROM placeholder')")
+    db_conn.execute(
+        "insert into event_bosses (event_id, trainer_id, version_group_id) values (900, %s, 1)",
+        (boss_id,))
+    db_conn.commit()
+
+    summary = [dict(r) for r in backend_module.get_placement_summary(db_conn)]
+
+    row = next(r for r in summary if r["version_group_id"] == 1)
+    assert row["unplaced"] == 3
+    assert row["excluded"] == 1
+    assert row["boss_linked"] == 1
+    assert row["actionable_gaps"] == 1
+
+
 def test_gen5_loader_embeds_curated_reapply():
     from etl.pipelines import gen5_trainers
 

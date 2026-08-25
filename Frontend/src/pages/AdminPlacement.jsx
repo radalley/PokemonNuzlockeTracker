@@ -184,7 +184,9 @@ function AdminPlacement() {
               <th style={{ padding: '6px' }}>Version</th>
               <th style={{ padding: '6px', textAlign: 'right' }}>Trainers</th>
               <th style={{ padding: '6px', textAlign: 'right' }}>Placed</th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>Unplaced</th>
+              <th style={{ padding: '6px', textAlign: 'right' }}>Gaps</th>
+              <th style={{ padding: '6px', textAlign: 'right' }}>Boss-linked</th>
+              <th style={{ padding: '6px', textAlign: 'right' }}>Excluded</th>
               <th style={{ padding: '6px', textAlign: 'right' }}>With suggestions</th>
               <th style={{ padding: '6px', textAlign: 'right' }}>Curated</th>
             </tr>
@@ -206,7 +208,9 @@ function AdminPlacement() {
                   <td style={{ padding: '6px' }}>{versionLabels.get(vg) || `Version group ${vg}`}</td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.total_trainers}</td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.placed}</td>
-                  <td style={{ padding: '6px', textAlign: 'right', color: Number(row.unplaced) > 0 ? '#e0a052' : 'inherit' }}>{row.unplaced}</td>
+                  <td style={{ padding: '6px', textAlign: 'right', color: Number(row.actionable_gaps ?? row.unplaced) > 0 ? '#e0a052' : '#5ba85b' }}>{row.actionable_gaps ?? row.unplaced}</td>
+                  <td style={{ padding: '6px', textAlign: 'right' }}>{row.boss_linked ?? '-'}</td>
+                  <td style={{ padding: '6px', textAlign: 'right' }}>{row.excluded ?? '-'}</td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.unplaced_with_suggestions}</td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.curated}</td>
                 </tr>

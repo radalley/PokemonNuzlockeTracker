@@ -232,7 +232,8 @@ function Attempt() {
     if (activeFilter === 'encounters') {
       return script.filter(row => row.event_type === 'Location')
     }
-    return script.filter(row => row.event_type !== 'Location' || row.trainer_count > 0)
+    return script.filter(row => row.event_type !== 'Location'
+      || row.trainer_count > 0 || row.special_trainer_count > 0)
   }, [activeFilter, script])
 
   if (!attemptLoaded) return <p>Loading...</p>

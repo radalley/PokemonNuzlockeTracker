@@ -115,6 +115,7 @@ export async function getAttemptPageData(runId, attemptNumber) {
       encounter_key: `${row.event_id}:${Number(row.secondary_sort_order || 0)}`,
       trainer_count: Number(row.trainer_count || 0),
       available_trainer_count: Number(row.available_trainer_count || 0),
+      special_trainer_count: Number(row.special_trainer_count || 0),
     }))
 
     const injectedBonus = bonusRows
