@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import LocationRow from '../components/LocationRow'
@@ -82,29 +82,54 @@ function Attempt() {
     return () => controller.abort()
   }, [runId, attemptId, partyRefreshKey])
 
+  // Refetches for an already-displayed attempt (victories, starter changes,
+  // structure edits) reconcile in the background: unmounting into the
+  // loading screen would collapse the page and reset the scroll position.
+  const loadedIdentityRef = useRef(null)
+  const loadSeqRef = useRef(0)
+  const encountersVersionRef = useRef(0)
+
   useEffect(() => {
-    const controller = new AbortController()
-    setAttemptLoadError('')
-    setAttemptLoaded(false)
+    const identity = `${runId}:${attemptId}`
+    const seq = ++loadSeqRef.current
+    const encountersVersion = encountersVersionRef.current
+    const isBackgroundRefresh = loadedIdentityRef.current === identity
+    if (!isBackgroundRefresh) {
+      setAttemptLoadError('')
+      setAttemptLoaded(false)
+    }
     getAttemptPageData(runId, attemptId)
       .then(data => {
+        if (seq !== loadSeqRef.current) return
+        if (!data?.run && isBackgroundRefresh) {
+          // The run vanished mid-session (e.g. deleted in another tab):
+          // keep the current view rather than collapsing it under the user.
+          console.error('Background refresh returned no run data; keeping current view.')
+          return
+        }
         setRunDetails(data?.run || null)
         setCurrentStarter(data?.run?.starter || '')
         setScript(data?.script || [])
         setPools(data?.pools || {})
-        setSavedEncounters(data?.encounters || {})
+        // A stale snapshot must not clobber encounter edits (saves, deletes,
+        // status changes) made while this request was in flight.
+        if (encountersVersion === encountersVersionRef.current) {
+          setSavedEncounters(data?.encounters || {})
+        }
         setAttemptLoaded(true)
         if (data?.run) {
+          loadedIdentityRef.current = identity
           markRunOpened(runId, attemptId).catch(err => console.error('Failed to record opened run:', err))
         }
       })
       .catch(err => {
-        if (err.name === 'AbortError') return
+        if (seq !== loadSeqRef.current) return
         console.error(err)
-        setAttemptLoadError('Failed to load attempt page data.')
-        setAttemptLoaded(true)
+        if (!isBackgroundRefresh) {
+          setAttemptLoadError('Failed to load attempt page data.')
+          setAttemptLoaded(true)
+        }
       })
-    return () => controller.abort()
   }, [runId, attemptId, refreshKey])
 
   const handleStarterChange = (newStarter) => {
@@ -154,6 +179,7 @@ function Attempt() {
   }, [capturedSpeciesIds.join(',')])
 
   const handleStatusChange = useCallback((locationId, speciesId, newStatus) => {
+    encountersVersionRef.current += 1
     setSavedEncounters(prev => ({
       ...prev,
       [locationId]: { ...(prev[locationId] || {}), species_id: speciesId, status: newStatus }
@@ -161,8 +187,10 @@ function Attempt() {
   }, [])
 
   const handleEncounterChange = useCallback(() => {
+    const version = ++encountersVersionRef.current
     getPokebank(runId, attemptId)
       .then(data => {
+        if (version !== encountersVersionRef.current) return
         const byLocation = {}
         ;(data || []).forEach(p => { byLocation[p.encounter_key] = p })
         setSavedEncounters(byLocation)
@@ -212,7 +240,7 @@ function Attempt() {
 
   function renderScriptRow(row) {
     const generation = runDetails?.generation ?? null
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
     if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
     return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
   }
