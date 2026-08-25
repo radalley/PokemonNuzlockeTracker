@@ -51,7 +51,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
   const [open, setOpen] = useState(false)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -180,7 +180,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
         {/* Trainer sprite */}
         {(() => {
-          const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName, gameId, versionGroupId)
+          const src = getTrainerSpriteSrc(trainerPic, trainerClass, trainerName, gameId, versionGroupId, generation)
           return src
             ? <img className="trainer-card-summary__sprite" src={src} style={{ height: '80px', width: 'auto', flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
                 alt={trainerName || formattedClass}

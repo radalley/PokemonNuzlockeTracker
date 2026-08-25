@@ -60,7 +60,9 @@ create table games (
     generation integer,
     version_group_id integer,
     valid_game text default 'valid',
-    pool_game_id integer
+    pool_game_id integer,
+    base_game_id integer,
+    is_rom_hack boolean not null default false
 );
 
 create table runs (
@@ -185,7 +187,26 @@ create table event_bosses (
     event_id serial primary key,
     trainer_id integer,
     version_group_id integer,
-    encounter_title text
+    encounter_title text,
+    sort_order text,
+    starter text,
+    type_focus text,
+    event_type text,
+    game_id integer,
+    badge_id integer,
+    battle_type text,
+    is_level_cap boolean
+);
+
+create table encounter_pool (
+    game_id text,
+    location_id integer,
+    canonical_location_id integer,
+    species_id integer,
+    min_level integer,
+    max_level integer,
+    method text,
+    enounter_rate integer
 );
 
 create table trainer_pool (
@@ -248,6 +269,7 @@ TABLES = [
     "curated_trainer_placements", "trainer_placement_suggestions",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
     "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
+    "encounter_pool",
 ]
 
 

@@ -137,7 +137,7 @@ function SummaryButton({ active = false, disabled = false, style = {}, children,
   )
 }
 
-function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master' }) {
+function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, generation = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master' }) {
   const searchRef = useRef(null)
   const menuRef = useRef(null)
   const natureRef = useRef(null)
@@ -1312,6 +1312,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                       trainerPic={trainer.trainer_pic}
                       trainerItems={trainer.trainer_items}
                       gameId={gameId}
+                      generation={generation}
                       versionGroupId={trainer.version_group_id}
                       runId={runId}
                       attemptId={attemptNumber}

@@ -1,9 +1,13 @@
 import TrainerCard from './TrainerCard'
 
-function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
-  const shouldShowLevelCap = ['gym leader', 'elite four', 'champion'].includes(
-    String(row.event_type || '').trim().toLowerCase()
-  )
+function BossRow({ row, gameId = null, generation = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
+  // is_level_cap comes from event_bosses; the event_type string list is the
+  // fallback for rows predating the flag.
+  const shouldShowLevelCap = row.is_level_cap != null
+    ? Boolean(row.is_level_cap)
+    : ['gym leader', 'elite four', 'champion'].includes(
+        String(row.event_type || '').trim().toLowerCase()
+      )
 
   return (
     <div style={{ marginBottom: '14px', border: '1px solid var(--border-strong)', borderRadius: '12px', overflow: 'hidden', background: 'var(--surface)' }}>
@@ -19,6 +23,7 @@ function BossRow({ row, gameId = null, runId = null, attemptId = null, onVictory
         levelCap={row.level_cap}
         typeFocus={row.type_focus}
         gameId={gameId}
+        generation={generation}
         versionGroupId={row.version_group_id}
         runId={runId}
         attemptId={attemptId}

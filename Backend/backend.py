@@ -172,7 +172,12 @@ EVENT_BADGE_MAPPINGS = (
 
 def get_games(conn):
     cur = _cursor(conn)
-    cur.execute("SELECT game_id, name, game_tag, generation, version_group_id from games where valid_game = 'valid'")
+    cur.execute(
+        "SELECT g.game_id, g.name, g.game_tag, g.generation, g.version_group_id, "
+        "g.base_game_id, g.is_rom_hack, base.name as base_game_name "
+        "FROM games g LEFT JOIN games base ON base.game_id = g.base_game_id "
+        "WHERE g.valid_game = 'valid'"
+    )
     return cur.fetchall()
 
 def _get_game_generation(conn, game_id=None, run_id=None):
@@ -467,9 +472,10 @@ def get_run_by_id(conn, run_id, attempt_number, user_id=None):
     # return conn.execute('select run_id, runs.name, runs.game_id, games.name as game_name from runs left join games on runs.game_id = games.game_id where runs.run_id = (%s)',(run_id,)).fetchone()
     _ensure_auth_schema(conn)
     query = (
-        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, run.s_ref, run.b_ref, run.pdb_ref, attempts.starter '
+        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, run.generation, run.base_game_id, run.base_game_name, run.s_ref, run.b_ref, run.pdb_ref, attempts.starter '
         'from ('
-        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id, games.s_ref, games.b_ref, games.pdb_ref '
+        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id, games.generation, games.base_game_id, '
+        '  (select b.name from games b where b.game_id = games.base_game_id) as base_game_name, games.s_ref, games.b_ref, games.pdb_ref '
         '  from runs left join games on nullif(runs.game_id::text, \'\')::integer = nullif(games.game_id::text, \'\')::integer where nullif(runs.run_id::text, \'\')::integer = %s'
         ') as run '
         'left join attempts on run.run_id = attempts.run_id '
@@ -1772,7 +1778,8 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
                 'select nullif(bl.canonical_location_id::text, \'\')::integer as event_id, bl.canonical_name as display_name, '
                 'nullif(bl.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(bl.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, '
                 'bl.event_type, null, null, null, null, null, null::integer as version_group_id, 1 as is_bonus_location, '
-                'null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
+                'null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap, '
+                'null::boolean as is_level_cap, null::text as battle_type '
                 'from bonus_locations bl '
                 'where bl.run_id = %s and bl.attempt_id = %s and bl.is_active = 1 '
             )
@@ -1781,18 +1788,23 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
 
     return conn.execute(
         'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location, eb.event_id as boss_event_id, eb.badge_id, eb.type_focus, '
-        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.trainer_id = eb.trainer_id or (t.trainer_id is null and t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id))) as level_cap '
+        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.trainer_id = eb.trainer_id or (t.trainer_id is null and t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id))) as level_cap, '
+        'eb.is_level_cap, eb.battle_type '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
         f'{game_filter}'
         'union all '
-        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap, '
+        'null::boolean as is_level_cap, null::text as battle_type '
         'from event_locations el '
         'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
         f'{loc_filter}'
         f'{bonus_sql}'
-        'order by sort_order asc, secondary_sort_order asc',
+        # display_name breaks sort ties deterministically; without it,
+        # same-sort rows (e.g. Route 12 / Giant Chasm, both 35) come back in
+        # whatever order the planner chose that day.
+        'order by sort_order asc, secondary_sort_order asc, display_name asc',
         tuple(params)).fetchall()
 
 def get_location_by_id(conn, location_id):

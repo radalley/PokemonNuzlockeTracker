@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8fubCPk9X7gKqzR0BkNzp9gW24qMMzdPlHS59ahHjAP3XNRxCt78r5N0a3SicyO
+\restrict HcvP2S4NF3U66HW0JerNf5bKrVTTLVex6chaYAOMvZkaVKmglXRhwLdVSgfY8oX
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -248,7 +248,9 @@ CREATE TABLE public.event_bosses (
     version_group_id integer,
     event_type text,
     game_id integer,
-    badge_id integer
+    badge_id integer,
+    battle_type text,
+    is_level_cap boolean
 );
 
 
@@ -377,7 +379,9 @@ CREATE TABLE public.games (
     pool_game_id integer,
     s_ref text,
     b_ref text,
-    pdb_ref text
+    pdb_ref text,
+    base_game_id integer,
+    is_rom_hack boolean DEFAULT false NOT NULL
 );
 
 
@@ -1319,5 +1323,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8fubCPk9X7gKqzR0BkNzp9gW24qMMzdPlHS59ahHjAP3XNRxCt78r5N0a3SicyO
+\unrestrict HcvP2S4NF3U66HW0JerNf5bKrVTTLVex6chaYAOMvZkaVKmglXRhwLdVSgfY8oX
 

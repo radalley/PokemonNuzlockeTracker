@@ -211,9 +211,10 @@ function Attempt() {
   if (!runDetails) return <p>{attemptLoadError || 'Attempt not found.'}</p>
 
   function renderScriptRow(row) {
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
-    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
-    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    const generation = runDetails?.generation ?? null
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
+    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
   }
 
   return (

@@ -63,6 +63,19 @@ python -m etl.pipelines.derive_location_areas --version-group-id 1
 It only fills empty `area_id`s, so curated assignments survive a re-run;
 pass `--reassign` to overwrite them.
 
+The variant model (WP7) seeds a ROM hack's version group from its base game:
+
+```bash
+python -m etl.pipelines.clone_version_group --base-vg 11 --new-vg 1001 \
+    --game "1001:17:Blaze Black" --game "1002:18:Volt White" --apply
+```
+
+Hack ids live in the reserved 1000+ range. The structural clone copies the
+route script and areas; `--full` also clones trainers, parties, bosses, and
+encounters into a playable copy (game-exclusive rows of unmapped base games
+are dropped, never turned shared). New games rows land hidden until launch
+(`--valid-game valid` to expose them).
+
 Placement curation (WP5) adds two more:
 
 ```bash
