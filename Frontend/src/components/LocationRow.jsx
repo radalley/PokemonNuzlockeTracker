@@ -658,7 +658,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
     if (!encounter?.species_id) {
       // Also covers a status-bearing row mid species-edit: no live buttons
-      // may act on a species that is no longer selected.
+      // may act on a species that is no longer selected. The summary row
+      // stays quiet; the decision lives inside the encounter card.
+      if (compact) return null
       return (
         <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
@@ -733,7 +735,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         </div>
       )
     }
-    // No status yet: the two decisions that start an encounter's story.
+    // No status yet: the two decisions that start an encounter's story,
+    // offered only inside the encounter card.
+    if (compact) return null
     return (
       <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
@@ -1361,34 +1365,6 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 }}
               />
 
-              {status === 'Captured' && (
-                <select
-                  value={ability}
-                  disabled={isSavingEncounter}
-                  onChange={e => handleSelectAbility(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    boxSizing: 'border-box',
-                    borderRadius: '10px',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--surface-deep)',
-                    color: ability ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    padding: '0 12px',
-                    fontSize: '0.9em',
-                  }}
-                >
-                  <option value="">Ability?</option>
-                  {abilityOptions.map(option => (
-                    <option key={option.name} value={option.name}>
-                      {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}
-                    </option>
-                  ))}
-                  {ability && !abilityOptions.some(option => option.name === ability) && (
-                    <option value={ability}>{formatAbility(ability)}</option>
-                  )}
-                </select>
-              )}
 
               {(isSavingEncounter || encounterSaveError) && (
                 <div
@@ -1409,17 +1385,46 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {/* vg-aware options only: the generation-only species summary
-                      would show vanilla abilities on a hack run. */}
-                  {abilityOptions.length
-                    ? abilityOptions.map(option => {
-                        const chosen = ability && option.name === ability
-                        return (
-                          <span key={option.name} style={{ fontSize: '0.8em', color: chosen ? '#52c97a' : 'var(--text-secondary)', fontWeight: chosen ? 'bold' : 'normal', fontStyle: option.hidden ? 'italic' : 'normal' }}>
-                            {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}{chosen ? ' ✓' : ''}
-                          </span>
-                        )
-                      })
-                    : <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>—</span>}
+                      would show vanilla abilities on a hack run. Rows are the
+                      picker: press one to record it, press again to unset. */}
+                  {(() => {
+                    const entries = [...abilityOptions]
+                    if (ability && !entries.some(option => option.name === ability)) {
+                      entries.push({ name: ability, hidden: false })
+                    }
+                    if (!entries.length) {
+                      return <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>—</span>
+                    }
+                    const clickable = status === 'Captured'
+                    return entries.map(option => {
+                      const chosen = ability && option.name === ability
+                      return (
+                        <button
+                          key={option.name}
+                          type="button"
+                          disabled={!clickable || isSavingEncounter}
+                          onClick={() => handleSelectAbility(chosen ? '' : option.name)}
+                          title={clickable ? (chosen ? 'Press to unset' : 'Press to record this ability') : undefined}
+                          style={{
+                            textAlign: 'left',
+                            font: 'inherit',
+                            fontSize: '0.8em',
+                            padding: '7px 10px',
+                            borderRadius: '8px',
+                            border: chosen ? '1px solid #52c97a' : '1px solid var(--border-strong)',
+                            background: chosen ? 'rgba(82,201,122,0.12)' : 'var(--surface-deep)',
+                            color: chosen ? '#52c97a' : 'var(--text-secondary)',
+                            fontWeight: chosen ? 'bold' : 'normal',
+                            fontStyle: option.hidden ? 'italic' : 'normal',
+                            cursor: clickable && !isSavingEncounter ? 'pointer' : 'default',
+                            opacity: clickable ? 1 : 0.75,
+                          }}
+                        >
+                          {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}{chosen ? ' ✓' : ''}
+                        </button>
+                      )
+                    })
+                  })()}
                 </div>
               </div>
 
