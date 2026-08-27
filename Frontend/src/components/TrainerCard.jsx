@@ -171,8 +171,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       .catch(() => {})
   }
 
-  const addObservedMove = (slot) => {
-    const text = (moveDraft[slot] || '').trim()
+  const addObservedMove = (slot, moveNameOverride) => {
+    const text = (moveNameOverride != null ? moveNameOverride : (moveDraft[slot] || '')).trim()
     if (!text || trainerId == null || moveSaving[slot]) return
     setMoveSaving(prev => ({ ...prev, [slot]: true }))
     setMoveError(prev => ({ ...prev, [slot]: null }))
@@ -198,7 +198,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
               ],
             }
           : member))
-        setMoveDraft(prev => ({ ...prev, [slot]: '' }))
+        if (moveNameOverride == null) setMoveDraft(prev => ({ ...prev, [slot]: '' }))
       })
       .catch(err => {
         console.error('Failed to record observed move:', err)
@@ -492,6 +492,17 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                               style={{ position: 'absolute', top: '2px', right: '2px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.72em', lineHeight: 1, padding: '2px' }}
                             >
                               ✕
+                            </button>
+                          )}
+                          {!seen && isAdmin && trainerId != null && p.slot != null && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); addObservedMove(p.slot, move.move_name) }}
+                              title="Confirm this move was seen"
+                              disabled={Boolean(moveSaving[p.slot])}
+                              style={{ position: 'absolute', top: '2px', right: '2px', border: 'none', background: 'transparent', color: '#5ba85b', cursor: moveSaving[p.slot] ? 'wait' : 'pointer', fontSize: '0.72em', lineHeight: 1, padding: '2px' }}
+                            >
+                              ✓
                             </button>
                           )}
                         </div>
