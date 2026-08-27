@@ -177,6 +177,13 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
           <span style={{ color: 'var(--text-primary)' }}>{nature || '—'}</span>
           {level_met != null && <span>Lv. {level_met}</span>}
         </div>
+        {pokemon.ability && (
+          <div style={{ marginBottom: '8px', fontSize: '0.72em', color: 'var(--text-secondary)' }}>
+            Ability: <span style={{ color: 'var(--text-primary)' }}>
+              {String(pokemon.ability).replace(/^ABILITY_/i, '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+            </span>
+          </div>
+        )}
 
         <div style={{ marginBottom: '8px', borderTop: '1px solid var(--border)', paddingTop: '6px', minHeight: '30px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', minHeight: '18px', alignItems: 'center' }}>

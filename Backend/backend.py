@@ -1890,15 +1890,20 @@ def drop_pokemon(conn, pokemon_id):
 def get_pokemon_name_from_id(conn, species_id):
     return conn.execute('select name from species where species_id = (%s)',(species_id,)).fetchone()[0]
 
-def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None):
+def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None, ability=None):
     attempt_id = conn.execute(
         'select attempt_id from attempts where run_id = %s and attempt_number = %s',
         (run_id, attempt_number)
     ).fetchone()['attempt_id']
+    # Column-probe like the read paths, so a not-yet-migrated database keeps
+    # saving (dropping the ability) instead of hard-failing every save.
+    has_ability = _has_column(conn, 'pokebank', 'ability')
+    ability_set = ', ability=%s' if has_ability else ''
+    ability_params = (ability,) if has_ability else ()
     if pokemon_id:
         conn.execute(
-            'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
-            (species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, pokemon_id)
+            f'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s{ability_set} where pokemon_id=%s',
+            (species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params, pokemon_id)
         )
         conn.commit()
         return pokemon_id
@@ -1911,14 +1916,16 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
         if existing:
             existing_id = existing['pokemon_id']
             conn.execute(
-                'update pokebank set species_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
-                (species_id, nickname, nature, status, shiny, bonus_location, gender, existing_id)
+                f'update pokebank set species_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s{ability_set} where pokemon_id=%s',
+                (species_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params, existing_id)
             )
             conn.commit()
             return existing_id
+        ability_col = ', ability' if has_ability else ''
+        ability_ph = ',%s' if has_ability else ''
         conn.execute(
-            'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender)
+            f'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender{ability_col}) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s{ability_ph})',
+            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params)
         )
         conn.commit()
         return conn.execute(
@@ -2026,13 +2033,14 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
     trainers_defeated_select = ', pb.trainers_defeated' if has_trainers_defeated else ", '' as trainers_defeated"
     has_gender = _has_column(conn, 'pokebank', 'gender')
     gender_select = ', pb.gender' if has_gender else ", 'male' as gender"
+    ability_select = ', pb.ability, pb.bonus_location' if _has_column(conn, 'pokebank', 'ability') else ', null as ability, pb.bonus_location'
 
     rows = conn.execute(
         f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         f'cl.canonical_location_name as location_name, '
         f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, '
         f'st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, ss.bst'
-        f'{badges_select}{trainers_defeated_select}{gender_select} '
+        f'{badges_select}{trainers_defeated_select}{gender_select}{ability_select} '
         f'from pokebank pb '
         f'join attempts a on nullif(pb.attempt_id::text, \'\')::integer = nullif(a.attempt_id::text, \'\')::integer '
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
@@ -2053,13 +2061,14 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
     badges_col = _pokemon_badges_text_expr('pb')
     has_gender_col = _has_column(conn, 'pokebank', 'gender')
     gender_col = 'pb.gender' if has_gender_col else "'male' as gender"
+    ability_col = 'pb.ability' if _has_column(conn, 'pokebank', 'ability') else 'null as ability'
     rows = conn.execute(
         'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         'case '
         '  when coalesce(pb.bonus_location, 0) > 0 then pb.bonus_location '
         '  else coalesce(el.secondary_sort_order, 0) '
         'end as secondary_sort_order, '
-        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col} '
+        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col}, {ability_col} '
         'from pokebank pb '
         'join attempts a on pb.attempt_id = a.attempt_id '
         'left join species s on pb.species_id = s.species_id '
@@ -2546,6 +2555,40 @@ def _assemble_trainer_party(conn, rows, version_group_id):
             pokemon['debug_moves_source'] = 'moveset_generated'
         party.append(pokemon)
     return party
+
+def get_species_abilities(conn, species_id, game_id=None):
+    """The ability choices for a species in a game's context.
+
+    Resolves through the same version-group-aware patch join the party
+    queries use, so a hack's override layer (Blaze Black's Regular-mode
+    abilities) wins over the generation pick. Returns [{name, hidden}] in
+    slot order (ability3 is the hidden slot), deduplicated; display
+    formatting is client-side.
+    """
+    game_generation = _get_game_generation(conn, game_id=game_id)
+    version_group_id = None
+    if game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
+    sql = (
+        'select sa.ability1, sa.ability2, sa.ability3 from species sp '
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
+        + 'where sp.species_id = %s'
+    )
+    row = conn.execute(sql, (version_group_id, game_generation, species_id)).fetchone()
+    if not row:
+        return []
+    abilities = []
+    seen = set()
+    for slot, hidden in (('ability1', False), ('ability2', False), ('ability3', True)):
+        value = (row[slot] or '').strip()
+        if value and value not in seen:
+            seen.add(value)
+            abilities.append({'name': value, 'hidden': hidden})
+    return abilities
 
 def _attach_observed_moves(conn, party, trainer_version_group_id, trainer_key, display_version_group_id):
     """Attach admin-observed moves to party members.

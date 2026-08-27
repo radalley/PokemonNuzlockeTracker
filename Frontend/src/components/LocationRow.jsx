@@ -166,6 +166,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const [nickname, setNickname] = useState('')
   const [nature, setNature] = useState('')
   const [status, setStatus] = useState('')
+  const [ability, setAbility] = useState('')
+  const [abilityOptions, setAbilityOptions] = useState([])
+  const [saveNonce, setSaveNonce] = useState(0)
   const [isShiny, setIsShiny] = useState(false)
   const [gender, setGender] = useState('male')
   const [isSavingEncounter, setIsSavingEncounter] = useState(false)
@@ -220,6 +223,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setNickname(savedEncounter.nickname || '')
     setNature(savedEncounter.nature || '')
     setStatus(savedEncounter.status || '')
+    setAbility(savedEncounter.ability || '')
     setIsShiny(savedEncounter.shiny === 'True' || savedEncounter.shiny === true)
     setGender(savedEncounter.gender || 'male')
   }, [savedEncounter?.pokemon_id])
@@ -253,6 +257,19 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     return () => controller.abort()
   }, [encounter?.species_id])
 
+  // Ability choices resolve version-group-aware (a hack's override layer
+  // wins), unlike the generation-only species summary.
+  useEffect(() => {
+    if (!encounter?.species_id) { setAbilityOptions([]); return }
+    const controller = new AbortController()
+    const query = gameId ? `?game_id=${gameId}` : ''
+    apiFetch(`/api/species/${encounter.species_id}/abilities${query}`, { signal: controller.signal })
+      .then(res => res.json())
+      .then(data => setAbilityOptions(Array.isArray(data) ? data : []))
+      .catch(err => { if (err.name !== 'AbortError') setAbilityOptions([]) })
+    return () => controller.abort()
+  }, [encounter?.species_id, gameId])
+
   // Set gender default from species data when selecting a new (unsaved) encounter
   useEffect(() => {
     if (!encounterDetails || pokemonId) return
@@ -282,6 +299,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
 
     const persistEncounter = () => {
+      const wasCreating = !pokemonIdRef.current
       setIsSavingEncounter(true)
       setEncounterSaveError('')
       saveEncounter(
@@ -297,6 +315,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         isShiny,
         pokemonIdRef.current,
         gender,
+        ability,
       )
         .then(data => {
           if (!data?.pokemon_id) {
@@ -312,6 +331,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           console.error('Failed to save encounter:', err)
           if (saveSequence === encounterSaveSequenceRef.current) {
             setEncounterSaveError('Encounter could not be saved. Please try again.')
+            // A failed CREATE means the parent's optimistic status entry is
+            // a phantom -- roll it back so dupe graying stays truthful.
+            if (wasCreating && status && encounter?.species_id && onStatusChange) {
+              onStatusChange(row.encounter_key, encounter.species_id, '')
+            }
           }
         })
         .finally(() => {
@@ -328,7 +352,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
     const timer = setTimeout(persistEncounter, saveDelay)
     return () => clearTimeout(timer)
-  }, [encounter, nickname, nature, status, isShiny, gender, runId, attemptNumber, row.event_id, row.secondary_sort_order, onEncounterChange, onPartyChange])
+  }, [encounter, nickname, nature, status, isShiny, gender, ability, saveNonce, runId, attemptNumber, row.event_id, row.secondary_sort_order, onEncounterChange, onPartyChange])
 
   useEffect(() => {
     const canShowTrainerView = viewMode === 'master' || viewMode === 'trainers'
@@ -482,6 +506,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }, [activePanel, showEncounterView, showTrainerView])
 
   const handleClear = () => {
+    // Invalidate any in-flight save so a pending create cannot resurrect
+    // the row after it was cleared.
+    encounterSaveSequenceRef.current += 1
+    // A status that never reached the server left an optimistic entry in
+    // the parent (dupe graying); roll it back.
+    if (!pokemonIdRef.current && status && encounter?.species_id && onStatusChange) {
+      onStatusChange(row.encounter_key, encounter.species_id, '')
+    }
     if (pokemonId) {
       deleteEncounterById(runId, attemptNumber, pokemonId)
         .then(() => { if (onEncounterChange) onEncounterChange() })
@@ -496,6 +528,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setNickname('')
     setNature('')
     setStatus('')
+    setAbility('')
     setIsShiny(false)
     setGender('male')
     setForms([])
@@ -548,6 +581,32 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     updateEncounterStatus('Captured')
   }
 
+  const handleCatch = () => {
+    if (!encounter?.species_id) return
+    updateEncounterStatus('Captured')
+  }
+
+  const handleMiss = () => {
+    if (!encounter?.species_id) return
+    updateEncounterStatus('Missed')
+    // A mon corrected from Captured to Missed cannot stay in the party.
+    if (pokemonId && partyPokemonIds.has(pokemonId)) {
+      removeFromParty(runId, attemptNumber, pokemonId)
+        .then(() => { if (onPartyChange) onPartyChange() })
+        .catch(err => console.error('Failed to remove from party on miss:', err))
+    }
+  }
+
+  const handleSelectAbility = (value) => {
+    saveStatusImmediatelyRef.current = true
+    setAbility(value)
+    // Bump the parent's encounters version (same status, no visible change)
+    // so a stale in-flight refetch cannot revert the just-picked ability.
+    if (encounter?.species_id && status && onStatusChange) {
+      onStatusChange(row.encounter_key, encounter.species_id, status)
+    }
+  }
+
   const handleAddToParty = () => {
     if (!pokemonId) return
     addToParty(runId, attemptNumber, pokemonId)
@@ -571,8 +630,127 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     handleAddToParty()
   }
 
+  const formatAbility = (value) => value
+    ? String(value).replace(/^ABILITY_/i, '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+    : ''
+
+  const requestImmediateSave = () => {
+    saveStatusImmediatelyRef.current = true
+    setEncounterSaveError('')
+    setSaveNonce(n => n + 1)
+    // Retrying a failed create must re-register the optimistic status the
+    // failure rolled back.
+    if (encounter?.species_id && status && onStatusChange) {
+      onStatusChange(row.encounter_key, encounter.species_id, status)
+    }
+  }
+
+  // One state machine for both action sites (summary row and open panel):
+  // no species -> disabled choice; saved-status-pending -> Saving/Retry;
+  // unset -> Caught/Missed choice; Captured -> Party/Dead/Evolve;
+  // Missed -> muted chip + Caught + Undo; Dead -> Revive.
+  const renderEncounterActions = (variant) => {
+    const compact = variant === 'summary'
+    const groupStyle = compact
+      ? ROW_ACTION_GROUP_STYLE
+      : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%' }
+    const buttonStyle = compact ? { whiteSpace: 'nowrap' } : { minHeight: '42px' }
+
+    if (!encounter?.species_id) {
+      // Also covers a status-bearing row mid species-edit: no live buttons
+      // may act on a species that is no longer selected.
+      return (
+        <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
+            Caught
+          </SummaryButton>
+          <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.08)' }}>
+            Missed
+          </SummaryButton>
+        </div>
+      )
+    }
+
+    if (status && !pokemonId) {
+      // The status was chosen but the row hasn't been created server-side
+      // (save in flight, or it failed): offer retry instead of dead buttons.
+      return (
+        <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          {isSavingEncounter ? (
+            <SummaryButton disabled style={{ ...buttonStyle, gridColumn: '1 / -1', width: '100%' }}>
+              Saving...
+            </SummaryButton>
+          ) : (
+            <>
+              <SummaryButton onClick={requestImmediateSave} style={{ ...buttonStyle, color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
+                Retry Save
+              </SummaryButton>
+              <SummaryButton onClick={handleClear} title="Discard this encounter" style={buttonStyle}>
+                Cancel
+              </SummaryButton>
+            </>
+          )}
+        </div>
+      )
+    }
+
+    if (status === 'Dead') {
+      return (
+        <div style={{ ...groupStyle, gridTemplateColumns: compact ? groupStyle.gridTemplateColumns : '1fr' }}>
+          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ ...buttonStyle, gridColumn: '1 / -1', minWidth: 0, width: '100%', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
+            Revive
+          </SummaryButton>
+        </div>
+      )
+    }
+    if (status === 'Captured') {
+      return (
+        <div style={groupStyle}>
+          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handlePartyToggle} style={{ ...buttonStyle, color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
+            {compact ? `Party ${inParty ? '-' : '+'}` : (inParty ? 'Party -' : 'Party')}
+          </SummaryButton>
+          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleDeath} style={{ ...buttonStyle, color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
+            Dead
+          </SummaryButton>
+          <SummaryButton disabled={isSavingEncounter || !pokemonId || !hasEvolutions} onClick={() => setShowEvolve(true)} style={{ ...buttonStyle, color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
+            Evolve
+          </SummaryButton>
+        </div>
+      )
+    }
+    if (status === 'Missed') {
+      return (
+        <div style={groupStyle}>
+          <div style={{ ...buttonStyle, minHeight: compact ? '34px' : '42px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.8em', color: '#d4a017', border: '1px dashed #d4a017', borderRadius: '999px', background: 'rgba(212,160,23,0.08)', boxSizing: 'border-box', opacity: 0.9 }}>
+            Missed
+          </div>
+          <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
+            Caught
+          </SummaryButton>
+          <SummaryButton disabled={isSavingEncounter} onClick={handleClear} title="Undo: clear this encounter" style={buttonStyle}>
+            Undo
+          </SummaryButton>
+        </div>
+      )
+    }
+    // No status yet: the two decisions that start an encounter's story.
+    return (
+      <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+        <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
+          Caught
+        </SummaryButton>
+        <SummaryButton disabled={isSavingEncounter} onClick={handleMiss} style={{ ...buttonStyle, color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.08)' }}>
+          Missed
+        </SummaryButton>
+      </div>
+    )
+  }
+
+  // An ability belongs to one species: every species change clears it
+  // rather than silently carrying it onto a Pokemon that cannot have it.
   const handleEncounterSelect = (species) => {
     setEncounter(species)
+    setAbility('')
     setSearchQuery(species.name)
     setShowSearch(false)
     setActivePanel('encounter')
@@ -580,6 +758,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleEvolveSelect = (evo) => {
     setEncounter({ species_id: evo.to_species_id, name: evo.name })
+    setAbility('')
     setSearchQuery(evo.name)
     setShowEvolve(false)
     setEvolutions(null)
@@ -587,6 +766,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const handleFormSelect = (form) => {
     setEncounter({ species_id: form.species_id, name: form.name })
+    setAbility('')
     setSearchQuery(form.name)
   }
 
@@ -736,7 +916,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '46px', height: '46px', flex: '0 0 auto', visibility: activePanel === 'encounter' ? 'hidden' : 'visible' }}>
               {encounter?.species_id ? (
-                <Sprite speciesId={encounter.species_id} size={52} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : undefined} />
+                <Sprite speciesId={encounter.species_id} size={52} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : status === 'Missed' ? { opacity: 0.4 } : undefined} />
               ) : (
                 <img
                   src="/sprites/Standard/substitute.png"
@@ -765,31 +945,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           </SummaryButton>
         )}
 
-        {showEncounterView && activePanel !== 'encounter' && (
-          <>
-            {status === 'Dead' ? (
-              <div style={ROW_ACTION_GROUP_STYLE}>
-                <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ gridColumn: '1 / -1', minWidth: 0, width: '100%', whiteSpace: 'nowrap', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
-                  Revive
-                </SummaryButton>
-              </div>
-            ) : (
-              <div style={ROW_ACTION_GROUP_STYLE}>
-                <SummaryButton disabled={isSavingEncounter || !pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ whiteSpace: 'nowrap', color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
-                  Party {inParty ? '-' : '+'}
-                </SummaryButton>
-
-                <SummaryButton disabled={isSavingEncounter || !pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ whiteSpace: 'nowrap', color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
-                  Dead
-                </SummaryButton>
-
-                <SummaryButton disabled={isSavingEncounter || !pokemonId || !hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ whiteSpace: 'nowrap', color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
-                  Evolve
-                </SummaryButton>
-              </div>
-            )}
-          </>
-        )}
+        {showEncounterView && activePanel !== 'encounter' && renderEncounterActions('summary')}
 
         <div ref={menuRef} style={{ position: 'relative', marginLeft: 'auto' }}>
           <SummaryButton onClick={() => setShowMenu(current => !current)} style={{ minWidth: 0, padding: '6px 10px' }}>
@@ -827,6 +983,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               >
                 Clear encounter
               </div>
+              {status === 'Captured' && pokemonId && (
+                <div
+                  onClick={() => { setShowMenu(false); handleMiss() }}
+                  style={{ padding: '10px 12px', cursor: 'pointer', color: '#d4a017' }}
+                >
+                  Mark as Missed
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -850,6 +1014,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     setSearchQuery(e.target.value)
                     setEncounter(null)
                     setEncounterDetails(null)
+                    setAbility('')
                     setShowSearch(true)
                   }}
                   onFocus={() => {
@@ -966,7 +1131,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   </button>
                 )}
                 {encounter?.species_id ? (
-                  <Sprite speciesId={encounter.species_id} size={200} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : undefined} />
+                  <Sprite speciesId={encounter.species_id} size={200} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : status === 'Missed' ? { opacity: 0.4 } : undefined} />
                 ) : (
                   <img
                     src="/sprites/Standard/substitute.png"
@@ -1196,29 +1361,34 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 }}
               />
 
-              <select
-                value={status}
-                disabled={isSavingEncounter}
-                onChange={e => {
-                  updateEncounterStatus(e.target.value)
-                }}
-                style={{
-                  width: '100%',
-                  height: '40px',
-                  boxSizing: 'border-box',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-strong)',
-                  background: 'var(--surface-deep)',
-                  color: 'var(--text-secondary)',
-                  padding: '0 12px',
-                  fontSize: '0.9em',
-                }}
-              >
-                <option value="">Status</option>
-                <option value="Captured">Captured</option>
-                <option value="Missed">Missed</option>
-                <option value="Dead">Dead</option>
-              </select>
+              {status === 'Captured' && (
+                <select
+                  value={ability}
+                  disabled={isSavingEncounter}
+                  onChange={e => handleSelectAbility(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    boxSizing: 'border-box',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-deep)',
+                    color: ability ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    padding: '0 12px',
+                    fontSize: '0.9em',
+                  }}
+                >
+                  <option value="">Ability?</option>
+                  {abilityOptions.map(option => (
+                    <option key={option.name} value={option.name}>
+                      {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}
+                    </option>
+                  ))}
+                  {ability && !abilityOptions.some(option => option.name === ability) && (
+                    <option value={ability}>{formatAbility(ability)}</option>
+                  )}
+                </select>
+              )}
 
               {(isSavingEncounter || encounterSaveError) && (
                 <div
@@ -1238,38 +1408,23 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                   Known Abilities
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {encounterDetails?.ability1 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{encounterDetails.ability1}</span>
-                  )}
-                  {encounterDetails?.ability2 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{encounterDetails.ability2}</span>
-                  )}
-                  {encounterDetails?.ability3 && (
-                    <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{encounterDetails.ability3}</span>
-                  )}
+                  {/* vg-aware options only: the generation-only species summary
+                      would show vanilla abilities on a hack run. */}
+                  {abilityOptions.length
+                    ? abilityOptions.map(option => {
+                        const chosen = ability && option.name === ability
+                        return (
+                          <span key={option.name} style={{ fontSize: '0.8em', color: chosen ? '#52c97a' : 'var(--text-secondary)', fontWeight: chosen ? 'bold' : 'normal', fontStyle: option.hidden ? 'italic' : 'normal' }}>
+                            {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}{chosen ? ' ✓' : ''}
+                          </span>
+                        )
+                      })
+                    : <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>—</span>}
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                {status === 'Dead' ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', width: '100%' }}>
-                    <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ minHeight: '42px', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
-                      Revive
-                    </SummaryButton>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%' }}>
-                    <SummaryButton disabled={isSavingEncounter || !pokemonId || status !== 'Captured'} onClick={handlePartyToggle} style={{ minHeight: '42px', color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
-                      {inParty ? 'Party -' : 'Party'}
-                    </SummaryButton>
-                    <SummaryButton disabled={isSavingEncounter || !pokemonId || status !== 'Captured'} onClick={handleDeath} style={{ minHeight: '42px', color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
-                      Dead
-                    </SummaryButton>
-                    <SummaryButton disabled={isSavingEncounter || !pokemonId || !hasEvolutions || status !== 'Captured'} onClick={() => setShowEvolve(true)} style={{ minHeight: '42px', color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
-                      Evolve
-                    </SummaryButton>
-                  </div>
-                )}
+                {renderEncounterActions('panel')}
               </div>
             </div>
           </div>

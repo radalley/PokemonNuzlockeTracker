@@ -206,7 +206,7 @@ export async function getPokebank(runId, attemptNumber) {
   return res.json()
 }
 
-export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender) {
+export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender, ability) {
   if (isLocalRun(runId)) {
     const localId = guest.upsertEncounter(
       runId,
@@ -221,6 +221,7 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       shiny,
       pokemonId,
       gender,
+      ability,
     )
     return { success: true, pokemon_id: localId }
   }
@@ -239,6 +240,7 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       shiny: shiny ? 'True' : null,
       pokemon_id: pokemonId || null,
       gender: gender || null,
+      ability: ability || null,
     }),
   })
   return res.json()
@@ -413,6 +415,8 @@ export async function getBox(runId, attemptNumber) {
 }
 
 export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
+  // Pass gender and ability through: a Box/Graveyard status flip re-saves
+  // the whole row, and omitting them would null what the row already has.
   return saveEncounter(
     runId,
     attemptNumber,
@@ -424,6 +428,8 @@ export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
     pokemon.nature,
     pokemon.status,
     pokemon.shiny,
-    pokemon.pokemon_id
+    pokemon.pokemon_id,
+    pokemon.gender,
+    pokemon.ability,
   )
 }

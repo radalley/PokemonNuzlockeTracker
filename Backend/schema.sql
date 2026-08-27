@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict c4BT4C5mQ61lG1TPb9UM3dJm42MnCtaIb4EXEtphgRx9aITA3Ji9A02R4O8Od0s
+\restrict Phgc2ScbiKZwBhuC8Urdflo3oK67uhF27Vqfa52dyubE59k9kMdvEZR9nvgjwnQ
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -528,7 +528,8 @@ CREATE TABLE public.pokebank (
     shiny text,
     badges_earned text,
     trainers_defeated text,
-    gender text DEFAULT 'male'::text
+    gender text DEFAULT 'male'::text,
+    ability text
 );
 
 
@@ -1380,5 +1381,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict c4BT4C5mQ61lG1TPb9UM3dJm42MnCtaIb4EXEtphgRx9aITA3Ji9A02R4O8Od0s
+\unrestrict Phgc2ScbiKZwBhuC8Urdflo3oK67uhF27Vqfa52dyubE59k9kMdvEZR9nvgjwnQ
 

@@ -24,7 +24,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_contact_report_stats, get_run_menu_summary, mark_run_opened,
                      get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
                      add_observed_move, delete_observed_move, search_move_names,
-                     end_attempt, reopen_attempt, get_attempt_summary)
+                     end_attempt, reopen_attempt, get_attempt_summary, get_species_abilities)
 
 load_dotenv()
 
@@ -380,6 +380,12 @@ def admin_trainer_moves_route():
         conn.rollback()
         return jsonify({'error': str(exc)}), 400
 
+@app.route('/api/species/<int:species_id>/abilities', methods=['GET'])
+def species_abilities_route(species_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    return jsonify(get_species_abilities(conn, species_id, game_id=game_id))
+
 @app.route('/api/moves/search', methods=['GET'])
 def moves_search_route():
     conn = get_db()
@@ -602,6 +608,7 @@ def save_encounter_route():
         int(data['pokemon_id']) if data.get('pokemon_id') else None,
         int(data.get('bonus_location') or 0),
         data.get('gender') or None,
+        (str(data.get('ability')).strip()[:80] or None) if data.get('ability') else None,
     )
     return jsonify({'success': True, 'pokemon_id': pokemon_id})
 

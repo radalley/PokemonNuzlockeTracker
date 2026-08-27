@@ -108,7 +108,8 @@ create table pokebank (
     shiny boolean,
     bonus_location integer default 0,
     gender text,
-    level_met integer
+    level_met integer,
+    ability text
 );
 
 create table canon_locations (
