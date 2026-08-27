@@ -82,7 +82,12 @@ create table attempts (
     attempt_id serial primary key,
     run_id integer,
     attempt_number integer,
-    starter text
+    starter text,
+    started_at timestamp with time zone default current_timestamp,
+    outcome text,
+    ended_at timestamp with time zone,
+    ended_by_trainer_id integer,
+    death_note text
 );
 
 create table party (

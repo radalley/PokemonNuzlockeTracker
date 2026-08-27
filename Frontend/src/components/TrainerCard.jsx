@@ -5,7 +5,7 @@ import PokemonStatRows from './PokemonStatRows'
 import { getTrainerSpriteSrc } from './trainerSprite'
 import BattleCompareModal from './BattleCompareModal'
 import { apiFetch } from '../utils/api'
-import { getParty, markTrainerVictory } from '../utils/dataLayer'
+import { getParty, markTrainerVictory, endAttempt } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
 
 function normalizeItemName(raw) {
@@ -52,7 +52,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false }) {
   const { user } = useAuth()
   const isAdmin = user?.account_type === 'admin'
   const [open, setOpen] = useState(false)
@@ -70,6 +70,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
   const [battleSaving, setBattleSaving] = useState(false)
   const [battleResult, setBattleResult] = useState(null)
   const [defeated, setDefeated] = useState(Boolean(isDefeated))
+  const [defeatSaving, setDefeatSaving] = useState(false)
+  const [defeatError, setDefeatError] = useState('')
 
   useEffect(() => {
     setDefeated(Boolean(isDefeated))
@@ -139,6 +141,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
     event.stopPropagation()
     if (defeated) return
     if (!runId || !attemptId) return
+    setDefeatError('')
     setBattleResult(null)
     setShowBattleModal(true)
     setBattleLoading(true)
@@ -151,6 +154,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
     if (event) event.stopPropagation()
     setShowBattleModal(false)
     setBattleResult(null)
+    setDefeatError('')
   }
 
   const fetchMoveSuggestions = (text) => {
@@ -225,6 +229,23 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       .catch(err => {
         console.error('Failed to remove observed move:', err)
         setMoveError(prev => ({ ...prev, [slot]: err.message || 'Remove failed' }))
+      })
+  }
+
+  const declareDefeat = () => {
+    if (!runId || !attemptId || defeatSaving) return
+    setDefeatSaving(true)
+    setDefeatError('')
+    endAttempt(runId, attemptId, {
+      trainerId: trainerId != null && trainerId !== '' ? Number(trainerId) : null,
+      trainerName: trainerName || encounterName || null,
+      trainerClass: trainerClass || null,
+    })
+      .then(() => { window.location.href = `/attempt/${runId}/${attemptId}/summary` })
+      .catch(err => {
+        console.error('Failed to declare defeat:', err)
+        setDefeatError(err.message || 'Failed to end attempt')
+        setDefeatSaving(false)
       })
   }
 
@@ -335,7 +356,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
-        {enableBattle && runId && attemptId && trainerId && (
+        {enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded) && (
           defeated ? (
             <div className="trainer-card-summary__battle" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
               Defeated
@@ -555,6 +576,9 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           battleResult={battleResult}
           onClose={closeBattleModal}
           onMarkVictory={markVictory}
+          onDeclareDefeat={runId && attemptId ? declareDefeat : null}
+          defeatSaving={defeatSaving}
+          defeatError={defeatError}
         />
       )}
     </div>

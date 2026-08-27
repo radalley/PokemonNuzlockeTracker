@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Sprite from './Sprite'
 import HeaderAuthMenu from './HeaderAuthMenu'
-import { getAttempts, getParty, createAttempt, removeFromParty } from '../utils/dataLayer'
+import { getAttempts, getParty, createAttempt, removeFromParty, endAttempt } from '../utils/dataLayer'
 
 function PartySlot({ member, slot, onRemove }) {
   const [hovered, setHovered] = useState(false)
@@ -56,7 +56,7 @@ function PartySlot({ member, slot, onRemove }) {
   )
 }
 
-function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null, statsOpen = true, onToggleStats = null, debugOpen = true, onToggleDebug = null }) {
+function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null, statsOpen = true, onToggleStats = null, debugOpen = true, onToggleDebug = null, attemptOutcome = null }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [attempts, setAttempts] = useState([])
@@ -65,6 +65,15 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   const runMenuRef = useRef(null)
   const [party, setParty] = useState([])
   const [logoLoadFailed, setLogoLoadFailed] = useState(false)
+  const [showDeadDialog, setShowDeadDialog] = useState(false)
+  const [deathNote, setDeathNote] = useState('')
+  const [endingAttempt, setEndingAttempt] = useState(false)
+  const [endError, setEndError] = useState('')
+  // Pages that don't load attempt info (Box, Graveyard) still know the
+  // outcome from the attempts list this header fetches anyway.
+  const attemptIsDead = attemptOutcome
+    ? attemptOutcome.outcome === 'dead'
+    : attempts.some(a => Number(a.attempt_number) === Number(attemptId) && a.outcome === 'dead')
 
   const gameLogoSrc = runDetails?.game_name
     ? `/sprites/Game Logos/Pokemon_${runDetails.game_name.replace(/\s+/g, '_')}.png`
@@ -109,6 +118,19 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         setShowAttemptFlyout(false)
         window.location.href = `/attempt/${runId}/${data.attempt_number}`
       })
+  }
+
+  const handleDeclareDead = () => {
+    if (endingAttempt) return
+    setEndingAttempt(true)
+    setEndError('')
+    endAttempt(runId, attemptId, { note: deathNote })
+      .then(() => {
+        setShowDeadDialog(false)
+        window.location.href = `/attempt/${runId}/${attemptId}/summary`
+      })
+      .catch(err => setEndError(err.message || 'Failed to end attempt'))
+      .finally(() => setEndingAttempt(false))
   }
 
   const handleRemoveFromParty = (pokemonId) => {
@@ -181,7 +203,9 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               <span style={{ display: 'block', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(220px, 20vw)' }}>
                 {runDetails?.name || 'Run Name'}
               </span>
-              <span style={{ display: 'block', marginTop: '3px', color: 'var(--text-secondary)', fontSize: '0.72em' }}>Attempt {attemptId}</span>
+              <span style={{ display: 'block', marginTop: '3px', color: attemptIsDead ? '#e05252' : 'var(--text-secondary)', fontSize: '0.72em' }}>
+                Attempt {attemptId}{attemptIsDead ? ' ☠' : ''}
+              </span>
             </span>
           </button>
 
@@ -204,6 +228,24 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               )}
               {!debugOpen && onToggleDebug && (
                 <button type="button" onClick={() => { setShowRunMenu(false); onToggleDebug() }} style={menuItemStyle}>Debug</button>
+              )}
+              {isAttemptPage && attemptOutcome && !attemptIsDead && (
+                <button
+                  type="button"
+                  onClick={() => { setShowRunMenu(false); setDeathNote(''); setEndError(''); setShowDeadDialog(true) }}
+                  style={{ ...menuItemStyle, color: '#e05252' }}
+                >
+                  Declare Attempt Dead
+                </button>
+              )}
+              {attemptIsDead && (
+                <button
+                  type="button"
+                  onClick={() => { setShowRunMenu(false); navigate(`/attempt/${runId}/${attemptId}/summary`) }}
+                  style={{ ...menuItemStyle, color: '#f2b46b' }}
+                >
+                  Attempt Summary
+                </button>
               )}
               {attempts.length > 0 && (
                 <div
@@ -242,7 +284,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
                             color: attempt.attempt_number === parseInt(attemptId) ? 'var(--text-primary)' : 'var(--text-secondary)',
                           }}
                         >
-                          Attempt {attempt.attempt_number}
+                          Attempt {attempt.attempt_number}{attempt.outcome === 'dead' ? ' ☠' : ''}
                         </button>
                       ))}
                       <button type="button" onClick={handleNewAttempt} style={{ ...menuItemStyle, color: '#6cf', borderTop: '1px solid var(--border-strong)' }}>
@@ -273,6 +315,15 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
       </div>
 
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
+        {attemptIsDead && (
+          <button
+            onClick={() => navigate(`/attempt/${runId}/${attemptId}/summary`)}
+            style={{ ...btnStyle, borderColor: '#f2b46b', color: '#f2b46b' }}
+            title="This attempt has ended — view its summary"
+          >
+            ☠ Summary
+          </button>
+        )}
         {backToAttempt && !isAttemptPage && (
           <button onClick={() => navigate(`/attempt/${runId}/${attemptId}`)} style={btnStyle}>
             Attempt
@@ -282,6 +333,45 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         {!isGraveyardPage && <button onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>}
         <HeaderAuthMenu />
       </div>
+
+      {showDeadDialog && (
+        <div
+          onClick={() => !endingAttempt && setShowDeadDialog(false)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: 'min(420px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '18px' }}
+          >
+            <div style={{ fontWeight: 'bold', color: '#e05252', fontSize: '1.05em', marginBottom: '6px' }}>
+              Declare Attempt {attemptId} dead?
+            </div>
+            <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              This ends the attempt and opens its summary. You can reopen it later if it was a mistake.
+            </div>
+            <textarea
+              value={deathNote}
+              onChange={e => setDeathNote(e.target.value)}
+              placeholder="How did it end? (optional — e.g. crit on the last mon vs wild Excadrill)"
+              rows={3}
+              maxLength={500}
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', fontSize: '0.82em', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-strong)', background: 'var(--surface-deep)', color: 'var(--text-primary)', font: 'inherit' }}
+            />
+            {endError && <div style={{ fontSize: '0.78em', color: '#e05252', marginTop: '6px' }}>{endError}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+              <button type="button" onClick={() => setShowDeadDialog(false)} disabled={endingAttempt} style={btnStyle}>Cancel</button>
+              <button
+                type="button"
+                onClick={handleDeclareDead}
+                disabled={endingAttempt}
+                style={{ ...btnStyle, borderColor: '#e05252', color: '#e05252', background: 'rgba(224,82,82,0.1)', cursor: endingAttempt ? 'wait' : 'pointer' }}
+              >
+                {endingAttempt ? 'Ending...' : 'Declare Dead'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

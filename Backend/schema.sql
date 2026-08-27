@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EhsrRg7JeVnfRP8bPKtaNLkNcTUX69wssG8bLNrebZWayAkLpctMn00esBGEJ6d
+\restrict c4BT4C5mQ61lG1TPb9UM3dJm42MnCtaIb4EXEtphgRx9aITA3Ji9A02R4O8Od0s
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -45,7 +45,12 @@ CREATE TABLE public.attempts (
     attempt_number integer NOT NULL,
     is_active integer DEFAULT 1,
     starter text,
-    badges_earned text
+    badges_earned text,
+    started_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    outcome text,
+    ended_at timestamp with time zone,
+    ended_by_trainer_id integer,
+    death_note text
 );
 
 
@@ -1375,5 +1380,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EhsrRg7JeVnfRP8bPKtaNLkNcTUX69wssG8bLNrebZWayAkLpctMn00esBGEJ6d
+\unrestrict c4BT4C5mQ61lG1TPb9UM3dJm42MnCtaIb4EXEtphgRx9aITA3Ji9A02R4O8Od0s
 

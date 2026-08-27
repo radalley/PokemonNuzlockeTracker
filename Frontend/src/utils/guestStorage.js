@@ -57,10 +57,17 @@ function nextPokemonId(state) {
   return id
 }
 
-function nextBonusSort(state, runId, attemptNumber) {
+function nextBonusSort(state, runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder) {
   const key = attemptKey(runId, attemptNumber)
-  const rows = state.bonus_locations[key] || []
-  const max = rows.reduce((acc, row) => Math.max(acc, Number(row.secondary_sort_order || 0)), 0)
+  const rows = (state.bonus_locations[key] || [])
+    .filter(row => Number(row.canonical_location_id) === Number(canonicalLocationId))
+  // Floor at the canonical row's own secondary sort: placement can give the
+  // base location a non-zero secondary (e.g. Dreamyard), and a bonus slot
+  // that reuses it collides on encounter_key. Mirrors create_bonus_location.
+  const max = rows.reduce(
+    (acc, row) => Math.max(acc, Number(row.secondary_sort_order || 0)),
+    Number(baseSecondarySortOrder || 0),
+  )
   return max + 1
 }
 
@@ -193,6 +200,101 @@ export function updateStarter(runId, attemptNumber, starter) {
   const row = attempts.find(a => Number(a.attempt_number) === Number(attemptNumber))
   if (row) row.starter = starter
   _setState(state)
+}
+
+export function endAttempt(runId, attemptNumber, { trainerId = null, trainerName = null, trainerClass = null, note = null } = {}) {
+  const state = _getState()
+  const row = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row) return { success: false, error: 'Attempt not found' }
+  if (row.outcome) return { success: false, error: `Attempt already ended (${row.outcome})` }
+  row.outcome = 'dead'
+  row.ended_at = new Date().toISOString()
+  row.ended_by_trainer_id = trainerId != null ? Number(trainerId) : null
+  row.ended_by_trainer_name = trainerName || null
+  row.ended_by_trainer_class = trainerClass || null
+  row.death_note = (note || '').trim().slice(0, 500) || null
+  _setState(state)
+  return { success: true, outcome: 'dead' }
+}
+
+export function reopenAttempt(runId, attemptNumber) {
+  const state = _getState()
+  const row = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row || !row.outcome) return { success: false, error: 'Attempt is not ended' }
+  delete row.outcome
+  delete row.ended_at
+  delete row.ended_by_trainer_id
+  delete row.ended_by_trainer_name
+  delete row.ended_by_trainer_class
+  delete row.death_note
+  _setState(state)
+  return { success: true }
+}
+
+export function getAttemptOutcome(runId, attemptNumber) {
+  const row = (_getState().attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row) return null
+  return {
+    attempt_number: Number(row.attempt_number),
+    outcome: row.outcome || null,
+    ended_at: row.ended_at || null,
+    ended_by_trainer_id: row.ended_by_trainer_id ?? null,
+    death_note: row.death_note || null,
+  }
+}
+
+export function getAttemptSummary(runId, attemptNumber) {
+  const state = _getState()
+  const run = (state.runs || []).find(r => String(r.run_id) === String(runId))
+  const attempt = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!run || !attempt) return null
+  const encounters = Object.values(getEncounters(runId, attemptNumber) || {})
+  const byStatus = status => encounters.filter(e => e.status === status)
+  // state.badges[key] is the authoritative attempt-level award record;
+  // per-encounter badges_earned only tags party members at victory time.
+  const badgeIds = new Set((state.badges[attemptKey(runId, attemptNumber)] || []).map(Number).filter(Number.isFinite))
+  const partySlots = new Map(
+    (state.party[attemptKey(runId, attemptNumber)] || [])
+      .map(member => [String(member.pokemon_id), member.party_slot ?? null]))
+  const asMon = e => ({
+    pokemon_id: e.pokemon_id ?? null,
+    species_id: e.species_id ?? null,
+    species_name: e.species_name || null,
+    nickname: e.nickname || null,
+    level_met: e.level_met ?? null,
+    location_name: null,
+    party_slot: partySlots.get(String(e.pokemon_id)) ?? null,
+  })
+  return {
+    run: { run_id: run.run_id, name: run.run_name, game_id: run.game_id, game_name: run.game_name, generation: run.generation },
+    attempt: {
+      attempt_number: Number(attemptNumber),
+      starter: attempt.starter || 'Fire',
+      started_at: attempt.started_at || null,
+      outcome: attempt.outcome || null,
+      ended_at: attempt.ended_at || null,
+      ended_by_trainer_id: attempt.ended_by_trainer_id ?? null,
+      death_note: attempt.death_note || null,
+    },
+    killer: attempt.ended_by_trainer_id != null || attempt.ended_by_trainer_name
+      ? {
+          trainer_id: attempt.ended_by_trainer_id ?? null,
+          trainer_name: attempt.ended_by_trainer_name || null,
+          trainer_class: attempt.ended_by_trainer_class || null,
+          trainer_pic: null,
+          location_name: null,
+        }
+      : null,
+    badges: [...badgeIds].sort((a, b) => a - b).map(id => ({ badge_id: id, badge_name: null, earned_at: null })),
+    deaths: byStatus('Dead').map(asMon),
+    survivors: byStatus('Captured').map(asMon),
+    counts: {
+      captured: byStatus('Captured').length,
+      missed: byStatus('Missed').length,
+      dead: byStatus('Dead').length,
+      trainers_defeated: getTrainersDefeated(runId, attemptNumber).length,
+    },
+  }
 }
 
 export function getRunDetails(runId, attemptNumber) {
@@ -435,11 +537,11 @@ export function getLocalFeedPokemon() {
   return result
 }
 
-export function addBonusLocation(runId, attemptNumber, canonicalLocationId) {
+export function addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder = 0) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const rows = state.bonus_locations[key] || []
-  const secondary_sort_order = nextBonusSort(state, runId, attemptNumber)
+  const secondary_sort_order = nextBonusSort(state, runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder)
   rows.push({
     canonical_location_id: Number(canonicalLocationId),
     secondary_sort_order,

@@ -137,7 +137,7 @@ function SummaryButton({ active = false, disabled = false, style = {}, children,
   )
 }
 
-function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, generation = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master' }) {
+function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, generation = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master', attemptEnded = false }) {
   const searchRef = useRef(null)
   const menuRef = useRef(null)
   const natureRef = useRef(null)
@@ -332,6 +332,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   useEffect(() => {
     const canShowTrainerView = viewMode === 'master' || viewMode === 'trainers'
+    if (row.is_bonus_location) return
     if (trainersLoaded) return
     if (activePanel !== 'trainers') return
     if (!canShowTrainerView) return
@@ -350,7 +351,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         if (err.name !== 'AbortError') console.error(err)
       })
     return () => controller.abort()
-  }, [trainersLoaded, activePanel, viewMode, row.event_id, runId, attemptNumber, gameId, row.version_group_id, showSpecialTrainers])
+  }, [trainersLoaded, activePanel, viewMode, row.event_id, row.is_bonus_location, runId, attemptNumber, gameId, row.version_group_id, showSpecialTrainers])
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -503,7 +504,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   const handleAddLocation = () => {
-    addBonusLocation(runId, attemptNumber, row.event_id)
+    addBonusLocation(runId, attemptNumber, row.event_id, row.secondary_sort_order || 0)
       .then(data => {
         if (!data.success) {
           throw new Error(data.error || 'Failed to add bonus location')
@@ -755,7 +756,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           </>
         )}
 
-        {showTrainerView && (
+        {showTrainerView && !row.is_bonus_location && (
           <SummaryButton disabled={trainerButtonDisabled} active={activePanel === 'trainers'} onClick={() => togglePanel('trainers')} style={{ whiteSpace: 'nowrap' }}>
             Trainers {defeatedTrainerCount}/{trainerCount}{(() => {
               const special = trainersLoaded && showSpecialTrainers ? specialTrainers.length : initialSpecialCount
@@ -1330,6 +1331,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                       enableBattle
                       isDefeated={Boolean(trainer.is_defeated)}
                       onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
+                      attemptEnded={attemptEnded}
                     />
                   ))}
                 </div>

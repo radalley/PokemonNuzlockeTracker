@@ -1,6 +1,6 @@
-import TrainerCard from './TrainerCard'
+﻿import TrainerCard from './TrainerCard'
 
-function RivalRow({ row, gameId = null, generation = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
+function RivalRow({ row, gameId = null, generation = null, runId = null, attemptId = null, onVictoryRecorded = null, attemptEnded = false }) {
   return (
     <div style={{ marginBottom: '14px' }}>
       
@@ -23,6 +23,7 @@ function RivalRow({ row, gameId = null, generation = null, runId = null, attempt
         enableBattle
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}
+        attemptEnded={attemptEnded}
       />
     </div>
   )

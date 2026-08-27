@@ -61,9 +61,13 @@ function BattleCompareModal({
   battleResult = null,
   onClose,
   onMarkVictory,
+  onDeclareDefeat = null,
+  defeatSaving = false,
+  defeatError = '',
 }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [selectedOpponent, setSelectedOpponent] = useState(null)
+  const [confirmingDefeat, setConfirmingDefeat] = useState(false)
 
   const togglePlayer = (idx) => setSelectedPlayer(prev => prev === idx ? null : idx)
   const toggleOpponent = (idx) => setSelectedOpponent(prev => prev === idx ? null : idx)
@@ -276,8 +280,44 @@ function BattleCompareModal({
           </div>
         )}
 
+        {defeatError && (
+          <div style={{ marginTop: '10px', fontSize: '0.8em', color: '#e05252', textAlign: 'right' }}>{defeatError}</div>
+        )}
+
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {onDeclareDefeat && !battleResult?.success && (
+              confirmingDefeat ? (
+                <>
+                  <span style={{ fontSize: '0.78em', color: '#e05252' }}>
+                    End this attempt? {trainerName} is recorded as the killer.
+                  </span>
+                  <button type="button" onClick={() => setConfirmingDefeat(false)} disabled={defeatSaving} style={MODAL_ACTION_BUTTON_STYLE}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDeclareDefeat}
+                    disabled={defeatSaving}
+                    style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#e05252', color: '#e05252', background: 'rgba(224,82,82,0.12)', cursor: defeatSaving ? 'wait' : 'pointer' }}
+                  >
+                    {defeatSaving ? 'Ending...' : '☠ Confirm Defeat'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDefeat(true)}
+                  style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#5a2d2d', color: '#e05252' }}
+                  title="Lost this battle? End the attempt and record the killer."
+                >
+                  Declare Defeat
+                </button>
+              )
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" onClick={onClose} style={MODAL_ACTION_BUTTON_STYLE}>Back</button>
           <button
             type="button"
@@ -294,6 +334,7 @@ function BattleCompareModal({
           >
             {defeated || battleResult?.success ? '✓ Victory' : battleSaving ? 'Saving...' : 'Mark Victory'}
           </button>
+          </div>
         </div>
       </div>
     </div>

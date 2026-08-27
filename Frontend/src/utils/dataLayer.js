@@ -65,6 +65,10 @@ export async function createAttempt(runId) {
     return { attempt_number }
   }
   const res = await apiFetch(`/api/runs/${runId}/attempts`, { method: 'POST' })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || `create-attempt failed ${res.status}`)
+  }
   return res.json()
 }
 
@@ -124,10 +128,17 @@ export async function getAttemptPageData(runId, attemptNumber) {
         if (!canonical) return null
         return {
           ...canonical,
-          display_name: b.canonical_name || canonical.display_name,
+          // Server-mode bonus rows are named "<base> - Bonus" at creation;
+          // guest rows store null until renamed, so default the same way.
+          display_name: b.canonical_name || `${canonical.display_name} - Bonus`,
           secondary_sort_order: Number(b.secondary_sort_order || 0),
           is_bonus_location: true,
           encounter_key: `${b.canonical_location_id}:${Number(b.secondary_sort_order || 0)}`,
+          // Bonus locations are extra encounter slots; they must not inherit
+          // the canonical location's trainer roster.
+          trainer_count: 0,
+          available_trainer_count: 0,
+          special_trainer_count: 0,
         }
       })
       .filter(Boolean)
@@ -143,11 +154,49 @@ export async function getAttemptPageData(runId, attemptNumber) {
       script: fullScript,
       pools: scriptData.pools || {},
       encounters,
+      attempt: guest.getAttemptOutcome(runId, attemptNumber),
     }
   }
 
   const res = await apiFetch(`/api/attempt-page/${runId}/${attemptNumber}`)
   if (!res.ok) throw new Error(`attempt-page failed ${res.status}`)
+  return res.json()
+}
+
+export async function endAttempt(runId, attemptNumber, payload = {}) {
+  if (isLocalRun(runId)) {
+    const result = guest.endAttempt(runId, attemptNumber, payload)
+    if (!result.success) throw new Error(result.error || 'end-attempt failed')
+    return result
+  }
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/end`, {
+    method: 'POST',
+    body: JSON.stringify({
+      trainer_id: payload.trainerId ?? null,
+      note: payload.note ?? null,
+    }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `end-attempt failed ${res.status}`)
+  return data
+}
+
+export async function reopenAttempt(runId, attemptNumber) {
+  if (isLocalRun(runId)) {
+    const result = guest.reopenAttempt(runId, attemptNumber)
+    if (!result.success) throw new Error(result.error || 'reopen failed')
+    return result
+  }
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/reopen`, { method: 'POST' })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `reopen failed ${res.status}`)
+  return data
+}
+
+export async function getAttemptSummary(runId, attemptNumber) {
+  if (isLocalRun(runId)) return guest.getAttemptSummary(runId, attemptNumber)
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/summary`)
+  if (!res.ok) throw new Error(`attempt-summary failed ${res.status}`)
   return res.json()
 }
 
@@ -288,8 +337,8 @@ export async function getSessionStats(runId, attemptNumber, signal) {
   return res.json()
 }
 
-export async function addBonusLocation(runId, attemptNumber, canonicalLocationId) {
-  if (isLocalRun(runId)) return guest.addBonusLocation(runId, attemptNumber, canonicalLocationId)
+export async function addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder = 0) {
+  if (isLocalRun(runId)) return guest.addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder)
   const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
     method: 'POST',
     body: JSON.stringify({ canonical_location_id: canonicalLocationId }),

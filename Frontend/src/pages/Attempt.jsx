@@ -51,6 +51,7 @@ function Attempt() {
   const [script, setScript] = useState([])
   const [pools, setPools] = useState({})
   const [runDetails, setRunDetails] = useState(null)
+  const [attemptInfo, setAttemptInfo] = useState(null)
   const [attemptLoaded, setAttemptLoaded] = useState(false)
   const [attemptLoadError, setAttemptLoadError] = useState('')
   const [currentStarter, setCurrentStarter] = useState('')
@@ -108,6 +109,7 @@ function Attempt() {
           return
         }
         setRunDetails(data?.run || null)
+        setAttemptInfo(data?.attempt || null)
         setCurrentStarter(data?.run?.starter || '')
         setScript(data?.script || [])
         setPools(data?.pools || {})
@@ -241,9 +243,10 @@ function Attempt() {
 
   function renderScriptRow(row) {
     const generation = runDetails?.generation ?? null
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
-    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
-    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    const attemptEnded = attemptInfo?.outcome === 'dead'
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} attemptEnded={attemptEnded} />
+    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} attemptEnded={attemptEnded} />
+    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} attemptEnded={attemptEnded} />
   }
 
   return (
@@ -319,7 +322,7 @@ function Attempt() {
         </div>
       )}
 
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={isAdmin && debugOpen} onToggleDebug={isAdmin ? () => setDebugOpen(v => !v) : null} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={isAdmin && debugOpen} onToggleDebug={isAdmin ? () => setDebugOpen(v => !v) : null} attemptOutcome={attemptInfo} />
 
       {isAdmin && <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />}
 
@@ -327,6 +330,22 @@ function Attempt() {
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} showStarterControls versionGroupId={runDetails?.version_group_id} />
 
         <div style={{ textAlign: 'left' }}>
+          {attemptInfo?.outcome === 'dead' && (
+            <div style={{ marginBottom: '18px', padding: '10px 14px', border: '1px solid #5a2d2d', borderRadius: '12px', background: 'rgba(224,82,82,0.08)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.88em', color: '#e05252', fontWeight: 'bold' }}>☠ This attempt has ended</span>
+              {attemptInfo.ended_at && (
+                <span style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>{new Date(attemptInfo.ended_at).toLocaleDateString()}</span>
+              )}
+              <span style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>You are reviewing it.</span>
+              <button
+                type="button"
+                onClick={() => { window.location.href = `/attempt/${runId}/${attemptId}/summary` }}
+                style={{ marginLeft: 'auto', padding: '6px 12px', borderRadius: '999px', border: '1px solid #f2b46b', background: 'rgba(242,180,107,0.1)', color: '#f2b46b', cursor: 'pointer', font: 'inherit', fontSize: '0.78em' }}
+              >
+                View Summary
+              </button>
+            </div>
+          )}
           <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
             <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
             {FILTER_OPTIONS.map(option => {

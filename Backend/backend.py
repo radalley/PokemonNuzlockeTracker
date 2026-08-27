@@ -543,7 +543,8 @@ def get_attempts(conn):
 
 def get_attempts_for_run(conn, run_id):
     return conn.execute(
-        'select attempt_number from attempts where run_id = %s order by attempt_number asc',
+        'select attempt_number, outcome, ended_at from attempts '
+        'where run_id = %s order by attempt_number asc',
         (run_id,)
     ).fetchall()
 
@@ -566,6 +567,144 @@ def create_attempt_for_run(conn, run_id):
     )
     conn.commit()
     return new_num
+
+def end_attempt(conn, run_id, attempt_number, outcome='dead', trainer_id=None, note=None):
+    """End an attempt, recording how it died.
+
+    trainer_id names the killer when defeat was declared from a trainer
+    battle; note carries free text for wild/other deaths. Raises ValueError
+    on a missing attempt, an already-ended attempt, or an unknown trainer.
+    """
+    if outcome not in ('dead', 'won'):
+        raise ValueError(f'Unknown outcome {outcome!r}')
+    if note is not None and not isinstance(note, str):
+        note = str(note)
+    attempt = conn.execute(
+        'select attempt_id, outcome from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        raise ValueError(f'Attempt {attempt_number} not found for run {run_id}')
+    if attempt['outcome']:
+        raise ValueError(f'Attempt {attempt_number} already ended ({attempt["outcome"]})')
+    if trainer_id is not None:
+        # The killer must belong to the run's game world, not merely exist.
+        trainer = conn.execute(
+            'select tp.trainer_id from trainer_pool tp '
+            'join runs r on nullif(r.run_id::text, \'\')::integer = %s '
+            'join games g on nullif(r.game_id::text, \'\')::integer = g.game_id '
+            'where tp.trainer_id = %s and tp.version_group_id = g.version_group_id',
+            (run_id, trainer_id)
+        ).fetchone()
+        if not trainer:
+            raise ValueError(f'Trainer {trainer_id} does not belong to this run\'s game')
+    # The outcome guard in the WHERE clause makes concurrent declarations
+    # first-writer-wins instead of last-writer-overwrites.
+    updated = conn.execute(
+        'update attempts set outcome = %s, ended_at = current_timestamp, '
+        'ended_by_trainer_id = %s, death_note = %s '
+        'where run_id = %s and attempt_number = %s and outcome is null',
+        (outcome, trainer_id, (note or '').strip()[:500] or None, run_id, attempt_number)
+    )
+    conn.commit()
+    if updated.rowcount != 1:
+        raise ValueError(f'Attempt {attempt_number} already ended')
+    return {'success': True, 'outcome': outcome}
+
+def reopen_attempt(conn, run_id, attempt_number):
+    """Undo an accidental end-of-attempt declaration."""
+    attempt = conn.execute(
+        'select 1 from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        raise ValueError(f'Attempt {attempt_number} not found for run {run_id}')
+    updated = conn.execute(
+        'update attempts set outcome = null, ended_at = null, '
+        'ended_by_trainer_id = null, death_note = null '
+        'where run_id = %s and attempt_number = %s and outcome is not null',
+        (run_id, attempt_number)
+    )
+    conn.commit()
+    return updated.rowcount == 1
+
+def get_attempt_summary(conn, run_id, attempt_number):
+    """Everything the post-mortem screen shows for one attempt."""
+    _ensure_badge_schema(conn)
+    run = get_run_by_id(conn, run_id, attempt_number)
+    if not run:
+        return None
+    attempt = conn.execute(
+        'select attempt_id, attempt_number, starter, started_at, outcome, '
+        'ended_at, ended_by_trainer_id, death_note '
+        'from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        return None
+    attempt_dict = dict(attempt)
+    attempt_id = attempt_dict.pop('attempt_id')
+
+    killer = None
+    if attempt_dict.get('ended_by_trainer_id') is not None:
+        killer_row = conn.execute(
+            'select tp.trainer_id, tp.trainer_name, tp.trainer_class, tp.trainer_pic, '
+            'cl.canonical_location_name as location_name '
+            'from trainer_pool tp '
+            'left join canon_locations cl on cl.canonical_location_id = tp.canonical_location_id '
+            'where tp.trainer_id = %s',
+            (attempt_dict['ended_by_trainer_id'],)
+        ).fetchone()
+        killer = dict(killer_row) if killer_row else None
+
+    badges = [dict(r) for r in conn.execute(
+        'select ab.badge_id, b.badge_name, ab.earned_at '
+        'from attempt_badges ab join badges b on b.badge_id = ab.badge_id '
+        'where ab.attempt_id = %s order by ab.earned_at asc',
+        (attempt_id,)
+    ).fetchall()]
+
+    deaths = [dict(r) for r in conn.execute(
+        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, '
+        'pb.level_met, cl.canonical_location_name as location_name '
+        'from pokebank pb '
+        'left join species s on s.species_id = pb.species_id '
+        'left join canon_locations cl on cl.canonical_location_id = pb.canonical_location_id '
+        "where pb.run_id = %s and pb.attempt_id = %s and pb.status = 'Dead' "
+        'order by pb.pokemon_id asc',
+        (run_id, attempt_id)
+    ).fetchall()]
+
+    survivors = [dict(r) for r in conn.execute(
+        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, '
+        'p.party_slot '
+        'from pokebank pb '
+        'left join species s on s.species_id = pb.species_id '
+        'left join party p on p.pokemon_id = pb.pokemon_id and p.attempt_id = %s '
+        "where pb.run_id = %s and pb.attempt_id = %s and pb.status = 'Captured' "
+        'order by p.party_slot asc nulls last, pb.pokemon_id asc',
+        (attempt_id, run_id, attempt_id)
+    ).fetchall()]
+
+    counts = dict(conn.execute(
+        'select '
+        "count(*) filter (where status = 'Captured') as captured, "
+        "count(*) filter (where status = 'Missed') as missed, "
+        "count(*) filter (where status = 'Dead') as dead, "
+        '(select count(distinct td.trainer_id) from trainers_defeated td where td.run_id = %s and td.attempt_id = %s) as trainers_defeated '
+        'from pokebank where run_id = %s and attempt_id = %s',
+        (run_id, attempt_id, run_id, attempt_id)
+    ).fetchone())
+
+    return {
+        'run': {k: run[k] for k in ('run_id', 'name', 'game_id', 'game_name', 'generation') if k in run.keys()},
+        'attempt': attempt_dict,
+        'killer': killer,
+        'badges': badges,
+        'deaths': deaths,
+        'survivors': survivors,
+        'counts': counts,
+    }
 
 def get_latest_attempt(conn):
     return conn.execute(f'select attempt_id from attempts where run_id = {state["active_run_id"]} order by attempt_id desc limit 1').fetchone()
@@ -1675,11 +1814,18 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     pokebank = get_pokebank_for_attempt(conn, run_id, attempt_number)
     encounters = {p['encounter_key']: p for p in pokebank}
 
+    attempt_info = conn.execute(
+        'select attempt_number, outcome, ended_at, ended_by_trainer_id, death_note '
+        'from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+
     return {
         'run': run_dict,
         'script': script_list,
         'pools': pools,
         'encounters': encounters,
+        'attempt': dict(attempt_info) if attempt_info else None,
     }
 
 def get_attempt_session_stats(conn, run_id, attempt_number):

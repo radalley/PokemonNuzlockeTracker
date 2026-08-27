@@ -1,6 +1,6 @@
-import TrainerCard from './TrainerCard'
+﻿import TrainerCard from './TrainerCard'
 
-function BossRow({ row, gameId = null, generation = null, runId = null, attemptId = null, onVictoryRecorded = null }) {
+function BossRow({ row, gameId = null, generation = null, runId = null, attemptId = null, onVictoryRecorded = null, attemptEnded = false }) {
   // is_level_cap comes from event_bosses; the event_type string list is the
   // fallback for rows predating the flag.
   const shouldShowLevelCap = row.is_level_cap != null
@@ -33,6 +33,7 @@ function BossRow({ row, gameId = null, generation = null, runId = null, attemptI
         enableBattle
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}
+        attemptEnded={attemptEnded}
       />
     </div>
   )

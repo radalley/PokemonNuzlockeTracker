@@ -12,6 +12,7 @@ const NewRun = lazy(() => import('./pages/NewRun'))
 const LoadRun = lazy(() => import('./pages/LoadRun'))
 const Guides = lazy(() => import('./pages/Guides'))
 const Attempt = lazy(() => import('./pages/Attempt'))
+const AttemptSummary = lazy(() => import('./pages/AttemptSummary'))
 const Box = lazy(() => import('./pages/Box'))
 const Graveyard = lazy(() => import('./pages/Graveyard'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -31,6 +32,7 @@ function App() {
               <Route path="/load-run" element={<LoadRun />} />
               <Route path="/guides" element={<Guides />} />
               <Route path="/attempt/:runId/:attemptId" element={<Attempt />} />
+              <Route path="/attempt/:runId/:attemptId/summary" element={<AttemptSummary />} />
               <Route path="/box/:runId/:attemptId" element={<Box />} />
               <Route path="/graveyard/:runId/:attemptId" element={<Graveyard />} />
               <Route path="/reset-password" element={<ResetPassword />} />

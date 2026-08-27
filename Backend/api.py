@@ -23,7 +23,8 @@ from backend import (get_games, create_run, get_runs, get_script,
                      create_contact_report, get_contact_reports, update_contact_report,
                      get_contact_report_stats, get_run_menu_summary, mark_run_opened,
                      get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
-                     add_observed_move, delete_observed_move, search_move_names)
+                     add_observed_move, delete_observed_move, search_move_names,
+                     end_attempt, reopen_attempt, get_attempt_summary)
 
 load_dotenv()
 
@@ -719,6 +720,52 @@ def create_attempt_route(run_id):
         return error
     new_num = create_attempt_for_run(conn, run_id)
     return jsonify({'attempt_number': new_num})
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/end', methods=['POST'])
+def end_attempt_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    data = request.get_json() or {}
+    trainer_id = data.get('trainer_id')
+    note = data.get('note')
+    try:
+        result = end_attempt(
+            conn, run_id, attempt_number, outcome='dead',
+            trainer_id=int(trainer_id) if trainer_id is not None else None,
+            note=note,
+        )
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify(result)
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/reopen', methods=['POST'])
+def reopen_attempt_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    try:
+        reopened = reopen_attempt(conn, run_id, attempt_number)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 404
+    if not reopened:
+        return jsonify({'error': 'Attempt is not ended'}), 400
+    return jsonify({'success': True})
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/summary', methods=['GET'])
+def attempt_summary_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    summary = get_attempt_summary(conn, run_id, attempt_number)
+    if summary is None:
+        return jsonify({'error': 'Attempt not found'}), 404
+    return jsonify(summary)
 
 @app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/party', methods=['GET'])
 def get_party_route(run_id, attempt_number):
