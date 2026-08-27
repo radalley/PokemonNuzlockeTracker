@@ -348,37 +348,38 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
-        {showLevelCap && resolvedLevelCap !== null && (
-          <div className="trainer-card-summary__cap" style={{ marginRight: '12px', textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
-            <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
-              Lvl {resolvedLevelCap}
-            </div>
+        {/* The format pill shares the level-cap grid cell: it sits left of
+            the cap and can never wrap onto a row of its own in any of the
+            summary's three grid templates. */}
+        {(normalizeBattleFormat(battleType) || (showLevelCap && resolvedLevelCap !== null)) && (
+          <div className="trainer-card-summary__cap" style={{ marginRight: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0 }}>
+            <BattleFormatPill format={battleType} fontSize="0.72em" />
+            {showLevelCap && resolvedLevelCap !== null && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
+                <div style={{ fontWeight: 'bold', fontSize: '1.1em' }}>
+                  Lvl {resolvedLevelCap}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* The format pill shares the battle grid cell so it can never
-            wrap onto its own row in any of the summary's grid templates. */}
-        {(normalizeBattleFormat(battleType)
-          || (enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded))) && (
-          <div className="trainer-card-summary__battle" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexShrink: 0, justifySelf: 'end' }}>
-            <BattleFormatPill format={battleType} fontSize="0.72em" />
-            {enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded) && (
-              defeated ? (
-                <div style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
-                  Defeated
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={openBattleModal}
-                  style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
-                >
-                  Battle
-                </button>
-              )
-            )}
-          </div>
+        {enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded) && (
+          defeated ? (
+            <div className="trainer-card-summary__battle" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
+              Defeated
+            </div>
+          ) : (
+            <button
+              className="trainer-card-summary__battle"
+              type="button"
+              onClick={openBattleModal}
+              style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
+            >
+              Battle
+            </button>
+          )
         )}
 
         <div className="trainer-card-summary__chevron" style={{ fontSize: '0.8em', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: '8px' }}>
