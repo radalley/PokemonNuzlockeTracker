@@ -453,9 +453,12 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                   {(() => {
                     const observed = p.observed_moves || []
                     const observedNames = new Set(observed.map(m => (m.move_name || '').toLowerCase()))
+                    // A Pokemon holds four moves: confirmed sightings claim
+                    // their slots first, estimates only fill what remains.
                     const inferred = (p.resolved_moves || movesList).filter(move => typeof move === 'string'
                       ? !observedNames.has(move.toLowerCase())
                       : !observedNames.has((move.move_name || '').toLowerCase()))
+                      .slice(0, Math.max(0, 4 - observed.length))
                     const renderMoveRow = (move, idx, seen) => {
                       if (typeof move === 'string') {
                         return <div key={idx} style={{ fontSize: '0.78em', color: 'var(--text-primary)', marginBottom: '4px' }}>{move}</div>
