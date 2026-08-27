@@ -94,6 +94,20 @@ Current architecture areas established in this design thread:
   commits). Remaining deferred: guest script assembly consolidation, Gen 3
   re-extraction; custom move "Wood Horn" unrepresentable (2 learnset
   entries skipped).
+- 2026-08-27: dead-run declarations + post-mortem summary live (commit
+  cd59152). attempts carries started_at/outcome/ended_at/
+  ended_by_trainer_id/death_note (outcome NULL=live, 'won' reserved for
+  the victory flow). Declare defeat from a trainer's battle modal
+  (records the killer) or the run menu (free-text note); summary page at
+  /attempt/:runId/:attemptId/summary with killer card, badges, fallen/
+  survivors, and Review / New Attempt / Reopen actions. Dead-attempt
+  review hides all Battle buttons (attemptEnded prop threads
+  Attempt -> rows -> TrainerCard). Guest parity via attempt objects in
+  localStorage (killer kept as id+name+class). end_attempt is
+  first-writer-wins (outcome IS NULL guard) and validates the killer
+  against the run's version group. A docs snapshot of curated memory
+  lives at docs/memory/ (commit e1facf8) -- refresh it when curated
+  files change materially.
 - 2026-08-27: observed-moves overlay live (commit 3c0b48a).
   `curated_trainer_moves` records opponents' moves the admin sees in
   battle, keyed (vg, encounter_name, slot, move) with a species guard;
