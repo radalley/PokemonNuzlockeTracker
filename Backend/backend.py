@@ -1643,7 +1643,9 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     for row in script_list:
         if row['event_type'] != 'Location':
             continue
-        trainer_meta = available_trainers_by_location.get(int(row['event_id']), None)
+        # Bonus locations are extra encounter slots; they share the canonical
+        # location id but must not inherit its trainer roster.
+        trainer_meta = None if row['is_bonus_location'] else available_trainers_by_location.get(int(row['event_id']), None)
         row['trainer_count'] = trainer_meta['trainer_count'] if trainer_meta else 0
         row['available_trainer_count'] = trainer_meta['available_trainer_count'] if trainer_meta else 0
         row['special_trainer_count'] = trainer_meta['special_trainer_count'] if trainer_meta else 0
@@ -2398,6 +2400,115 @@ def _assemble_trainer_party(conn, rows, version_group_id):
         party.append(pokemon)
     return party
 
+def _attach_observed_moves(conn, party, trainer_version_group_id, trainer_key, display_version_group_id):
+    """Attach admin-observed moves to party members.
+
+    curated_trainer_moves is keyed by the stable ETL identity (trainer's own
+    version group + encounter name + slot); a row only attaches when its
+    recorded species still occupies the slot, so a re-extraction that
+    reshuffles a party silently drops stale observations instead of
+    mislabeling the new occupant. Details resolve through the same machinery
+    as explicit trainer moves, in the display game's context.
+    """
+    for pokemon in party:
+        pokemon['observed_moves'] = []
+    if trainer_version_group_id is None or not trainer_key:
+        return party
+    rows = conn.execute(
+        'select slot, species_name, move_name from curated_trainer_moves '
+        'where version_group_id = %s and trainer_key = %s '
+        'order by slot asc, noted_at asc',
+        (trainer_version_group_id, trainer_key)
+    ).fetchall()
+    if not rows:
+        return party
+    by_slot = {}
+    for row in rows:
+        by_slot.setdefault(row['slot'], []).append(row)
+    for pokemon in party:
+        matches = [
+            r for r in by_slot.get(pokemon.get('slot'), [])
+            if (r['species_name'] or '').upper() == (pokemon.get('species_name') or '').upper()
+        ]
+        for match in matches:
+            details = _resolve_explicit_moves(conn, match['move_name'], display_version_group_id)
+            if details:
+                pokemon['observed_moves'].append(details[0])
+            else:
+                pokemon['observed_moves'].append({'move_name': match['move_name']})
+    return party
+
+def add_observed_move(conn, trainer_id, slot, move_name):
+    """Record a move an opponent was seen using. Returns the attached
+    move details, or raises ValueError on bad identity or unknown move."""
+    move_name = (move_name or '').strip()
+    if not move_name:
+        raise ValueError('move_name is required')
+    if ',' in move_name:
+        raise ValueError('One move at a time')
+    trainer = conn.execute(
+        'select encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer or trainer['version_group_id'] is None:
+        raise ValueError(f'Unknown trainer {trainer_id}')
+    slot_row = conn.execute(
+        'select species_name from trainer_pokemon where trainer_id = %s and slot = %s',
+        (trainer_id, slot)
+    ).fetchone()
+    if not slot_row:
+        raise ValueError(f'Trainer {trainer_id} has no party slot {slot}')
+    resolved = _resolve_explicit_moves(conn, move_name, trainer['version_group_id'])
+    if not resolved:
+        raise ValueError(f'Unknown move {move_name!r}')
+    canonical_name = resolved[0]['move_name']
+    # Re-observing after a re-extraction changed the slot's species must
+    # revive the row, not silently no-op against the stale one.
+    conn.execute(
+        'insert into curated_trainer_moves '
+        '(version_group_id, trainer_key, slot, species_name, move_name) '
+        'values (%s, %s, %s, %s, %s) '
+        'on conflict (version_group_id, trainer_key, slot, move_name) do update '
+        'set species_name = excluded.species_name, noted_at = current_timestamp',
+        (trainer['version_group_id'], trainer['encounter_name'], slot,
+         slot_row['species_name'], canonical_name)
+    )
+    conn.commit()
+    return resolved[0]
+
+def delete_observed_move(conn, trainer_id, slot, move_name):
+    """Remove an observed-move record. Returns the number of rows removed."""
+    trainer = conn.execute(
+        'select encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer:
+        raise ValueError(f'Unknown trainer {trainer_id}')
+    # Compare by the same slug the add path canonicalizes through, so a
+    # caller can delete with any accepted spelling of the name.
+    result = conn.execute(
+        'delete from curated_trainer_moves '
+        'where version_group_id = %s and trainer_key = %s and slot = %s '
+        "and lower(replace(replace(move_name, '_', '-'), ' ', '-')) = %s",
+        (trainer['version_group_id'], trainer['encounter_name'], slot,
+         _normalize_move_constant(move_name))
+    )
+    conn.commit()
+    return result.rowcount
+
+def search_move_names(conn, query, limit=15):
+    """Distinct move names for the admin autocomplete."""
+    q = (query or '').strip()[:80]
+    if not q:
+        return []
+    escaped = q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    rows = conn.execute(
+        'select distinct move_name from moves where move_name ilike %s '
+        'order by move_name asc limit %s',
+        (f'%{escaped}%', limit)
+    ).fetchall()
+    return [r['move_name'] for r in rows]
+
 def get_trainer_party_by_id(conn, trainer_id, game_id=None):
     """Party for one trainer_pool row, keyed by trainer_id.
 
@@ -2445,7 +2556,9 @@ def get_trainer_party_by_id(conn, trainer_id, game_id=None):
             (*join_params, trainer['encounter_name'], trainer['version_group_id'])
         ).fetchall()
 
-    return _assemble_trainer_party(conn, rows, version_group_id)
+    party = _assemble_trainer_party(conn, rows, version_group_id)
+    return _attach_observed_moves(
+        conn, party, trainer['version_group_id'], trainer['encounter_name'], version_group_id)
 
 def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
     """Get trainers defeated and badges earned for a specific pokemon in a run/attempt."""

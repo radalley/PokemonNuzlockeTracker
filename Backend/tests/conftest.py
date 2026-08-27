@@ -62,7 +62,10 @@ create table games (
     valid_game text default 'valid',
     pool_game_id integer,
     base_game_id integer,
-    is_rom_hack boolean not null default false
+    is_rom_hack boolean not null default false,
+    s_ref text,
+    b_ref text,
+    pdb_ref text
 );
 
 create table runs (
@@ -262,6 +265,17 @@ create table moves (
     version_group_id integer
 );
 
+create table curated_trainer_moves (
+    version_group_id integer not null,
+    trainer_key text not null,
+    slot integer not null,
+    species_name text not null,
+    move_name text not null,
+    noted_at timestamp with time zone not null default current_timestamp,
+    note text,
+    primary key (version_group_id, trainer_key, slot, move_name)
+);
+
 create table movesets (
     species_id integer,
     move_id integer,
@@ -277,7 +291,7 @@ TABLES = [
     "curated_trainer_placements", "trainer_placement_suggestions",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
     "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
-    "encounter_pool",
+    "encounter_pool", "curated_trainer_moves",
 ]
 
 

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict PemEa92n1XoFoBBzoyTbSdiIWewHgoE1jbeeoHM1P8Xe3rWBvwm1j3lQUZcoO5d
+\restrict EhsrRg7JeVnfRP8bPKtaNLkNcTUX69wssG8bLNrebZWayAkLpctMn00esBGEJ6d
 
 -- Dumped from database version 18.3
 -- Dumped by pg_dump version 18.3
@@ -188,6 +188,21 @@ CREATE SEQUENCE public.contact_reports_report_id_seq
 --
 
 ALTER SEQUENCE public.contact_reports_report_id_seq OWNED BY public.contact_reports.report_id;
+
+
+--
+-- Name: curated_trainer_moves; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.curated_trainer_moves (
+    version_group_id integer NOT NULL,
+    trainer_key text NOT NULL,
+    slot integer NOT NULL,
+    species_name text NOT NULL,
+    move_name text NOT NULL,
+    noted_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    note text
+);
 
 
 --
@@ -943,6 +958,14 @@ ALTER TABLE ONLY public.contact_reports
 
 
 --
+-- Name: curated_trainer_moves curated_trainer_moves_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curated_trainer_moves
+    ADD CONSTRAINT curated_trainer_moves_pkey PRIMARY KEY (version_group_id, trainer_key, slot, move_name);
+
+
+--
 -- Name: curated_trainer_placements curated_trainer_placements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1352,5 +1375,5 @@ ALTER TABLE ONLY public.species_stats
 -- PostgreSQL database dump complete
 --
 
-\unrestrict PemEa92n1XoFoBBzoyTbSdiIWewHgoE1jbeeoHM1P8Xe3rWBvwm1j3lQUZcoO5d
+\unrestrict EhsrRg7JeVnfRP8bPKtaNLkNcTUX69wssG8bLNrebZWayAkLpctMn00esBGEJ6d
 

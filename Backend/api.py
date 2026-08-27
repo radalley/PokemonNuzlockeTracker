@@ -22,7 +22,8 @@ from backend import (get_games, create_run, get_runs, get_script,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn,
                      create_contact_report, get_contact_reports, update_contact_report,
                      get_contact_report_stats, get_run_menu_summary, mark_run_opened,
-                     get_placement_summary, get_unplaced_trainers, apply_trainer_placements)
+                     get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
+                     add_observed_move, delete_observed_move, search_move_names)
 
 load_dotenv()
 
@@ -355,6 +356,34 @@ def admin_placement_apply_route():
         conn.rollback()
         return jsonify({'error': str(exc)}), 400
     return jsonify({'success': True, 'applied': results})
+
+@app.route('/api/admin/trainer-moves', methods=['POST', 'DELETE'])
+def admin_trainer_moves_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json() or {}
+    trainer_id = data.get('trainer_id')
+    slot = data.get('slot')
+    move_name = data.get('move_name')
+    if trainer_id is None or slot is None or not move_name:
+        return jsonify({'error': 'trainer_id, slot and move_name are required'}), 400
+    try:
+        if request.method == 'POST':
+            details = add_observed_move(conn, int(trainer_id), int(slot), str(move_name))
+            return jsonify({'success': True, 'move': details})
+        removed = delete_observed_move(conn, int(trainer_id), int(slot), str(move_name))
+        return jsonify({'success': True, 'removed': removed})
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+
+@app.route('/api/moves/search', methods=['GET'])
+def moves_search_route():
+    conn = get_db()
+    q = request.args.get('q', default='', type=str)
+    return jsonify(search_move_names(conn, q))
 
 @app.route('/api/debug/trainer-pics', methods=['GET'])
 def debug_trainer_pics_route():
