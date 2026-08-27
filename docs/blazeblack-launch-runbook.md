@@ -73,6 +73,11 @@ python -m etl.pipelines.load_species_overrides blazeblack --apply
 omit (the Starter pool); run it after `load_encounters` or the
 already-loaded guard sees its rows as a partial load.
 
+After the clone, re-run `migrations/20260906_bb_trim_empty_towns.sql`
+(psql -f): the clone copies the vg-11 script wholesale, resurrecting the
+empty Nuvema/Accumula Location rows this file trims from the hack script.
+Its DELETE sits outside the run-once guard for exactly this reason.
+
 The preview build must end with `base skeleton matched 61/61` and exactly
 four notes (the N's Castle story capture skipped twice -- no canonical
 location, matching vanilla -- and the custom move Wood Horn twice) before
