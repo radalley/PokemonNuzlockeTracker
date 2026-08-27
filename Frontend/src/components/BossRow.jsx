@@ -34,6 +34,7 @@ function BossRow({ row, gameId = null, generation = null, runId = null, attemptI
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}
         attemptEnded={attemptEnded}
+        battleType={row.battle_type}
       />
     </div>
   )

@@ -2148,6 +2148,7 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_rematch, "
+        "case when lower(coalesce(tp.trainer_double::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_double, "
         + defeated_select +
         'from trainer_pool tp '
         + defeated_join +

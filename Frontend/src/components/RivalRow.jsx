@@ -24,6 +24,7 @@ function RivalRow({ row, gameId = null, generation = null, runId = null, attempt
         isDefeated={Boolean(row.is_defeated)}
         onVictoryRecorded={onVictoryRecorded}
         attemptEnded={attemptEnded}
+        battleType={row.battle_type}
       />
     </div>
   )

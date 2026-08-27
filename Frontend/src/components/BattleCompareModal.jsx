@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
@@ -64,6 +65,7 @@ function BattleCompareModal({
   onDeclareDefeat = null,
   defeatSaving = false,
   defeatError = '',
+  battleType = null,
 }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [selectedOpponent, setSelectedOpponent] = useState(null)
@@ -98,8 +100,11 @@ function BattleCompareModal({
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
+            <BattleFormatPill format={battleType} fontSize="0.72em" />
+          </div>
           <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{subtitle}</div>
         </div>
 

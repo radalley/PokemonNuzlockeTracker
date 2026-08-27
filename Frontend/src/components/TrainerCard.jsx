@@ -4,6 +4,7 @@ import TypeIcon, { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
 import { getTrainerSpriteSrc } from './trainerSprite'
 import BattleCompareModal from './BattleCompareModal'
+import BattleFormatPill, { normalizeBattleFormat } from './BattleFormatPill'
 import { apiFetch } from '../utils/api'
 import { getParty, markTrainerVictory, endAttempt } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
@@ -52,7 +53,7 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false }) {
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null }) {
   const { user } = useAuth()
   const isAdmin = user?.account_type === 'admin'
   const [open, setOpen] = useState(false)
@@ -347,6 +348,12 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
+        {normalizeBattleFormat(battleType) && (
+          <div className="trainer-card-summary__format" style={{ marginRight: '10px', flexShrink: 0 }}>
+            <BattleFormatPill format={battleType} fontSize="0.72em" />
+          </div>
+        )}
+
         {showLevelCap && resolvedLevelCap !== null && (
           <div className="trainer-card-summary__cap" style={{ marginRight: '12px', textAlign: 'center', flexShrink: 0 }}>
             <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
@@ -579,6 +586,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           onDeclareDefeat={runId && attemptId ? declareDefeat : null}
           defeatSaving={defeatSaving}
           defeatError={defeatError}
+          battleType={battleType}
         />
       )}
     </div>

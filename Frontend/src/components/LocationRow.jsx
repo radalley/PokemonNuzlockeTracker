@@ -1332,6 +1332,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                       isDefeated={Boolean(trainer.is_defeated)}
                       onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
                       attemptEnded={attemptEnded}
+                      battleType={Number(trainer.is_double) ? 'double' : null}
                     />
                   ))}
                 </div>
