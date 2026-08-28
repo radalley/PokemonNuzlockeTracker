@@ -217,4 +217,11 @@ describe('bonus locations', () => {
     const second = addBonusLocation(run_id, 1, 42)
     expect(second.secondary_sort_order).toBeGreaterThan(first.secondary_sort_order)
   })
+
+  it('starts above the base row secondary sort so keys never collide with the canonical row', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    // Dreamyard-style placement: the canonical row itself sits at secondary 1.
+    const added = addBonusLocation(run_id, 1, 234, 1)
+    expect(added.secondary_sort_order).toBe(2)
+  })
 })
