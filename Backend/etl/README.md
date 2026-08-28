@@ -153,12 +153,15 @@ Ported: trainer loads for every version group with a preview — Gens 1, 2, 4
 (builds 4-5, previously loader-less) and Gen 5 (build 6), all through
 `load_trainers` with a manifest each, verified loading into a fresh database.
 Gen 5 event bosses load through `gen5_event_bosses`. The old
-`load_blackwhite_build6_*.py` scripts forward here so existing commands keep
-working. `derive_location_areas` covers every version group whose trainers
+`load_*_build*.py` forwarding shims were retired to `archive/Backend/`; use
+the `etl.pipelines` commands above.
+`derive_location_areas` covers every version group whose trainers
 carry map references (1, 2, 3, 4, 8, 9, 10 — Gen 3 and Gen 5 previews do not
 record one).
 
 Not ported: the preview *builders* (ROM and decomp extraction), the Gen 1-4
 event-boss updaters, and Gen 3 (version groups 5-7), which has no previews at
 all — its data predates the preview discipline and re-extraction is the
-outstanding stretch item.
+outstanding stretch item. Those legacy one-off scripts (and the pre-ETL
+sqlite-era loaders) live in `archive/Backend/`; they are kept for reference
+and are not importable from there without moving them back.
