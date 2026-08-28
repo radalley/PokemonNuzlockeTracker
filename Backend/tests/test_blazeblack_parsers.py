@@ -136,6 +136,9 @@ def patched_vocabularies(monkeypatch):
     monkeypatch.setattr(reference, "class_sprites", lambda: {
         "TRAINER_CLASS_PKMN_RANGER": "TRAINER_PIC_BW_RANGER_F",
     })
+    monkeypatch.setattr(reference, "name_pics", lambda: {
+        "KUMI & AMY": [("TRAINER_CLASS_TWINS", "TRAINER_PIC_BW_TWINS")],
+    })
     monkeypatch.setattr(parse_bosses, "move_vocabulary", lambda: {
         parse_bosses._slug(m): m for m in [
             "Quick Attack", "Will-O-Wisp", "Cotton Guard", "Earthquake",
@@ -211,6 +214,9 @@ def test_roster_parser_places_and_flags(monkeypatch):
     assert by_name["BRENDA"]["trainer_class"] == "TRAINER_CLASS_PKMN_RANGER"
     assert by_name["BRENDA"]["trainer_pic"] == "TRAINER_PIC_BW_RANGER_F"
     assert by_name["KUMI & AMY"]["trainer_double"] == "true"
+    # The vanilla namesake's pic wins over the class fallback, across the
+    # doc-class/vanilla-class divide (Duo vs Twins).
+    assert by_name["KUMI & AMY"]["trainer_pic"] == "TRAINER_PIC_BW_TWINS"
     # Starred (boss) entries are skipped; unknown locations leave trainers
     # unplaced but still loaded.
     assert "BIANCA" not in by_name

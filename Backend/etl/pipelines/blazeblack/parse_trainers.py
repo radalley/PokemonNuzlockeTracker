@@ -106,7 +106,7 @@ def parse(text):
             "is_rematch": "",
             "is_event": "",
             "trainer_items": "",
-            "trainer_pic": reference.class_sprites().get(klass, ""),
+            "trainer_pic": reference.resolve_trainer_pic(name, klass),
             "trainer_double": "true" if double else "",
             "details": f"blazeblack_doc=trainer_rosters; location_header={location_header}",
             "version_group_id": reference.VERSION_GROUP_ID,

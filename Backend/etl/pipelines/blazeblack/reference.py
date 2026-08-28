@@ -113,6 +113,71 @@ def class_sprites():
     return dict(rows)
 
 
+# The doc's class constants vs vanilla's: the doc collapses gendered classes
+# (Preschooler, not Preschooler F/M) and spells a few its own way, so a name
+# match must accept these vanilla classes for a doc class.
+CLASS_COMPAT = {
+    "TRAINER_CLASS_ACE_TRAINER": ("TRAINER_CLASS_ACE_TRAINER_F", "TRAINER_CLASS_ACE_TRAINER_M"),
+    "TRAINER_CLASS_ARIST": ("TRAINER_CLASS_ARTIST",),
+    "TRAINER_CLASS_ARTIST": ("TRAINER_CLASS_ARTIST",),
+    "TRAINER_CLASS_BACKPACKER": ("TRAINER_CLASS_BACKPACKER_F", "TRAINER_CLASS_BACKPACKER_M"),
+    "TRAINER_CLASS_CLERK": ("TRAINER_CLASS_CLERK_F", "TRAINER_CLASS_CLERK_M"),
+    "TRAINER_CLASS_CYCLING": ("TRAINER_CLASS_CYCLIST_F", "TRAINER_CLASS_CYCLIST_M"),
+    "TRAINER_CLASS_DUO": ("TRAINER_CLASS_HOOLIGANS", "TRAINER_CLASS_BACKERS", "TRAINER_CLASS_TWINS"),
+    "TRAINER_CLASS_PKMN_BREEDER": ("TRAINER_CLASS_PKMN_BREEDER_F", "TRAINER_CLASS_PKMN_BREEDER_M"),
+    "TRAINER_CLASS_PKMN_RANGER": ("TRAINER_CLASS_PKMN_RANGER_F", "TRAINER_CLASS_PKMN_RANGER_M"),
+    "TRAINER_CLASS_POKEFAN": ("TRAINER_CLASS_POKEFAN_F", "TRAINER_CLASS_POKEFAN_M"),
+    "TRAINER_CLASS_PRESCHOOLER": ("TRAINER_CLASS_PRESCHOOLER_F", "TRAINER_CLASS_PRESCHOOLER_M"),
+    "TRAINER_CLASS_PSYCHIC": ("TRAINER_CLASS_PSYCHIC_F", "TRAINER_CLASS_PSYCHIC_M"),
+    "TRAINER_CLASS_SCHOOL_KID": ("TRAINER_CLASS_SCHOOL_KID_F", "TRAINER_CLASS_SCHOOL_KID_M"),
+    "TRAINER_CLASS_SWIMMER": ("TRAINER_CLASS_SWIMMER_F", "TRAINER_CLASS_SWIMMER_M"),
+    "TRAINER_CLASS_VETERAN": ("TRAINER_CLASS_VETERAN_F", "TRAINER_CLASS_VETERAN_M"),
+    "TRAINER_CLASS_PLASMA_GRUNT": ("TRAINER_CLASS_TEAM_PLASMA",),
+    "TRAINER_CLASS_TEAM_PLASMA_GRUNT": ("TRAINER_CLASS_TEAM_PLASMA",),
+}
+
+# Classes whose doc entries are anonymous (no vanilla namesake to inherit
+# from). Grunts default to the male grunt art, matching the vanilla majority.
+CLASS_FALLBACK_PICS = {
+    "TRAINER_CLASS_PLASMA_GRUNT": "TRAINER_PIC_BW_PLASMA_GRUNT_M",
+    "TRAINER_CLASS_TEAM_PLASMA_GRUNT": "TRAINER_PIC_BW_PLASMA_GRUNT_M",
+}
+
+# Doc names the vanilla name match cannot reach (the doc folds the class into
+# the name: vanilla calls the Driftveil duo just "JIM & CAS").
+NAME_PIC_OVERRIDES = {
+    "HOOLIGANS JIM & CAS": "TRAINER_PIC_BW_HOOLIGANS",
+}
+
+
+@lru_cache(maxsize=1)
+def name_pics():
+    """Vanilla BW trainer_name -> [(trainer_class, trainer_pic), ...]."""
+    rows = db.query_rows(
+        "select upper(trainer_name), trainer_class, trainer_pic from trainer_pool "
+        f"where version_group_id = {BASE_VERSION_GROUP_ID} "
+        "and trainer_name is not null and trainer_pic is not null"
+    )
+    out = {}
+    for name, klass, pic in rows:
+        out.setdefault(name, []).append((klass, pic))
+    return out
+
+
+def resolve_trainer_pic(trainer_name, klass):
+    """Sprite for a doc trainer: the vanilla namesake's pic first (it carries
+    the right gender for classes the doc leaves ungendered), then the class's
+    most common vanilla pic, then the anonymous-class fallback."""
+    override = NAME_PIC_OVERRIDES.get((trainer_name or "").upper())
+    if override:
+        return override
+    allowed = CLASS_COMPAT.get(klass, (klass,))
+    for vanilla_class, pic in name_pics().get((trainer_name or "").upper(), ()):
+        if vanilla_class in allowed:
+            return pic
+    return class_sprites().get(klass) or CLASS_FALLBACK_PICS.get(klass, "")
+
+
 @lru_cache(maxsize=1)
 def base_bosses():
     """The vanilla BW boss skeleton, one entry per boss row."""
