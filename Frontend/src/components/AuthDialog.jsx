@@ -11,7 +11,6 @@ function AuthDialog() {
     register,
     loginWithGoogle,
     forgotPassword,
-    loading,
   } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -34,7 +33,9 @@ function AuthDialog() {
     }
   }, [authDialogOpen])
 
-  if (!authDialogOpen || loading) return null
+  // Opening the form is a local UI action. Do not hide it behind session
+  // restoration, which may be slow or fail when the auth service is offline.
+  if (!authDialogOpen) return null
 
   const isRegister = authDialogMode === 'register'
 
