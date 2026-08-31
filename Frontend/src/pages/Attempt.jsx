@@ -250,7 +250,7 @@ function Attempt() {
   }
 
   return (
-    <div style={{ paddingTop: '120px', paddingBottom: '56px' }}>
+    <div className="attempt-page" style={{ paddingTop: '120px', paddingBottom: '56px' }}>
       {showDocsMenu && (
         <div
           onClick={() => setShowDocsMenu(false)}
@@ -326,10 +326,10 @@ function Attempt() {
 
       {isAdmin && <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />}
 
-      <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
+      <div className="attempt-page__content" style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} showStarterControls versionGroupId={runDetails?.version_group_id} />
 
-        <div style={{ textAlign: 'left' }}>
+        <div className="attempt-page__body" style={{ textAlign: 'left' }}>
           {attemptInfo?.outcome === 'dead' && (
             <div style={{ marginBottom: '18px', padding: '10px 14px', border: '1px solid #5a2d2d', borderRadius: '12px', background: 'rgba(224,82,82,0.08)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.88em', color: '#e05252', fontWeight: 'bold' }}>☠ This attempt has ended</span>
@@ -346,13 +346,14 @@ function Attempt() {
               </button>
             </div>
           )}
-          <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
-            <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
+          <div className="attempt-filter" style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+            <div className="attempt-filter__label" style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
             {FILTER_OPTIONS.map(option => {
               const isActive = activeFilter === option.key
               return (
                 <button
                   key={option.key}
+                  className="attempt-filter__button"
                   type="button"
                   onClick={() => setActiveFilter(option.key)}
                   style={{

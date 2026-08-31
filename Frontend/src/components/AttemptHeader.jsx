@@ -10,7 +10,7 @@ function PartySlot({ member, slot, onRemove }) {
 
   if (!member) {
     return (
-      <div style={{
+      <div className="attempt-header__party-slot" style={{
         width: slotSize,
         aspectRatio: '1 / 1',
         border: '1px solid var(--border-strong)',
@@ -32,6 +32,7 @@ function PartySlot({ member, slot, onRemove }) {
 
   return (
     <div
+      className="attempt-header__party-slot"
       onClick={() => onRemove(member.pokemon_id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -149,7 +150,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   const isGraveyardPage = location.pathname.startsWith('/graveyard/')
 
   return (
-    <header style={{
+    <header className="attempt-header" style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -163,12 +164,14 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
       backgroundColor: 'var(--surface-deep)',
       gap: '12px',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+      <div className="attempt-header__primary" style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
         <div
           ref={runMenuRef}
+          className="attempt-header__run-control"
           style={{ position: 'relative', minWidth: 0 }}
         >
           <button
+            className="attempt-header__run-button"
             type="button"
             onClick={() => setShowRunMenu(open => !open)}
             style={{
@@ -187,7 +190,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               textAlign: 'left',
             }}
           >
-            <span style={{ width: 'clamp(92px, 12vw, 138px)', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span className="attempt-header__game-logo" style={{ width: 'clamp(92px, 12vw, 138px)', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {gameLogoSrc && !logoLoadFailed ? (
                 <img
                   src={gameLogoSrc}
@@ -199,8 +202,8 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
                 <span style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textAlign: 'center' }}>Game Art</span>
               )}
             </span>
-            <span style={{ minWidth: 0 }}>
-              <span style={{ display: 'block', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(220px, 20vw)' }}>
+            <span className="attempt-header__run-copy" style={{ minWidth: 0 }}>
+              <span className="attempt-header__run-name" style={{ display: 'block', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 'min(220px, 20vw)' }}>
                 {runDetails?.name || 'Run Name'}
               </span>
               <span style={{ display: 'block', marginTop: '3px', color: attemptIsDead ? '#e05252' : 'var(--text-secondary)', fontSize: '0.72em' }}>
@@ -210,7 +213,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
           </button>
 
           {showRunMenu && (
-            <div style={{
+            <div className="attempt-header__run-menu" style={{
               position: 'absolute',
               top: 'calc(100% + 6px)',
               left: 0,
@@ -261,7 +264,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
                     <span style={{ color: 'var(--text-secondary)' }}>›</span>
                   </button>
                   {showAttemptFlyout && (
-                    <div style={{
+                    <div className="attempt-header__attempt-flyout" style={{
                       position: 'absolute',
                       top: 0,
                       left: 'calc(100% + 6px)',
@@ -299,7 +302,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center', flexShrink: 1, minWidth: 0 }}>
+      <div className="attempt-header__party" style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center', flexShrink: 1, minWidth: 0 }}>
         {Array.from({ length: 6 }, (_, i) => {
           const slot = i + 1
           const member = party.find(p => p.party_slot === slot)
@@ -314,10 +317,11 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         })}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
+      <div className="attempt-header__nav" style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
         {attemptIsDead && (
           <button
             onClick={() => navigate(`/attempt/${runId}/${attemptId}/summary`)}
+            className="attempt-header__nav-button"
             style={{ ...btnStyle, borderColor: '#f2b46b', color: '#f2b46b' }}
             title="This attempt has ended — view its summary"
           >
@@ -325,12 +329,12 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
           </button>
         )}
         {backToAttempt && !isAttemptPage && (
-          <button onClick={() => navigate(`/attempt/${runId}/${attemptId}`)} style={btnStyle}>
+          <button className="attempt-header__nav-button" onClick={() => navigate(`/attempt/${runId}/${attemptId}`)} style={btnStyle}>
             Attempt
           </button>
         )}
-        {!isBoxPage && <button onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>}
-        {!isGraveyardPage && <button onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>}
+        {!isBoxPage && <button className="attempt-header__nav-button" onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>}
+        {!isGraveyardPage && <button className="attempt-header__nav-button" onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>}
         <HeaderAuthMenu />
       </div>
 

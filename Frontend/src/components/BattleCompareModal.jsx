@@ -83,6 +83,7 @@ function BattleCompareModal({
 
   return (
     <div
+      className="battle-compare__backdrop"
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
@@ -92,6 +93,7 @@ function BattleCompareModal({
       }}
     >
       <div
+        className="battle-compare"
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(1200px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
@@ -100,7 +102,7 @@ function BattleCompareModal({
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px' }}>
+        <div className="battle-compare__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
             <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
             <BattleFormatPill format={battleType} fontSize="0.72em" />
@@ -109,17 +111,17 @@ function BattleCompareModal({
         </div>
 
         {/* Three columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 200px', gap: '12px', flex: 1 }}>
+        <div className="battle-compare__grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr 200px', gap: '12px', flex: 1 }}>
 
           {/* Left — Player party */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+          <div className="battle-compare__party battle-compare__player" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Your Party</div>
             {battleLoading ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>Loading...</div>
             ) : playerParty.length === 0 ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party Pokémon.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div className="battle-compare__party-list" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {playerParty.map((mon, idx) => (
                   <button
                     type="button"
@@ -147,7 +149,7 @@ function BattleCompareModal({
           </div>
 
           {/* Center — Stats / Comparison */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '14px' }}>
+          <div className="battle-compare__comparison" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '14px' }}>
             {!hasOne ? (
               <div style={{ height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '0.82em', textAlign: 'center' }}>
                 Select a Pokémon from either party to view stats
@@ -171,7 +173,7 @@ function BattleCompareModal({
                   </div>
                 </div>
                 <div style={{ display: 'grid', gap: '10px', alignItems: 'start' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid var(--border)', fontSize: '0.78em' }}>
+                  <div className="battle-compare__bst-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid var(--border)', fontSize: '0.78em' }}>
                     <span />
                     <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{playerMon.bst ?? '—'}</span>
                     <span style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>BST</span>
@@ -236,12 +238,12 @@ function BattleCompareModal({
           </div>
 
           {/* Right — Opponent party */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+          <div className="battle-compare__party battle-compare__opponent" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Opponent Team</div>
             {opponentParty.length === 0 ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party data.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div className="battle-compare__party-list" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {opponentParty.map((mon, idx) => (
                   <button
                     type="button"
@@ -290,7 +292,7 @@ function BattleCompareModal({
         )}
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+        <div className="battle-compare__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {onDeclareDefeat && !battleResult?.success && (
               confirmingDefeat ? (

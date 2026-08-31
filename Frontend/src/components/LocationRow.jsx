@@ -662,7 +662,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       // stays quiet; the decision lives inside the encounter card.
       if (compact) return null
       return (
-        <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+        <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
             Caught
           </SummaryButton>
@@ -677,7 +677,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       // The status was chosen but the row hasn't been created server-side
       // (save in flight, or it failed): offer retry instead of dead buttons.
       return (
-        <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+        <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           {isSavingEncounter ? (
             <SummaryButton disabled style={{ ...buttonStyle, gridColumn: '1 / -1', width: '100%' }}>
               Saving...
@@ -698,7 +698,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
     if (status === 'Dead') {
       return (
-        <div style={{ ...groupStyle, gridTemplateColumns: compact ? groupStyle.gridTemplateColumns : '1fr' }}>
+        <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: compact ? groupStyle.gridTemplateColumns : '1fr' }}>
           <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ ...buttonStyle, gridColumn: '1 / -1', minWidth: 0, width: '100%', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
             Revive
           </SummaryButton>
@@ -707,7 +707,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
     if (status === 'Captured') {
       return (
-        <div style={groupStyle}>
+        <div className={`encounter-actions encounter-actions--${variant}`} style={groupStyle}>
           <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handlePartyToggle} style={{ ...buttonStyle, color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
             {compact ? `Party ${inParty ? '-' : '+'}` : (inParty ? 'Party -' : 'Party')}
           </SummaryButton>
@@ -722,7 +722,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
     if (status === 'Missed') {
       return (
-        <div style={groupStyle}>
+        <div className={`encounter-actions encounter-actions--${variant}`} style={groupStyle}>
           <div style={{ ...buttonStyle, minHeight: compact ? '34px' : '42px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.8em', color: '#d4a017', border: '1px dashed #d4a017', borderRadius: '999px', background: 'rgba(212,160,23,0.08)', boxSizing: 'border-box', opacity: 0.9 }}>
             Missed
           </div>
@@ -739,7 +739,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     // offered only inside the encounter card.
     if (compact) return null
     return (
-      <div style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+      <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
           Caught
         </SummaryButton>
@@ -904,7 +904,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         </div>
       )}
 
-      <div style={{
+      <div className={`location-row__summary${showEncounterView ? ' has-encounter-view' : ''}`} style={{
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
@@ -912,13 +912,13 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         padding: '2px 0',
         flexWrap: 'wrap',
       }}>
-        <div style={{ minWidth: 0, flex: '0 1 220px' }}>
+        <div className="location-row__name" style={{ minWidth: 0, flex: '0 1 220px' }}>
           {renderLocationCell()}
         </div>
 
         {showEncounterView && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '46px', height: '46px', flex: '0 0 auto', visibility: activePanel === 'encounter' ? 'hidden' : 'visible' }}>
+            <div className="location-row__encounter-sprite" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '46px', height: '46px', flex: '0 0 auto', visibility: activePanel === 'encounter' ? 'hidden' : 'visible' }}>
               {encounter?.species_id ? (
                 <Sprite speciesId={encounter.species_id} size={52} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : status === 'Missed' ? { opacity: 0.4 } : undefined} />
               ) : (
@@ -932,7 +932,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               )}
             </div>
 
-            <SummaryButton active={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, textAlign: 'left', color: 'var(--text-primary)' }}>
+            <SummaryButton className="location-row__encounter-button" active={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, textAlign: 'left', color: 'var(--text-primary)' }}>
               <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                 {summaryName}
               </span>
@@ -941,7 +941,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         )}
 
         {showTrainerView && !row.is_bonus_location && (
-          <SummaryButton disabled={trainerButtonDisabled} active={activePanel === 'trainers'} onClick={() => togglePanel('trainers')} style={{ whiteSpace: 'nowrap' }}>
+          <SummaryButton className="location-row__trainer-button" disabled={trainerButtonDisabled} active={activePanel === 'trainers'} onClick={() => togglePanel('trainers')} style={{ whiteSpace: 'nowrap' }}>
             Trainers {defeatedTrainerCount}/{trainerCount}{(() => {
               const special = trainersLoaded && showSpecialTrainers ? specialTrainers.length : initialSpecialCount
               return special > 0 ? ` +${special}★` : ''
@@ -951,7 +951,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
         {showEncounterView && activePanel !== 'encounter' && renderEncounterActions('summary')}
 
-        <div ref={menuRef} style={{ position: 'relative', marginLeft: 'auto' }}>
+        <div ref={menuRef} className="location-row__menu" style={{ position: 'relative', marginLeft: 'auto' }}>
           <SummaryButton onClick={() => setShowMenu(current => !current)} style={{ minWidth: 0, padding: '6px 10px' }}>
             ...
           </SummaryButton>
@@ -1001,14 +1001,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       </div>
 
       {showEncounterView && activePanel === 'encounter' && (
-        <div style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
-          <div style={{
+        <div className="location-row__panel location-row__panel--encounter" style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
+          <div className="encounter-editor" style={{
             display: 'grid',
             gridTemplateColumns: 'minmax(220px, 1.05fr) minmax(220px, 1fr) minmax(220px, 1fr)',
             gap: '14px',
             alignItems: 'stretch',
           }}>
-            <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
+            <div className="encounter-editor__column encounter-editor__column--identity" style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
               <div ref={searchRef} style={{ position: 'relative' }}>
                 <input
                   type="text"
@@ -1073,7 +1073,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 )}
               </div>
 
-              <div style={{
+              <div className="encounter-editor__sprite-card" style={{
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
@@ -1217,7 +1217,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
             </div>
 
-            <div style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
+            <div className="encounter-editor__column encounter-editor__column--stats" style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
               <div ref={natureRef} style={{ position: 'relative' }}>
                 <button
                   type="button"
@@ -1346,7 +1346,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateRows: 'auto auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
+            <div className="encounter-editor__column encounter-editor__column--details" style={{ display: 'grid', gridTemplateRows: 'auto auto auto 1fr', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
               <input
                 type="text"
                 placeholder="Nickname"
@@ -1428,7 +1428,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <div className="encounter-editor__actions" style={{ display: 'flex', alignItems: 'flex-end' }}>
                 {renderEncounterActions('panel')}
               </div>
             </div>
@@ -1437,7 +1437,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       )}
 
       {showTrainerView && activePanel === 'trainers' && (
-        <div style={{ ...PANEL_STYLE, background: 'var(--surface)', marginTop: '10px', padding: '16px' }}>
+        <div className="location-row__panel location-row__panel--trainers" style={{ ...PANEL_STYLE, background: 'var(--surface)', marginTop: '10px', padding: '16px' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78em', color: 'var(--text-secondary)', marginBottom: '10px', cursor: 'pointer' }}>
             <input
               type="checkbox"

@@ -391,7 +391,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
       {open && (
         <>
           {party.length > 0 ? (
-            <div style={{
+            <div className="trainer-card__party-grid" style={{
               marginTop: '12px',
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
@@ -407,10 +407,10 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
             const type2 = formatType(p.type2)
             const ability = formatAbility(p.ability1)
             return (
-              <div key={i} style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div key={i} className="trainer-card__pokemon" style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', overflow: 'hidden' }}>
 
                 {/* Pokemon card header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderBottom: '1px solid var(--border-strong)', backgroundColor: 'var(--surface-deep)' }}>
+                <div className="trainer-card__pokemon-header" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 8px', borderBottom: '1px solid var(--border-strong)', backgroundColor: 'var(--surface-deep)' }}>
                   <Sprite speciesId={p.species_id} size={64} />
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -446,7 +446,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                 </div>
 
                 {/* Pokemon card body — moves left, stats right */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', padding: '8px', gap: '8px', alignItems: 'stretch' }}>
+                <div className="trainer-card__pokemon-body" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', padding: '8px', gap: '8px', alignItems: 'stretch' }}>
 
                   {/* Moves: observed (ground truth recorded in play) first,
                       then inferred moves that observation hasn't confirmed. */}
@@ -509,7 +509,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                       )
                     }
                     return (
-                      <div style={{ minWidth: 0, border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
+                      <div className="trainer-card__moves" style={{ minWidth: 0, border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
                         {p.moves_estimated && inferred.length > 0 && (
                           <div style={{ fontSize: '0.7em', color: '#f2b46b', marginBottom: '5px' }}>*Estimated</div>
                         )}
@@ -552,7 +552,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                   })()}
 
                   {/* Stats */}
-                  <div style={{ minWidth: 0, fontSize: '0.8em', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
+                  <div className="trainer-card__stats" style={{ minWidth: 0, fontSize: '0.8em', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '44px 26px 1fr', columnGap: '4px', alignItems: 'center', padding: '0 0 5px 0', marginBottom: '4px', borderBottom: '1px solid var(--border-strong)' }}>
                         <span style={{ fontSize: '0.68em', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'left' }}>BST</span>
                         <span style={{ fontSize: '0.72em', fontWeight: 'bold', color: 'var(--text-primary)', textAlign: 'right', whiteSpace: 'nowrap' }}>{p.bst ?? '—'}</span>
