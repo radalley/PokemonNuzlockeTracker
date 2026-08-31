@@ -60,7 +60,6 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
       right: '8px',
       top: '120px',
       width: 'min(720px, calc(100vw - 16px))',
-      maxHeight: 'calc(100dvh - 140px)',
       overflow: 'auto',
       zIndex: 900,
       border: '1px solid var(--border-strong)',
@@ -69,7 +68,7 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
       padding: '10px 12px',
       fontSize: '0.72rem',
       fontFamily: 'Consolas, monospace',
-      maxHeight: 'calc(100vh - 160px)',
+      maxHeight: 'calc(100dvh - 160px)',
       display: 'flex',
       flexDirection: 'column',
     }}>
