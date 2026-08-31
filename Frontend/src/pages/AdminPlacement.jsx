@@ -178,7 +178,8 @@ function AdminPlacement() {
           </div>
         </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9em' }}>
+        <div style={{ width: '100%', overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse', fontSize: '0.9em' }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--text-secondary)' }}>
               <th style={{ padding: '6px' }}>Version</th>
@@ -218,6 +219,7 @@ function AdminPlacement() {
             })}
           </tbody>
         </table>
+        </div>
 
         {versionGroupId != null && (
           <div style={{ marginTop: '18px' }}>

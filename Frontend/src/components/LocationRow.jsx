@@ -1026,7 +1026,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         <div className="location-row__panel location-row__panel--encounter" style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
           <div className="encounter-editor" style={{
             display: 'grid',
-            gridTemplateColumns: 'minmax(220px, 1.05fr) minmax(220px, 1fr) minmax(220px, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '14px',
             alignItems: 'stretch',
           }}>
@@ -1035,6 +1035,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 <input
                   type="text"
                   placeholder="Encounter"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -1372,6 +1376,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               <input
                 type="text"
                 placeholder="Nickname"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
                 style={{

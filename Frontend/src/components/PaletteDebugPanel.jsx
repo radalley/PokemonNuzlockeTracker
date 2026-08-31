@@ -55,11 +55,13 @@ export default function PaletteDebugPanel({ isOpen = true, onToggle = null }) {
   const miniBtn = { padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit', lineHeight: '1.4' }
 
   return (
-    <div style={{
+    <div className="palette-debug-panel" style={{
       position: 'fixed',
       right: '8px',
       top: '120px',
-      width: '720px',
+      width: 'min(720px, calc(100vw - 16px))',
+      maxHeight: 'calc(100dvh - 140px)',
+      overflow: 'auto',
       zIndex: 900,
       border: '1px solid var(--border-strong)',
       borderRadius: '12px',

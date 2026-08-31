@@ -148,6 +148,9 @@ function NewRun() {
           <input
             type="text"
             placeholder="Run name"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={runName}
             onChange={(e) => setRunName(e.target.value)}
           />

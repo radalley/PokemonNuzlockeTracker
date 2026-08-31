@@ -102,7 +102,7 @@ function AuthDialog() {
             <form className="auth-dialog__form" onSubmit={handleForgotSubmit}>
               <label className="auth-dialog__field">
                 <span>Email</span>
-                <input type="email" value={email} onChange={event => setEmail(event.target.value)} required />
+                <input type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} required />
               </label>
               {error && <div className="auth-dialog__error">{error}</div>}
               <button type="submit" className="auth-dialog__submit" disabled={submitting}>
@@ -145,13 +145,13 @@ function AuthDialog() {
         <form className="auth-dialog__form" onSubmit={handleSubmit}>
           <label className="auth-dialog__field">
             <span>Email</span>
-            <input type="email" value={email} onChange={event => setEmail(event.target.value)} required />
+            <input type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} required />
           </label>
 
           {isRegister && (
             <label className="auth-dialog__field">
               <span>Display Name</span>
-              <input type="text" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Optional" />
+              <input type="text" autoComplete="nickname" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Optional" />
             </label>
           )}
 
@@ -169,7 +169,7 @@ function AuthDialog() {
                 </button>
               )}
             </span>
-            <input type="password" value={password} onChange={event => setPassword(event.target.value)} minLength={8} required />
+            <input type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} value={password} onChange={event => setPassword(event.target.value)} minLength={8} required />
           </label>
 
           {error && <div className="auth-dialog__error">{error}</div>}
