@@ -131,7 +131,7 @@ function Box() {
   }
 
   return (
-    <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
+    <div className="attempt-page" style={{ paddingTop: '120px', paddingBottom: '40px' }}>
       {evolveTarget !== null && (
         // z-index clears the fixed header, which this modal is rendered
         // before and which otherwise paints over its heading; the panel

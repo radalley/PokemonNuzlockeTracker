@@ -2139,7 +2139,9 @@ code {
   }
 
   .attempt-page {
-    padding-top: 104px !important;
+    /* Zero, not absent: the pages set paddingTop inline and an inline
+       style beats a class, so the reserve has to be explicitly cancelled. */
+    padding-top: 0 !important;
     padding-bottom: 66px !important;
   }
 
@@ -2175,6 +2177,8 @@ code {
   }
 
   .attempt-header {
+    position: sticky !important;
+    top: 0 !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
@@ -2266,13 +2270,17 @@ code {
     min-width: min(230px, calc(100vw - 16px));
   }
 
+  .attempt-header__run-control {
+    position: static !important;
+  }
+
   .attempt-header__run-menu {
-    position: fixed !important;
-    top: 98px !important;
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
     left: 8px !important;
     right: 8px;
     min-width: 0 !important;
-    max-height: calc(100dvh - 110px);
+    max-height: 60dvh;
     overflow-y: auto !important;
   }
 

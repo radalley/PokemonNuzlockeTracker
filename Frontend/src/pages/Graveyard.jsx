@@ -42,7 +42,7 @@ function Graveyard() {
   }
 
   return (
-    <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
+    <div className="attempt-page" style={{ paddingTop: '120px', paddingBottom: '40px' }}>
       <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
       <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
