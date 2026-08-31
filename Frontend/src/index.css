@@ -82,6 +82,17 @@ button {
   font: inherit;
 }
 
+/* Same treatment as button. Without it these fall back to the UA's ~13.3px
+   in a different family -- inconsistent with the app's type, and under the
+   16px at which iOS zooms the page on focus and does not zoom back. Affects
+   the controls that set no font of their own: the auth dialog's email and
+   password, and New Run's game select and run name. */
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 .location-row + .location-row {
   border-top: 1px solid var(--border);
   padding-top: 12px;
@@ -2731,6 +2742,18 @@ code {
   .attempt-session-stats__toggle,
   .attempt-session-stats__starter {
     min-height: var(--tap-min) !important;
+  }
+
+  /* The encounter editor's species search and nickname set
+     fontSize: '0.9em' inline, which computes to 14.4px and so still
+     triggers the zoom. An author !important is what outranks an inline
+     declaration; scoping it to coarse pointers leaves the smaller type
+     alone on desktop. max() so a control that is already larger keeps
+     its size. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
   }
 
   /* The rest of the app: menu, run list, new run, auth. */
