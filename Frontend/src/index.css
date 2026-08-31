@@ -2316,23 +2316,9 @@ code {
     box-shadow: none !important;
   }
 
-  .attempt-side-panel {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    z-index: auto !important;
-  }
-
   .attempt-session-stats {
     margin-top: 0 !important;
     padding: 8px !important;
-  }
-
-  .attempt-session-stats__grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px !important;
   }
 
   .attempt-session-stats__item--badges {
@@ -2694,5 +2680,46 @@ code {
   .new-run-field select,
   .new-run-field input {
     min-height: var(--tap-min) !important;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Run Stats panel placement.
+
+   The panel is meant to sit in the gutter to the left of the content column.
+   But #root is 1126px wide, so a 250px panel plus a 12px gap only has room
+   once the viewport reaches ~1666px. Below that the inline
+   `left: max(8px, ...)` pinned it at 8px directly on top of the rows.
+   Measured: 100px of every row covered at 1400px, 25px still at 1550px,
+   clear at 1600px. That is a laptop bug, not a phone one.
+
+   Below the threshold the panel returns to the document flow above the
+   content, which is what the phone layout already did.
+--------------------------------------------------------------------------- */
+@media (max-width: 1679.98px) {
+  .attempt-side-panel {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    z-index: auto !important;
+  }
+
+  /* In flow the panel is as wide as the content, so lay the stats out
+     across it rather than in the narrow single column the compact prop
+     asks for. At a phone width this still resolves to two columns. */
+  .attempt-session-stats__grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px !important;
+  }
+}
+
+@media (min-width: 1680px) {
+  .attempt-side-panel {
+    /* Against the real container width. The inline style still says 1380px,
+       which left the panel floating 133px clear of the content at 1900px. */
+    left: calc((100vw - 1126px) / 2 - 262px) !important;
   }
 }
