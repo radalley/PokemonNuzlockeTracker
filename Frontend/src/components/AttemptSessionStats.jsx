@@ -37,6 +37,7 @@ function StarterButton({ label, color, selected, onClick, compact = false }) {
   return (
     <button
       type="button"
+      className="attempt-session-stats__starter"
       onClick={onClick}
       style={{
         flex: compact ? '1 1 calc(50% - 6px)' : 1,
@@ -94,7 +95,7 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
     <div className="attempt-session-stats" style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Run Stats</div>
-        {onToggle && <button onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
+        {onToggle && <button className="attempt-session-stats__toggle" onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
       </div>
 
       {showStarterControls && onStarterChange && (

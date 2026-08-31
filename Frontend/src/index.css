@@ -16,6 +16,11 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Minimum comfortable tap target. Applied by the (pointer: coarse)
+     tier at the end of this file, which is deliberately NOT width-gated:
+     an iPhone in landscape is 844px wide and would miss a 640px query. */
+  --tap-min: 44px;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -2172,7 +2177,7 @@ code {
   }
 
   .pokemon-card__action {
-    min-height: 44px !important;
+    min-width: 0;
   }
 
   .attempt-filter {
@@ -2191,7 +2196,6 @@ code {
 
   .attempt-filter__button {
     min-width: 0;
-    min-height: 38px;
     padding: 7px 5px !important;
     font-size: 0.76em !important;
   }
@@ -2260,13 +2264,11 @@ code {
   }
 
   .attempt-header__nav-button {
-    min-height: 32px;
     padding: 4px 7px !important;
     font-size: 0.68em !important;
   }
 
   .attempt-header .site-header__user-button {
-    min-height: 32px;
     padding: 2px !important;
     border-radius: 8px;
   }
@@ -2345,7 +2347,6 @@ code {
   .attempt-footer__button {
     flex: 1 1 0;
     max-width: 180px;
-    min-height: 38px;
     padding: 6px 8px;
     font-size: 0.72em;
   }
@@ -2410,7 +2411,6 @@ code {
 
   .encounter-actions--summary > * {
     min-width: 0;
-    min-height: 40px !important;
     padding-inline: 5px !important;
   }
 
@@ -2566,7 +2566,6 @@ code {
 
   .battle-compare__footer button {
     flex: 1 1 0;
-    min-height: 44px !important;
   }
 }
 
@@ -2607,5 +2606,93 @@ code {
     background: rgba(13, 16, 24, 0.765);
     border-color: rgba(76, 85, 104, 0.8);
     box-shadow: 0 28px 72px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Touch targets.
+
+   Deliberately keyed on (pointer: coarse) rather than a width, because the
+   two are not the same question: an iPhone in landscape is 844px wide and
+   would miss any phone-width query, while a 390px-wide desktop window has a
+   mouse and needs nothing here. This is the only place tap sizing is set.
+
+   !important throughout because every height below is spread onto the
+   element from an inline JSX style object (SUMMARY_BUTTON_STYLE,
+   MODAL_ACTION_BUTTON_STYLE, CARD_ACTION_BUTTON_STYLE and friends), and an
+   inline declaration outranks any normal class rule. Lifting those objects
+   into classes would let the !important go.
+--------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  /* Attempt page: the controls actually used to log a run. */
+  .attempt-filter__button,
+  .location-row__encounter-button,
+  .location-row__trainer-button,
+  .location-row__menu > button,
+  .encounter-actions--summary > *,
+  .encounter-actions--panel > * {
+    min-height: var(--tap-min) !important;
+  }
+
+  /* The overflow trigger is square-ish, so it needs the width too; its
+     inline minWidth: 0 would otherwise let it collapse to the glyph. */
+  .location-row__menu > button {
+    min-width: var(--tap-min) !important;
+  }
+
+  /* Header. The party slot is a div sized by width with aspect-ratio 1/1,
+     so height follows width. Six slots plus gaps at 44px is 284px, which
+     still fits a 320px viewport. */
+  .attempt-header__nav-button,
+  .attempt-header .site-header__user-button,
+  .attempt-header__run-menu button,
+  .attempt-header__attempt-flyout button {
+    min-height: var(--tap-min) !important;
+  }
+
+  .attempt-header__party-slot {
+    width: clamp(var(--tap-min), 11vw, 48px) !important;
+  }
+
+  /* Footer. Raising the buttons grows the bar, so the bar's floor and the
+     page's bottom reserve have to move with them or the last row is
+     covered again. */
+  .attempt-footer__button {
+    min-height: var(--tap-min) !important;
+  }
+
+  .attempt-footer {
+    min-height: 58px;
+  }
+
+  .attempt-page {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Cards and modals. */
+  .pokemon-card__action,
+  .trainer-card-summary__battle,
+  .battle-compare__footer button,
+  .battle-compare__party-list button,
+  .attempt-session-stats__toggle,
+  .attempt-session-stats__starter {
+    min-height: var(--tap-min) !important;
+  }
+
+  /* The rest of the app: menu, run list, new run, auth. */
+  .site-header__nav-button,
+  .site-header__auth-button,
+  .site-header__user-button,
+  .page-action-button,
+  .load-run-filter-btn,
+  .new-run-generation-pill,
+  .home-action-button,
+  .contact-panel__close,
+  .auth-dialog__close,
+  .auth-dialog__field input,
+  .auth-dialog__submit,
+  .new-run-field select,
+  .new-run-field input {
+    min-height: var(--tap-min) !important;
   }
 }
