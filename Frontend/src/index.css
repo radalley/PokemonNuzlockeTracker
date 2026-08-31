@@ -1906,21 +1906,77 @@ p {
 
 @media (max-width: 640px) {
   .load-run-table-wrap {
+    display: block;
     padding: 0 10px 16px;
-    overflow-x: auto;
+  }
+
+  .load-run-table,
+  .load-run-table tbody,
+  .load-run-row,
+  .load-run-cell {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .load-run-table {
-    width: 100%;
-    min-width: 720px;
+    border-spacing: 0;
+  }
+
+  .load-run-table thead {
+    display: none;
+  }
+
+  /* Each row becomes one card: the three cells stack, so the borders that
+     made a horizontal strip have to be redrawn vertically. */
+  .load-run-row {
+    margin-bottom: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .load-run-cell {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .load-run-cell + .load-run-cell {
+    border-top: 1px solid var(--border-strong);
+  }
+
+  .load-run-cell--latest-attempt {
+    min-width: 0;
+  }
+
+  .load-run-latest-attempt {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  /* SiteHeader wraps to two rows on a phone -- measured 125px against an
+     84px reserve, which buried each page's heading. It is the first child
+     of each of these pages, so sticky keeps it pinned while leaving it in
+     flow, and the reserve can go entirely. The negative inline margin
+     cancels the page's own side padding so the bar stays full-bleed. */
+  .load-run-page > .site-header,
+  .new-run-page > .site-header,
+  .guides-page > .site-header {
+    position: sticky;
+    margin-inline: -16px;
   }
 
   .new-run-page {
-    padding: 84px 16px 28px;
+    padding: 0 16px 28px;
   }
 
   .load-run-page {
-    padding: 84px 16px 20px;
+    padding: 0 16px 20px;
+  }
+
+  .guides-page {
+    padding: 0 16px 28px;
   }
 
   .new-run-controls {
