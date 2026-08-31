@@ -125,7 +125,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
   }, [showDropdown, runId, attemptId, pokemon.pokemon_id, localRun, badgeIds.join(','), badgeMeta])
 
   return (
-    <div style={{
+    <div className="pokemon-card" style={{
       background: 'var(--surface)', border: inParty ? '1px solid #5ba85b' : '1px solid var(--border-strong)', borderRadius: '8px',
       overflow: 'hidden', width: '220px', minWidth: '220px', maxWidth: '220px', boxSizing: 'border-box',
       boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
@@ -307,7 +307,7 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
                 <button
                   type="button"
                   onClick={() => onRevive(pokemon)}
-                  style={{ ...CARD_ACTION_BUTTON_STYLE, gridColumn: '1 / -1', color: '#7ec8e3', borderColor: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }}
+                  className="pokemon-card__action" style={{ ...CARD_ACTION_BUTTON_STYLE, gridColumn: '1 / -1', color: '#7ec8e3', borderColor: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }}
                 >Revive</button>
               ) : (
                 <>
@@ -316,13 +316,13 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
                       <button
                         type="button"
                         onClick={() => onRemoveFromParty(pokemon)}
-                        style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
+                        className="pokemon-card__action" style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
                       >Party -</button>
                     ) : (
                       <button
                         type="button"
                         onClick={() => onAddToParty(pokemon)}
-                        style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#5ba85b', borderColor: '#5ba85b', background: 'rgba(91,168,91,0.12)' }}
+                        className="pokemon-card__action" style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#5ba85b', borderColor: '#5ba85b', background: 'rgba(91,168,91,0.12)' }}
                       >Party +</button>
                     )
                   ) : <span />}
@@ -330,14 +330,14 @@ function PokemonCard({ pokemon, inParty = false, onAddToParty, onRemoveFromParty
                     <button
                       type="button"
                       onClick={() => onEvolve(pokemon)}
-                      style={{ ...CARD_ACTION_BUTTON_STYLE, color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}
+                      className="pokemon-card__action" style={{ ...CARD_ACTION_BUTTON_STYLE, color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}
                     >Evolve</button>
                   ) : <span />}
                   {showDeadAction ? (
                     <button
                       type="button"
                       onClick={() => onDead(pokemon)}
-                      style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
+                      className="pokemon-card__action" style={{ ...CARD_ACTION_BUTTON_STYLE, color: '#e55', borderColor: '#e55', background: 'rgba(224,82,82,0.12)' }}
                     >Dead</button>
                   ) : <span />}
                 </>

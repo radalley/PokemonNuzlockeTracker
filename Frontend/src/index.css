@@ -2155,6 +2155,26 @@ code {
     min-width: 0;
   }
 
+  /* Box and Graveyard nest a 20px-padded body inside the 28px-padded
+     content wrapper. Together those burned 96px of a 390px screen, and
+     left the stats panel and the card grid on different left edges. */
+  .attempt-page__body--inset {
+    padding: 10px 0 !important;
+  }
+
+  /* PokemonCard is pinned to 220px inline, so on a phone one card sat
+     centred in the column with dead gutters either side and its action
+     row squeezed to 63px columns at 26px tall. */
+  .pokemon-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  .pokemon-card__action {
+    min-height: 44px !important;
+  }
+
   .attempt-filter {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr));

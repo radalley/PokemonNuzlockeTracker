@@ -190,10 +190,10 @@ function Box() {
       )}
       <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} backToAttempt partyRefreshKey={partyRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
-      <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
+      <div className="attempt-page__content" style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
-        <div style={{ padding: '20px', textAlign: 'left' }}>
+        <div className="attempt-page__body attempt-page__body--inset" style={{ padding: '20px', textAlign: 'left' }}>
           <h2 style={{ marginBottom: '16px', fontSize: '1.1em', color: 'var(--text-secondary)' }}>
             Box — Attempt {attemptId} ({pokemon.length} caught)
           </h2>

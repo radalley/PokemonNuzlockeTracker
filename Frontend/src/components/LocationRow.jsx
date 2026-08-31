@@ -985,7 +985,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               borderRadius: '8px',
               zIndex: 1000,
               minWidth: '140px',
-              overflow: 'hidden'
+              // overflowX, not the shorthand: `overflow: hidden` written
+              // after overflowY would reset it and clip the scroll.
+              overflowX: 'hidden'
             }}>
               <div
                 onClick={handleAddLocation}
