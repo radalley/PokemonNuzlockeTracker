@@ -847,24 +847,40 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   return (
     <div className="location-row" style={{ marginBottom: '14px' }}>
       {showEvolve && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border-strong)',
-            borderRadius: '10px',
-            padding: '28px 32px',
-            maxWidth: '420px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
+        // z-index clears the fixed header and footer, which both sit at
+        // 1000; the panel scrolls because a species with many evolutions
+        // (Eevee has eight) is taller than a phone viewport and was being
+        // clipped at both edges with no way to reach the buttons.
+        <div
+          onClick={() => setShowEvolve(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            overflowY: 'auto',
+            overscrollBehavior: 'contain',
+            zIndex: 3000
+          }}
+        >
+          <div
+            onClick={event => event.stopPropagation()}
+            style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: '10px',
+              padding: '28px 32px',
+              maxWidth: '420px',
+              width: '100%',
+              maxHeight: 'calc(100svh - 32px)',
+              overflowY: 'auto',
+              boxSizing: 'border-box',
+              textAlign: 'center'
+            }}
+          >
             <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Evolve {encounter?.name}?</h2>
             {evolutions === null ? (
               <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
@@ -958,8 +974,12 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           {showMenu && (
             <div style={{
               position: 'absolute',
-              top: '62px',
+              // Tracks the trigger instead of a hardcoded desktop row
+              // height, which left the menu floating ~28px adrift on a phone.
+              top: 'calc(100% + 6px)',
               right: 0,
+              maxHeight: '50svh',
+              overflowY: 'auto',
               background: 'var(--surface-mid)',
               border: '1px solid var(--border-strong)',
               borderRadius: '8px',

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import useHoverCapable from '../utils/useHoverCapable'
 
 function HeaderAuthMenu() {
   const { user, openAuthDialog, logout } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const wrapperRef = useRef(null)
+  const hoverCapable = useHoverCapable()
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -40,8 +42,8 @@ function HeaderAuthMenu() {
     <div
       ref={wrapperRef}
       className="site-header__auth site-header__auth--menu"
-      onMouseEnter={() => setMenuOpen(true)}
-      onMouseLeave={() => setMenuOpen(false)}
+      onMouseEnter={hoverCapable ? () => setMenuOpen(true) : undefined}
+      onMouseLeave={hoverCapable ? () => setMenuOpen(false) : undefined}
     >
       <button
         type="button"

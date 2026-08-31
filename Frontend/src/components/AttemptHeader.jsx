@@ -1,12 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Sprite from './Sprite'
 import HeaderAuthMenu from './HeaderAuthMenu'
 import { getAttempts, getParty, createAttempt, removeFromParty, endAttempt } from '../utils/dataLayer'
+import useHoverCapable from '../utils/useHoverCapable'
 
-function PartySlot({ member, slot, onRemove }) {
+function PartySlot({ member, slot, onRemove, hoverCapable }) {
   const [hovered, setHovered] = useState(false)
+  const [armed, setArmed] = useState(false)
   const slotSize = 'clamp(44px, 4.8vw, 64px)'
+
+  // The only warning that a click drops the Pokemon from the party is the
+  // red hover tint, which touch devices never show. Ask for a second tap
+  // there instead, and disarm on a timer so a stray tap cannot linger.
+  useEffect(() => {
+    if (!armed) return undefined
+    const timer = setTimeout(() => setArmed(false), 3000)
+    return () => clearTimeout(timer)
+  }, [armed])
 
   if (!member) {
     return (
@@ -33,11 +45,17 @@ function PartySlot({ member, slot, onRemove }) {
   return (
     <div
       className="attempt-header__party-slot"
-      onClick={() => onRemove(member.pokemon_id)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      title="Drop from party"
+      onClick={() => {
+        if (hoverCapable) { onRemove(member.pokemon_id); return }
+        if (!armed) { setArmed(true); return }
+        setArmed(false)
+        onRemove(member.pokemon_id)
+      }}
+      onMouseEnter={hoverCapable ? () => setHovered(true) : undefined}
+      onMouseLeave={hoverCapable ? () => setHovered(false) : undefined}
+      title={armed ? 'Tap again to drop from party' : 'Drop from party'}
       style={{
+        position: 'relative',
         width: slotSize,
         aspectRatio: '1 / 1',
         borderRadius: '10px',
@@ -45,14 +63,34 @@ function PartySlot({ member, slot, onRemove }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: hovered ? 'rgba(229,85,85,0.15)' : 'var(--border)',
-        border: hovered ? '2px solid #e55' : '2px solid transparent',
+        backgroundColor: hovered || armed ? 'rgba(229,85,85,0.15)' : 'var(--border)',
+        border: hovered || armed ? '2px solid #e55' : '2px solid transparent',
         transition: 'border-color 0.15s, background-color 0.15s',
         boxSizing: 'border-box',
         boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
       }}
     >
       <Sprite speciesId={member.species_id} size={52} shiny={isShiny} style={{ width: '82%', height: '82%' }} />
+      {armed && (
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '8px',
+            background: 'rgba(229,85,85,0.55)',
+            color: '#fff',
+            fontSize: '0.62em',
+            fontWeight: 'bold',
+            lineHeight: 1.1,
+          }}
+        >
+          Drop?
+        </span>
+      )}
     </div>
   )
 }
@@ -60,6 +98,7 @@ function PartySlot({ member, slot, onRemove }) {
 function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, partyRefreshKey = 0, onPartyChange = null, statsOpen = true, onToggleStats = null, debugOpen = true, onToggleDebug = null, attemptOutcome = null }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const hoverCapable = useHoverCapable()
   const [attempts, setAttempts] = useState([])
   const [showRunMenu, setShowRunMenu] = useState(false)
   const [showAttemptFlyout, setShowAttemptFlyout] = useState(false)
@@ -252,7 +291,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               )}
               {attempts.length > 0 && (
                 <div
-                  onMouseEnter={() => setShowAttemptFlyout(true)}
+                  onMouseEnter={hoverCapable ? () => setShowAttemptFlyout(true) : undefined}
                   style={{ position: 'relative' }}
                 >
                   <button
@@ -312,6 +351,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               member={member}
               slot={slot}
               onRemove={handleRemoveFromParty}
+              hoverCapable={hoverCapable}
             />
           )
         })}
@@ -338,14 +378,20 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
         <HeaderAuthMenu />
       </div>
 
-      {showDeadDialog && (
+      {showDeadDialog && createPortal(
+        // Rendered through a portal because this header is position:fixed
+        // with a z-index, which traps any descendant's z-index inside its
+        // stacking context — the page footer (same z-index, later in the
+        // document) would otherwise paint over the Cancel / Declare Dead
+        // buttons. The backdrop scrolls so the dialog stays reachable when
+        // the on-screen keyboard shrinks the viewport.
         <div
           onClick={() => !endingAttempt && setShowDeadDialog(false)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 3000 }}
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ width: 'min(420px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '18px' }}
+            style={{ width: 'min(420px, calc(100vw - 32px))', maxHeight: 'calc(100svh - 32px)', overflowY: 'auto', background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '18px' }}
           >
             <div style={{ fontWeight: 'bold', color: '#e05252', fontSize: '1.05em', marginBottom: '6px' }}>
               Declare Attempt {attemptId} dead?
@@ -374,7 +420,8 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   )

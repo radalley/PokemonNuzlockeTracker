@@ -133,16 +133,28 @@ function Box() {
   return (
     <div style={{ paddingTop: '120px', paddingBottom: '40px' }}>
       {evolveTarget !== null && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '10px',
-            padding: '28px 32px', maxWidth: '420px', width: '90%', textAlign: 'center'
-          }}>
+        // z-index clears the fixed header, which this modal is rendered
+        // before and which otherwise paints over its heading; the panel
+        // scrolls so a long evolution list stays reachable on a phone.
+        <div
+          onClick={() => { setEvolveTarget(null); setEvolveOptions(null) }}
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px', overflowY: 'auto', overscrollBehavior: 'contain',
+            zIndex: 3000
+          }}
+        >
+          <div
+            onClick={event => event.stopPropagation()}
+            style={{
+              background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: '10px',
+              padding: '28px 32px', maxWidth: '420px', width: '100%',
+              maxHeight: 'calc(100svh - 32px)', overflowY: 'auto',
+              boxSizing: 'border-box', textAlign: 'center'
+            }}
+          >
             <h2 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Evolve {evolveTarget.nickname || evolveTarget.species_name}?</h2>
             {evolveOptions === null ? (
               <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>

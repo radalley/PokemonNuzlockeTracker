@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
@@ -71,6 +71,21 @@ function BattleCompareModal({
   const [selectedOpponent, setSelectedOpponent] = useState(null)
   const [confirmingDefeat, setConfirmingDefeat] = useState(false)
 
+  // The modal renders inside the trainer card, whose root click handler
+  // toggles the card open/shut. Without a scroll lock the page behind
+  // also scrolls under a touch drag once the modal's own list hits its end.
+  useEffect(() => {
+    const { body } = document
+    const previousOverflow = body.style.overflow
+    const previousOverscroll = body.style.overscrollBehavior
+    body.style.overflow = 'hidden'
+    body.style.overscrollBehavior = 'contain'
+    return () => {
+      body.style.overflow = previousOverflow
+      body.style.overscrollBehavior = previousOverscroll
+    }
+  }, [])
+
   const togglePlayer = (idx) => setSelectedPlayer(prev => prev === idx ? null : idx)
   const toggleOpponent = (idx) => setSelectedOpponent(prev => prev === idx ? null : idx)
 
@@ -84,7 +99,13 @@ function BattleCompareModal({
   return (
     <div
       className="battle-compare__backdrop"
-      onClick={onClose}
+      onClick={event => {
+        // This modal is a descendant of the trainer card in the React
+        // tree, so a backdrop tap would bubble up and collapse the card
+        // as well as closing the modal, throwing away the loaded party.
+        event.stopPropagation()
+        onClose()
+      }}
       style={{
         position: 'fixed', inset: 0,
         backgroundColor: 'rgba(0,0,0,0.75)',
