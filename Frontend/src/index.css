@@ -2131,6 +2131,74 @@ code {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Header structure below 1150px.
+
+   The single-row flex header gives .attempt-header__nav `flex: 1` with a
+   zero basis, so it is allocated only a share of the free space while its
+   children need far more than that. Being justify-content: flex-end, they
+   overflow leftward straight across the party strip. Measured spill, signed
+   out (the worst case -- a signed-in nav is narrower): 185px at 660px,
+   127px at 768px, 61px at 900px, 11px at 1100px, clear by 1150px. At 768px
+   both the Box and Graveyard chips sit on top of party slots.
+
+   Below 1150px the header therefore becomes the same two-row grid the phone
+   layout uses: run and nav on the first row, the party strip across the
+   second. Sticky rather than fixed for the same reason as the phone layout
+   -- two rows are taller than the 120px the pages reserve inline, and a
+   sticky header needs no reserve at all.
+
+   Cosmetic compression (smaller logo, hidden user label, tighter fonts)
+   stays in the 640px block below; this tier only changes structure.
+--------------------------------------------------------------------------- */
+@media (max-width: 1149.98px) {
+  .attempt-header {
+    position: sticky !important;
+    top: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "primary nav"
+      "party party";
+    align-items: center !important;
+    row-gap: 6px;
+  }
+
+  .attempt-header__primary {
+    grid-area: primary;
+    min-width: 0;
+  }
+
+  .attempt-header__nav {
+    grid-area: nav;
+  }
+
+  .attempt-header__party {
+    grid-area: party;
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  .attempt-page {
+    padding-top: 0 !important;
+  }
+
+  /* Anchored to the sticky header, which is a containing block for
+     absolute descendants, instead of a hardcoded viewport offset. */
+  .attempt-header__run-control {
+    position: static !important;
+  }
+
+  .attempt-header__run-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 8px !important;
+    min-width: 0 !important;
+    max-height: 60dvh;
+    overflow-y: auto !important;
+  }
+}
+
 @media (max-width: 640px) {
   html,
   body {
