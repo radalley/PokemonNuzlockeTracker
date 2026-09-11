@@ -1,3 +1,5 @@
+import { normalizeIvs } from './pokemonFormat'
+
 const STORAGE_KEY = 'lockley_guest'
 
 function defaultState() {
@@ -290,6 +292,8 @@ export function getAttemptSummary(runId, attemptNumber) {
     survivors: byStatus('Captured').map(asMon),
     counts: {
       captured: byStatus('Captured').length,
+      // Everything caught this attempt, alive or fallen.
+      obtained: byStatus('Captured').length + byStatus('Dead').length,
       missed: byStatus('Missed').length,
       dead: byStatus('Dead').length,
       trainers_defeated: getTrainersDefeated(runId, attemptNumber).length,
@@ -315,7 +319,7 @@ export function getEncounters(runId, attemptNumber) {
   return _getState().encounters[attemptKey(runId, attemptNumber)] || {}
 }
 
-export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId, gender, ability) {
+export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId, gender, ability, ivs = null) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const encounterKey = `${locationId}:${Number(bonusLocation || 0)}`
@@ -338,6 +342,7 @@ export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation,
     shiny: Boolean(shiny),
     gender: gender || null,
     ability: ability || null,
+    ivs: normalizeIvs(ivs),
   }
 
   // Keep party display data in sync when an encounter evolves or is edited.
@@ -388,6 +393,11 @@ export function getParty(runId, attemptNumber) {
       species_name: current.species_name,
       nickname: current.nickname || null,
       shiny: Boolean(current.shiny),
+      // Calc-export facts mirror the authenticated party endpoint.
+      nature: current.nature || null,
+      gender: current.gender || null,
+      chosen_ability: current.ability || null,
+      ivs: current.ivs || null,
     }
 
     if (

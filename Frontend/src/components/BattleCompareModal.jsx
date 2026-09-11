@@ -3,6 +3,7 @@ import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
+import { getDamageCalc, buildCalcExport } from '../utils/damageCalc'
 
 function formatType(t) {
   if (!t) return null
@@ -66,10 +67,31 @@ function BattleCompareModal({
   defeatSaving = false,
   defeatError = '',
   battleType = null,
+  gameId = null,
+  levelCap = null,
 }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [selectedOpponent, setSelectedOpponent] = useState(null)
   const [confirmingDefeat, setConfirmingDefeat] = useState(false)
+  const [calcNote, setCalcNote] = useState('')
+
+  const damageCalc = getDamageCalc(gameId)
+
+  const openDamageCalc = async () => {
+    if (!damageCalc || playerParty.length === 0) return
+    // Lockley does not track current levels; the battle's cap is the
+    // Nuzlocke default, falling back to the opponent's highest level.
+    const opponentMax = opponentParty.reduce((max, m) => Math.max(max, Number(m?.lvl) || 0), 0)
+    const level = Number(levelCap) > 0 ? Number(levelCap) : (opponentMax || null)
+    const text = buildCalcExport(playerParty, level)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCalcNote("Party copied — paste into the calc's Import box")
+    } catch {
+      setCalcNote('Clipboard blocked — allow it or export manually')
+    }
+    window.open(damageCalc.url, '_blank', 'noopener')
+  }
 
   // The modal renders inside the trainer card, whose root click handler
   // toggles the card open/shut. Without a scroll lock the page behind
@@ -315,6 +337,25 @@ function BattleCompareModal({
         {/* Footer */}
         <div className="battle-compare__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openDamageCalc}
+              disabled={!damageCalc || battleLoading || playerParty.length === 0}
+              title={damageCalc
+                ? 'Copy your party (IVs included) and open the damage calculator'
+                : 'Damage calc is set up for Blaze Black first — other games are coming'}
+              style={{
+                ...MODAL_ACTION_BUTTON_STYLE,
+                ...(damageCalc
+                  ? { borderColor: '#7ec8e3', color: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }
+                  : { opacity: 0.45, cursor: 'not-allowed' }),
+              }}
+            >
+              Damage Calc
+            </button>
+            {calcNote && (
+              <span style={{ fontSize: '0.75em', color: '#7ec8e3' }}>{calcNote}</span>
+            )}
             {onDeclareDefeat && !battleResult?.success && (
               confirmingDefeat ? (
                 <>

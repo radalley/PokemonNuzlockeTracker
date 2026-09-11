@@ -686,9 +686,12 @@ def get_attempt_summary(conn, run_id, attempt_number):
         (attempt_id, run_id, attempt_id)
     ).fetchall()]
 
+    # 'obtained' is every Pokemon the attempt actually caught, alive or
+    # fallen; 'captured' stays the survivor count the survivors list shows.
     counts = dict(conn.execute(
         'select '
         "count(*) filter (where status = 'Captured') as captured, "
+        "count(*) filter (where status in ('Captured', 'Dead')) as obtained, "
         "count(*) filter (where status = 'Missed') as missed, "
         "count(*) filter (where status = 'Dead') as dead, "
         '(select count(distinct td.trainer_id) from trainers_defeated td where td.run_id = %s and td.attempt_id = %s) as trainers_defeated '
@@ -1005,10 +1008,16 @@ def get_party_for_attempt(conn, run_id, attempt_number):
     run_vg = run_vg_row['version_group_id'] if run_vg_row else None
 
     badges_select = ', ' + _pokemon_badges_text_expr('pb')
-    return conn.execute(
+    # The chosen pokebank facts ride along for the damage-calc export
+    # (nature always exists; gender/ability/IVs are column-probed like the
+    # pokebank read paths so an unmigrated database still serves the party).
+    gender_select = ', pb.gender' if _has_column(conn, 'pokebank', 'gender') else ", null as gender"
+    ability_select = ', pb.ability as chosen_ability' if _has_column(conn, 'pokebank', 'ability') else ', null as chosen_ability'
+    ivs_select = _ivs_select(conn)
+    rows = conn.execute(
         'select p.party_slot, p.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, pb.shiny, '
-        'pb.level_met, st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
-        + badges_select + ' '
+        'pb.level_met, pb.nature, st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
+        + badges_select + gender_select + ability_select + ivs_select + ' '
         'from party p '
         'join pokebank pb on p.pokemon_id = pb.pokemon_id '
         'join species s on pb.species_id = s.species_id '
@@ -1019,6 +1028,7 @@ def get_party_for_attempt(conn, run_id, attempt_number):
         + 'order by p.party_slot',
         (run_vg, game_generation, run_vg, game_generation, run_vg, game_generation, attempt_id)
     ).fetchall()
+    return [_fold_ivs(dict(r)) for r in rows]
 
 def add_to_party_for_attempt(conn, run_id, attempt_number, pokemon_id):
     row = conn.execute(
@@ -1890,7 +1900,54 @@ def drop_pokemon(conn, pokemon_id):
 def get_pokemon_name_from_id(conn, species_id):
     return conn.execute('select name from species where species_id = (%s)',(species_id,)).fetchone()[0]
 
-def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None, ability=None):
+IV_STAT_KEYS = ('hp', 'atk', 'def', 'spa', 'spd', 'spe')
+IV_COLUMNS = tuple(f'iv_{key}' for key in IV_STAT_KEYS)
+# The full physical IV range; the table's check constraint matches.
+IV_MIN = 0
+IV_MAX = 31
+
+
+def normalize_ivs(value):
+    """Coerce a client IV payload into {stat: int|None} for every stat.
+
+    Accepts a dict keyed by stat (hp, atk, ...) or by column (iv_hp, ...).
+    Blank / non-numeric / out-of-range values become None rather than
+    failing the whole save, so a half-filled panel still persists.
+    """
+    ivs = {key: None for key in IV_STAT_KEYS}
+    if not isinstance(value, dict):
+        return ivs
+    for key in IV_STAT_KEYS:
+        raw = value.get(key, value.get(f'iv_{key}'))
+        if raw is None or raw == '':
+            continue
+        try:
+            number = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if IV_MIN <= number <= IV_MAX:
+            ivs[key] = number
+    return ivs
+
+
+def _has_iv_columns(conn):
+    return _has_column(conn, 'pokebank', 'iv_hp')
+
+
+def _ivs_select(conn, alias='pb'):
+    """Column list for the IV slots, or NULLs on a not-yet-migrated database."""
+    if _has_iv_columns(conn):
+        return ', ' + ', '.join(f'{alias}.{col}' for col in IV_COLUMNS)
+    return ', ' + ', '.join(f'null as {col}' for col in IV_COLUMNS)
+
+
+def _fold_ivs(row):
+    """Move the flat iv_* columns of a row dict into a nested ivs object."""
+    row['ivs'] = {key: row.pop(f'iv_{key}', None) for key in IV_STAT_KEYS}
+    return row
+
+
+def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None, ability=None, ivs=None):
     attempt_id = conn.execute(
         'select attempt_id from attempts where run_id = %s and attempt_number = %s',
         (run_id, attempt_number)
@@ -1900,6 +1957,13 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
     has_ability = _has_column(conn, 'pokebank', 'ability')
     ability_set = ', ability=%s' if has_ability else ''
     ability_params = (ability,) if has_ability else ()
+    # IVs follow the same explicit-save semantics: every save writes all six
+    # slots, so an omitted payload clears them.
+    has_ivs = _has_iv_columns(conn)
+    iv_values = normalize_ivs(ivs)
+    if has_ivs:
+        ability_set += ''.join(f', {col}=%s' for col in IV_COLUMNS)
+        ability_params += tuple(iv_values[key] for key in IV_STAT_KEYS)
     if pokemon_id:
         conn.execute(
             f'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s{ability_set} where pokemon_id=%s',
@@ -1923,6 +1987,9 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
             return existing_id
         ability_col = ', ability' if has_ability else ''
         ability_ph = ',%s' if has_ability else ''
+        if has_ivs:
+            ability_col += ''.join(f', {col}' for col in IV_COLUMNS)
+            ability_ph += ',%s' * len(IV_COLUMNS)
         conn.execute(
             f'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender{ability_col}) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s{ability_ph})',
             (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params)
@@ -2034,13 +2101,14 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
     has_gender = _has_column(conn, 'pokebank', 'gender')
     gender_select = ', pb.gender' if has_gender else ", 'male' as gender"
     ability_select = ', pb.ability, pb.bonus_location' if _has_column(conn, 'pokebank', 'ability') else ', null as ability, pb.bonus_location'
+    ivs_select = _ivs_select(conn)
 
     rows = conn.execute(
         f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         f'cl.canonical_location_name as location_name, '
         f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, '
         f'st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, ss.bst'
-        f'{badges_select}{trainers_defeated_select}{gender_select}{ability_select} '
+        f'{badges_select}{trainers_defeated_select}{gender_select}{ability_select}{ivs_select} '
         f'from pokebank pb '
         f'join attempts a on nullif(pb.attempt_id::text, \'\')::integer = nullif(a.attempt_id::text, \'\')::integer '
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
@@ -2053,7 +2121,7 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
         + f'where nullif(pb.run_id::text, \'\')::integer = %s and nullif(a.attempt_number::text, \'\')::integer = %s',
         (run_id, attempt_number)
     ).fetchall()
-    return [dict(r) for r in rows]
+    return [_fold_ivs(dict(r)) for r in rows]
 
 def get_pokebank_for_attempt(conn, run_id, attempt_number):
     _ensure_badge_schema(conn)
@@ -2062,13 +2130,14 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
     has_gender_col = _has_column(conn, 'pokebank', 'gender')
     gender_col = 'pb.gender' if has_gender_col else "'male' as gender"
     ability_col = 'pb.ability' if _has_column(conn, 'pokebank', 'ability') else 'null as ability'
+    ivs_select = _ivs_select(conn)
     rows = conn.execute(
         'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         'case '
         '  when coalesce(pb.bonus_location, 0) > 0 then pb.bonus_location '
         '  else coalesce(el.secondary_sort_order, 0) '
         'end as secondary_sort_order, '
-        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col}, {ability_col} '
+        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col}, {ability_col}{ivs_select} '
         'from pokebank pb '
         'join attempts a on pb.attempt_id = a.attempt_id '
         'left join species s on pb.species_id = s.species_id '
@@ -2078,7 +2147,7 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
     ).fetchall()
     result = []
     for row in rows:
-        item = dict(row)
+        item = _fold_ivs(dict(row))
         item['secondary_sort_order'] = int(item.get('secondary_sort_order') or 0)
         item['encounter_key'] = f"{item['location_id']}:{item['secondary_sort_order']}"
         result.append(item)
@@ -2589,6 +2658,56 @@ def get_species_abilities(conn, species_id, game_id=None):
             seen.add(value)
             abilities.append({'name': value, 'hidden': hidden})
     return abilities
+
+def get_species_learnset(conn, species_id, game_id=None):
+    """The full level-up learnset for a species in a game's context.
+
+    Picks the moveset version group the same way trainer parties do (a
+    hack's own rows win, otherwise the base game's chronology) and resolves
+    each move's stats against that game, so the Box summary shows what a
+    caught Pokemon learns, and when, for the run's actual game. Returns
+    {version_group_id, moves} with moves in learn order; a level of 0 is
+    the "learned on evolution" convention.
+    """
+    version_group_id = None
+    if game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
+
+    selected_vg = _pick_moveset_version_group(conn, species_id, version_group_id)
+    if selected_vg is None:
+        return {'version_group_id': None, 'moves': []}
+
+    rows = conn.execute(
+        'select move_id, learn_level from movesets '
+        "where species_id = %s and learn_method = 'level-up' and version_group_id = %s "
+        'order by learn_level asc, move_id asc',
+        (species_id, selected_vg)
+    ).fetchall()
+
+    seen = set()
+    moves = []
+    for row in rows:
+        key = (row['learn_level'], row['move_id'])
+        if key in seen:
+            continue
+        seen.add(key)
+        details = _resolve_move_details(conn, row['move_id'], version_group_id)
+        if not details:
+            continue
+        moves.append({
+            'learn_level': row['learn_level'],
+            'move_id': details['move_id'],
+            'move_name': details['move_name'],
+            'type': details['type'],
+            'damage_class': details['damage_class'],
+            'power': details['power'],
+            'accuracy': details['accuracy'],
+        })
+    return {'version_group_id': selected_vg, 'moves': moves}
 
 def _attach_observed_moves(conn, party, trainer_version_group_id, trainer_key, display_version_group_id):
     """Attach admin-observed moves to party members.

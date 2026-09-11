@@ -603,6 +603,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           defeatSaving={defeatSaving}
           defeatError={defeatError}
           battleType={battleType}
+          gameId={gameId}
+          levelCap={resolvedLevelCap}
         />
       )}
     </div>
