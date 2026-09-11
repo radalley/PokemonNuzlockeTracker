@@ -173,11 +173,15 @@ async function fetchDexPatch(gameId) {
  */
 export function buildCustomSets(playerParty, opponentParty, trainerName, playerLevel) {
   const sets = {}
-  const put = (speciesName, setName, set) => {
+  const playerSets = []
+  const opponentSets = []
+  const put = (speciesName, setName, set, order) => {
     const species = exportSpeciesName(speciesName)
     if (!species) return
     sets[species] = sets[species] || {}
     sets[species][setName] = { ...set, isCustomSet: true }
+    // "Species (Set name)" is the calculator's set-selector value format.
+    order.push(`${species} (${setName})`)
   }
 
   for (const mon of playerParty || []) {
@@ -193,7 +197,7 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
     if (mon.gender === 'female') set.gender = 'F'
     if (mon.gender === 'male') set.gender = 'M'
     const label = (mon.nickname || '').trim()
-    put(mon.species_name, `${label || exportSpeciesName(mon.species_name)} (yours)`, set)
+    put(mon.species_name, `${label || exportSpeciesName(mon.species_name)} (yours)`, set, playerSets)
   }
 
   for (const mon of opponentParty || []) {
@@ -207,9 +211,9 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
     if (ability) set.ability = ability
     const item = formatItemName(mon.held_item)
     if (item) set.item = item
-    put(mon.species_name, `${trainerName || 'Trainer'} Lv${set.level}`, set)
+    put(mon.species_name, `${trainerName || 'Trainer'} Lv${set.level}`, set, opponentSets)
   }
-  return sets
+  return { sets, playerSets, opponentSets }
 }
 
 /**
@@ -237,7 +241,7 @@ export async function openCalcWithTeams(playerParty, opponentParty, trainerName,
 }
 
 function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen) {
-  const fresh = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
+  const { sets: fresh, playerSets, opponentSets } = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
   let existing = {}
   try {
     existing = JSON.parse(localStorage.getItem('customsets') || '{}') || {}
@@ -260,6 +264,11 @@ function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, 
   }
   try {
     localStorage.setItem('customsets', JSON.stringify(merged))
+    // The calc's bridge script reads this to select your lead against the
+    // trainer's lead and confirm what loaded.
+    localStorage.setItem('lockleyBattle', JSON.stringify({
+      playerSets, opponentSets, trainerName: trainerName || 'Trainer',
+    }))
   } catch {
     return false
   }

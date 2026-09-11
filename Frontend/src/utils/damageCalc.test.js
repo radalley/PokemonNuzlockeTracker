@@ -84,7 +84,7 @@ describe('buildCustomSets', () => {
   }]
 
   it('builds both teams in the calculator storage shape', () => {
-    const sets = buildCustomSets(playerParty, opponentParty, 'CHEREN', 21)
+    const { sets } = buildCustomSets(playerParty, opponentParty, 'CHEREN', 21)
     expect(sets.Snivy['Kento (yours)']).toEqual({
       level: 21,
       nature: 'Quiet',
@@ -105,17 +105,17 @@ describe('buildCustomSets', () => {
   })
 
   it('keeps a recorded 0 IV and drops unrecorded slots', () => {
-    const sets = buildCustomSets([{ species_name: 'HOOTHOOT', ivs: { atk: 0, spa: 30 } }], [], null, 18)
+    const { sets } = buildCustomSets([{ species_name: 'HOOTHOOT', ivs: { atk: 0, spa: 30 } }], [], null, 18)
     expect(sets.Hoothoot['Hoothoot (yours)'].ivs).toEqual({ atk: 0, spa: 30 })
   })
 
   it('title-cases uppercase species and fixes punctuated names', () => {
-    const sets = buildCustomSets([{ species_name: 'NIDORAN M' }], [], null, 20)
+    const { sets } = buildCustomSets([{ species_name: 'NIDORAN M' }], [], null, 20)
     expect(Object.keys(sets)).toEqual(['Nidoran-M'])
   })
 
   it('formats trainer item tokens the calc dex recognizes', () => {
-    const sets = buildCustomSets([], [
+    const { sets } = buildCustomSets([], [
       { species_name: 'ALAKAZAM', lvl: 40, held_item: 'ITEM_ORAN_BERRY' },
       { species_name: 'BEARTIC', lvl: 40, held_item: 'NeverMeltIce' },
       { species_name: 'DRILBUR', lvl: 40, held_item: 'Toxic Orb*' },
@@ -126,12 +126,18 @@ describe('buildCustomSets', () => {
   })
 
   it('uses each trainer mon\'s real level, and the cap for the player', () => {
-    const sets = buildCustomSets(
+    const { sets } = buildCustomSets(
       [{ species_name: 'NATU' }],
       [{ species_name: 'PANSEAR', lvl: 23 }],
       'CHEREN', 21,
     )
     expect(sets.Natu['Natu (yours)'].level).toBe(21)
     expect(sets.Pansear['CHEREN Lv23'].level).toBe(23)
+  })
+
+  it('returns both teams\' set names in party order for the calc handoff', () => {
+    const { playerSets, opponentSets } = buildCustomSets(playerParty, opponentParty, 'CHEREN', 21)
+    expect(playerSets).toEqual(['Snivy (Kento (yours))'])
+    expect(opponentSets).toEqual(['Sandile (CHEREN Lv21)'])
   })
 })
