@@ -8,14 +8,17 @@
 
 // game_id -> the calculator that carries this game's data. Only games listed
 // here get a live Damage Calc button; everything else shows it greyed out.
+// The #import-1_wrapper fragment lands the page scrolled to the Import box
+// (it otherwise sits ~2000px below the fold and looks like there is no
+// import at all).
 export const DAMAGE_CALCS = {
   1001: { // Blaze Black
     label: 'Blaze Black/Volt White Calculator',
-    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator',
+    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator#import-1_wrapper',
   },
   1002: { // Volt White
     label: 'Blaze Black/Volt White Calculator',
-    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator',
+    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator#import-1_wrapper',
   },
 }
 

@@ -74,6 +74,7 @@ function BattleCompareModal({
   const [selectedOpponent, setSelectedOpponent] = useState(null)
   const [confirmingDefeat, setConfirmingDefeat] = useState(false)
   const [calcNote, setCalcNote] = useState('')
+  const [calcFallbackText, setCalcFallbackText] = useState('')
 
   const damageCalc = getDamageCalc(gameId)
 
@@ -86,9 +87,11 @@ function BattleCompareModal({
     const text = buildCalcExport(playerParty, level)
     try {
       await navigator.clipboard.writeText(text)
-      setCalcNote("Party copied — paste into the calc's Import box")
+      setCalcNote('Party copied. In the calc: click the Import box, press Ctrl+V, then Import.')
+      setCalcFallbackText('')
     } catch {
-      setCalcNote('Clipboard blocked — allow it or export manually')
+      setCalcNote('Clipboard blocked — copy the text below, then paste it into the calc’s Import box.')
+      setCalcFallbackText(text)
     }
     window.open(damageCalc.url, '_blank', 'noopener')
   }
@@ -354,7 +357,15 @@ function BattleCompareModal({
               Damage Calc
             </button>
             {calcNote && (
-              <span style={{ fontSize: '0.75em', color: '#7ec8e3' }}>{calcNote}</span>
+              <span style={{ fontSize: '0.75em', color: '#7ec8e3', maxWidth: '340px' }}>{calcNote}</span>
+            )}
+            {calcFallbackText && (
+              <textarea
+                readOnly
+                value={calcFallbackText}
+                onFocus={e => e.target.select()}
+                style={{ width: '100%', minHeight: '70px', fontSize: '0.72em', background: 'var(--surface-deep)', color: 'var(--text-primary)', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '6px' }}
+              />
             )}
             {onDeclareDefeat && !battleResult?.success && (
               confirmingDefeat ? (
