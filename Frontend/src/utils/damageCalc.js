@@ -37,7 +37,7 @@ const EXPORT_NAME_FIXES = {
   'PORYGON-Z': 'Porygon-Z',
 }
 
-function exportSpeciesName(name) {
+export function exportSpeciesName(name) {
   const trimmed = String(name || '').trim()
   const key = trimmed.toUpperCase()
   if (EXPORT_NAME_FIXES[key]) return EXPORT_NAME_FIXES[key]

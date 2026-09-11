@@ -605,6 +605,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           battleType={battleType}
           gameId={gameId}
           levelCap={resolvedLevelCap}
+          generation={generation}
         />
       )}
     </div>
