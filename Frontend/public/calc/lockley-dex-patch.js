@@ -19,7 +19,7 @@
   try {
     var skin = document.createElement('link');
     skin.rel = 'stylesheet';
-    skin.href = './lockley-calc.css?3';
+    skin.href = './lockley-calc.css?4';
     (document.head || document.documentElement).appendChild(skin);
     document.title = 'Lockley Damage Calc';
   } catch (e) { /* stock look stands */ }
@@ -204,6 +204,37 @@
         // A dropdown pick should move the highlight too.
         $(document).on('change', 'input.set-selector', refreshHighlights);
       } catch (e) { /* the strips are optional */ }
+
+      // Game header: the run's title art plus the battle being planned,
+      // replacing the stock text title (hidden by lockley-calc.css).
+      try {
+        var wrapper = document.querySelector('.wrapper');
+        if (wrapper) {
+          var head = document.createElement('div');
+          head.className = 'lockley-calc-header';
+          if (battle.gameLogo) {
+            var logo = document.createElement('img');
+            logo.src = battle.gameLogo;
+            logo.alt = battle.gameName || '';
+            logo.className = 'lockley-calc-header-logo';
+            logo.onerror = function () { this.style.display = 'none'; };
+            head.appendChild(logo);
+          }
+          var headText = document.createElement('div');
+          var line1 = document.createElement('div');
+          line1.className = 'lockley-calc-header-title';
+          line1.textContent = 'Damage Calculator';
+          headText.appendChild(line1);
+          var line2 = document.createElement('div');
+          line2.className = 'lockley-calc-header-battle';
+          line2.textContent = 'Battling ' + (battle.trainerName || 'a trainer') +
+            (battle.context ? ' — ' + battle.context : '');
+          headText.appendChild(line2);
+          head.appendChild(headText);
+          wrapper.insertBefore(head, wrapper.firstChild);
+          document.body.classList.add('lockley-has-header');
+        }
+      } catch (e) { /* the stock title stands */ }
 
       // Fork credit: keep the original creators' credits, framed as what
       // this page is — Lockley's fork of their calculator.

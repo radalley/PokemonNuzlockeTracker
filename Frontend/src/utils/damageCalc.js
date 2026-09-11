@@ -11,8 +11,14 @@
 // game_id -> calc settings. Only listed games get a live Calc button;
 // adding a game here is the entire enablement step.
 export const DAMAGE_CALCS = {
-  1001: { gen: 5 }, // Blaze Black
-  1002: { gen: 5 }, // Volt White
+  1001: { gen: 5, gameName: 'Blaze Black' },
+  1002: { gen: 5, gameName: 'Volt White' },
+}
+
+// Same convention as AttemptHeader/NewRun/LoadRun.
+export function gameLogoSrc(gameName) {
+  if (!gameName) return null
+  return `/sprites/Game Logos/Pokemon_${String(gameName).replace(/\s+/g, '_')}.png`
 }
 
 export function getDamageCalc(gameId) {
@@ -232,7 +238,7 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
  * themselves are preserved. The dex patch is best-effort: if it cannot
  * be fetched the calc still opens with its stock data.
  */
-export async function openCalcWithTeams(playerParty, opponentParty, trainerName, playerLevel, gen, gameId) {
+export async function openCalcWithTeams(playerParty, opponentParty, trainerName, playerLevel, gen, gameId, context = '') {
   let patched = false
   try {
     const patch = await fetchDexPatch(gameId)
@@ -245,7 +251,7 @@ export async function openCalcWithTeams(playerParty, opponentParty, trainerName,
   } catch {
     localStorage.removeItem('lockleyDexPatch')
   }
-  const opened = seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen)
+  const opened = seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen, gameId, context)
   return opened && { patched }
 }
 
@@ -279,7 +285,7 @@ export function mergeCustomSets(existing, fresh) {
   return merged
 }
 
-function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen) {
+function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen, gameId, context) {
   const { sets: fresh, playerSets, opponentSets } = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
   let existing = {}
   try {
@@ -292,8 +298,12 @@ function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, 
     localStorage.setItem('customsets', JSON.stringify(merged))
     // The calc's bridge script reads this to select your lead against the
     // trainer's lead and confirm what loaded.
+    const gameName = getDamageCalc(gameId)?.gameName || null
     localStorage.setItem('lockleyBattle', JSON.stringify({
       playerSets, opponentSets, trainerName: trainerName || 'Trainer',
+      context: context || '',
+      gameName,
+      gameLogo: gameLogoSrc(gameName),
     }))
   } catch {
     return false

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { buildCustomSets, calcMoveName, formatDexPatch, getDamageCalc, mergeCustomSets, opponentMoveNames } from './damageCalc'
 
 describe('getDamageCalc', () => {
-  it('maps Blaze Black and Volt White to a gen-5 calc', () => {
-    expect(getDamageCalc(1001)).toEqual({ gen: 5 })
-    expect(getDamageCalc('1002')).toEqual({ gen: 5 })
+  it('maps Blaze Black and Volt White to a gen-5 calc with their title art', () => {
+    expect(getDamageCalc(1001)).toEqual({ gen: 5, gameName: 'Blaze Black' })
+    expect(getDamageCalc('1002')).toEqual({ gen: 5, gameName: 'Volt White' })
   })
 
   it('has no calc for games not yet wired up', () => {

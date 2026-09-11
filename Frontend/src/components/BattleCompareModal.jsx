@@ -87,7 +87,7 @@ function BattleCompareModal({
     // Nuzlocke default, falling back to the opponent's highest level.
     const opponentMax = opponentParty.reduce((max, m) => Math.max(max, Number(m?.lvl) || 0), 0)
     const level = Number(levelCap) > 0 ? Number(levelCap) : (opponentMax || null)
-    const ok = await openCalcWithTeams(playerParty, opponentParty, trainerName, level, damageCalc.gen, gameId)
+    const ok = await openCalcWithTeams(playerParty, opponentParty, trainerName, level, damageCalc.gen, gameId, subtitle)
     setCalcNote(!ok
       ? 'Could not store the teams — browser storage is blocked.'
       : ok.patched

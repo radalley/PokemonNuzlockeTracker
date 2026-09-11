@@ -143,3 +143,35 @@ a { color: #7ec8e3 !important; }
   color: #9ca3af;
   margin-bottom: 6px;
 }
+
+/* ---- the game header (replaces the stock text title) ---- */
+.lockley-has-header .title-text.main-title-text {
+  display: none;
+}
+
+.lockley-calc-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 2px 0 12px;
+  font-family: sans-serif;
+}
+
+.lockley-calc-header-logo {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.lockley-calc-header-title {
+  font-size: 17px;
+  font-weight: bold;
+  color: #f3f4f6;
+}
+
+.lockley-calc-header-battle {
+  font-size: 13px;
+  color: #f2b46b;
+  margin-top: 2px;
+}
