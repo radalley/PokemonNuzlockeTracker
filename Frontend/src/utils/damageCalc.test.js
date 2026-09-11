@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCustomSets, calcMoveName, formatDexPatch, getDamageCalc, opponentMoveNames } from './damageCalc'
+import { buildCustomSets, calcMoveName, formatDexPatch, getDamageCalc, mergeCustomSets, opponentMoveNames } from './damageCalc'
 
 describe('getDamageCalc', () => {
   it('maps Blaze Black and Volt White to a gen-5 calc', () => {
@@ -158,5 +158,34 @@ describe('buildCustomSets', () => {
       [{ species_name: 'NATU', species_id: 177, shiny: true }], [], null, 20,
     )
     expect(playerSets[0].sprite).toBe('/sprites/Shiny/177.png')
+  })
+})
+
+describe('mergeCustomSets', () => {
+  it('keeps moves saved onto a (yours) set across a reseed', () => {
+    const existing = {
+      Snivy: { 'Kento (yours)': { level: 20, moves: ['Leaf Tornado', 'Leech Seed'], isCustomSet: true } },
+    }
+    const fresh = {
+      Snivy: { 'Kento (yours)': { level: 21, moves: [], isCustomSet: true } },
+    }
+    const merged = mergeCustomSets(existing, fresh)
+    expect(merged.Snivy['Kento (yours)'].level).toBe(21)
+    expect(merged.Snivy['Kento (yours)'].moves).toEqual(['Leaf Tornado', 'Leech Seed'])
+  })
+
+  it('always takes fresh trainer moves and drops stale Lockley sets', () => {
+    const existing = {
+      Sandile: { 'CHEREN Lv21': { level: 21, moves: ['Old Move'] } },
+      Drilbur: { 'GHOST Lv30': { level: 30, moves: [] } },
+      Excadrill: { 'My Own Import': { level: 50, moves: ['Earthquake'] } },
+    }
+    const fresh = {
+      Sandile: { 'CHEREN Lv23': { level: 23, moves: ['Crunch'] } },
+    }
+    const merged = mergeCustomSets(existing, fresh)
+    expect(merged.Sandile).toEqual({ 'CHEREN Lv23': { level: 23, moves: ['Crunch'] } })
+    expect(merged.Drilbur).toBeUndefined()
+    expect(merged.Excadrill['My Own Import'].moves).toEqual(['Earthquake'])
   })
 })

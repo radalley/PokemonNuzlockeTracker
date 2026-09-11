@@ -249,6 +249,36 @@ export async function openCalcWithTeams(playerParty, opponentParty, trainerName,
   return opened && { patched }
 }
 
+/**
+ * Merge freshly built sets over what the calculator already stores:
+ * Lockley-shaped set names are replaced (Lockley's data wins), the user's
+ * own imported sets survive — and moves saved onto a "(yours)" set inside
+ * the calculator carry over to its fresh replacement, since Lockley does
+ * not track your movesets.
+ */
+export function mergeCustomSets(existing, fresh) {
+  const isOurs = (setName) => / \(yours\)$/.test(setName) || / Lv\d+$/.test(setName)
+  const merged = {}
+  for (const [species, bySet] of Object.entries(existing || {})) {
+    for (const [setName, set] of Object.entries(bySet || {})) {
+      if (isOurs(setName)) continue
+      merged[species] = merged[species] || {}
+      merged[species][setName] = set
+    }
+  }
+  for (const [species, bySet] of Object.entries(fresh || {})) {
+    merged[species] = merged[species] || {}
+    for (const [setName, set] of Object.entries(bySet || {})) {
+      const saved = existing?.[species]?.[setName]
+      const keepMoves = / \(yours\)$/.test(setName)
+        && Array.isArray(saved?.moves) && saved.moves.length > 0
+        && (!Array.isArray(set.moves) || set.moves.length === 0)
+      merged[species][setName] = keepMoves ? { ...set, moves: saved.moves } : set
+    }
+  }
+  return merged
+}
+
 function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen) {
   const { sets: fresh, playerSets, opponentSets } = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
   let existing = {}
@@ -257,20 +287,7 @@ function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, 
   } catch {
     existing = {}
   }
-  // Drop our previous seeding (recognizable set names), keep the user's own.
-  const isOurs = (setName) => / \(yours\)$/.test(setName) || / Lv\d+$/.test(setName)
-  const merged = {}
-  for (const [species, bySet] of Object.entries(existing)) {
-    for (const [setName, set] of Object.entries(bySet || {})) {
-      if (isOurs(setName)) continue
-      merged[species] = merged[species] || {}
-      merged[species][setName] = set
-    }
-  }
-  for (const [species, bySet] of Object.entries(fresh)) {
-    merged[species] = merged[species] || {}
-    Object.assign(merged[species], bySet)
-  }
+  const merged = mergeCustomSets(existing, fresh)
   try {
     localStorage.setItem('customsets', JSON.stringify(merged))
     // The calc's bridge script reads this to select your lead against the

@@ -14,6 +14,16 @@
 (function () {
   'use strict';
 
+  // Lockley skin: strip the surrounding chrome, restyle to Lockley's
+  // palette. Loaded first so the page never flashes the stock look.
+  try {
+    var skin = document.createElement('link');
+    skin.rel = 'stylesheet';
+    skin.href = './lockley-calc.css?1';
+    (document.head || document.documentElement).appendChild(skin);
+    document.title = 'Lockley Damage Calc';
+  } catch (e) { /* stock look stands */ }
+
   function toId(name) {
     return String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
@@ -141,22 +151,17 @@
         }
       }
 
-      // The party bar: both teams as clickable sprites, hzla-style, above
-      // the calculator. Clicking a mon loads its set into that side's panel.
+      // The party strips: each team as clickable sprites directly under
+      // its side's Pokemon panel. Clicking a mon loads its set there.
       try {
-        var bar = document.createElement('div');
-        bar.id = 'lockley-party-bar';
-        bar.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;' +
-          'padding:8px 14px;background:#20262c;color:#dfe7ee;font:12px/1.3 sans-serif;' +
-          'border-bottom:2px solid #39434c;';
-
-        function makeGroup(title, team, side, accent) {
-          var group = document.createElement('div');
-          group.style.cssText = 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;';
+        function makeStrip(title, team, side, accent) {
+          var strip = document.createElement('div');
+          strip.className = 'lockley-party-strip';
           var caption = document.createElement('span');
+          caption.className = 'lockley-caption';
           caption.textContent = title;
-          caption.style.cssText = 'font-weight:bold;margin-right:6px;color:' + accent + ';';
-          group.appendChild(caption);
+          caption.style.color = accent;
+          strip.appendChild(caption);
           team.forEach(function (mon) {
             if (!mon || !mon.id) return;
             var btn = document.createElement('button');
@@ -165,33 +170,75 @@
             btn.setAttribute('data-side', String(side));
             btn.setAttribute('data-set', mon.id);
             btn.title = mon.id;
-            btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0;' +
-              'border:2px solid transparent;border-radius:8px;background:transparent;' +
-              'cursor:pointer;padding:2px 4px;color:inherit;font:inherit;';
             if (mon.sprite) {
               var img = document.createElement('img');
               img.src = mon.sprite;
-              img.width = 40; img.height = 40;
-              img.style.cssText = 'image-rendering:pixelated;object-fit:contain;';
               img.onerror = function () { this.style.display = 'none'; };
               btn.appendChild(img);
             }
             var name = document.createElement('span');
             name.textContent = mon.label || mon.id;
-            name.style.cssText = 'font-size:10px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
             btn.appendChild(name);
             btn.onclick = function () { pick(side, mon.id); };
-            group.appendChild(btn);
+            strip.appendChild(btn);
           });
-          return group;
+          return strip;
         }
 
-        bar.appendChild(makeGroup('Your team', playerTeam, 0, '#7ec8e3'));
-        bar.appendChild(makeGroup((battle.trainerName || 'Trainer'), opponentTeam, 1, '#f2b46b'));
-        document.body.insertBefore(bar, document.body.firstChild);
+        var p1 = document.getElementById('p1');
+        var p2 = document.getElementById('p2');
+        if (p1 && p1.parentElement) {
+          p1.parentElement.appendChild(makeStrip('Your team', playerTeam, 0, '#7ec8e3'));
+        }
+        if (p2 && p2.parentElement) {
+          p2.parentElement.appendChild(makeStrip((battle.trainerName || 'Trainer'), opponentTeam, 1, '#f2b46b'));
+        }
         // A dropdown pick should move the highlight too.
         $(document).on('change', 'input.set-selector', refreshHighlights);
-      } catch (e) { /* the bar is optional */ }
+      } catch (e) { /* the strips are optional */ }
+
+      // Fork credit: keep the original creators' credits, framed as what
+      // this page is — Lockley's fork of their calculator.
+      try {
+        var credits = document.querySelector('.credits');
+        if (credits) {
+          var note = document.createElement('div');
+          note.className = 'lockley-credits-note';
+          note.textContent = 'Lockley Damage Calc — a fork of the Pokémon Showdown Damage Calculator. All calculator credit to its creators:';
+          credits.insertBefore(note, credits.firstChild);
+        }
+      } catch (e) { /* credits stand as shipped */ }
+
+      // Moveset save: moves picked in a panel showing one of YOUR mons
+      // persist onto that mon's stored set, so switching away and back
+      // (or reopening the calc from a later battle) keeps them.
+      try {
+        var playerIds = {};
+        playerTeam.forEach(function (mon) { if (mon && mon.id) playerIds[mon.id] = true; });
+        $(document).on('change', '.poke-info select.move-selector', function () {
+          try {
+            var panel = this.closest('.poke-info');
+            if (!panel) return;
+            var fullname = $(panel).find('input.set-selector').val() || '';
+            if (!playerIds[fullname]) return;
+            var species = fullname.substring(0, fullname.indexOf(' ('));
+            var setName = fullname.substring(fullname.indexOf('(') + 1, fullname.lastIndexOf(')'));
+            var moves = [];
+            $(panel).find('select.move-selector').each(function () {
+              var value = $(this).val();
+              if (value && value !== '(No Move)') moves.push(value);
+            });
+            var stored = JSON.parse(localStorage.getItem('customsets') || '{}') || {};
+            if (stored[species] && stored[species][setName]) {
+              stored[species][setName].moves = moves;
+              localStorage.setItem('customsets', JSON.stringify(stored));
+            }
+            if (window.setdex && setdex[species] && setdex[species][setName]) {
+              setdex[species][setName].moves = moves;
+            }
+          } catch (e) { /* this pick just won't persist */ }
+        });
+      } catch (e) { /* saving is optional */ }
 
       pick(0, playerTeam[0] && playerTeam[0].id);
       pick(1, opponentTeam[0] && opponentTeam[0].id);
