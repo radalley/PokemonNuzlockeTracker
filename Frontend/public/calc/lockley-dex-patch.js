@@ -19,7 +19,7 @@
   try {
     var skin = document.createElement('link');
     skin.rel = 'stylesheet';
-    skin.href = './lockley-calc.css?1';
+    skin.href = './lockley-calc.css?3';
     (document.head || document.documentElement).appendChild(skin);
     document.title = 'Lockley Damage Calc';
   } catch (e) { /* stock look stands */ }
@@ -185,14 +185,22 @@
           return strip;
         }
 
-        var p1 = document.getElementById('p1');
-        var p2 = document.getElementById('p2');
-        if (p1 && p1.parentElement) {
-          p1.parentElement.appendChild(makeStrip('Your team', playerTeam, 0, '#7ec8e3'));
+        // The strip lives INSIDE the fieldset with an explicit pixel width
+        // measured before insertion. Everything here is shrink-to-fit
+        // floats sized to the pixel: a sibling beside the floated fieldset
+        // accumulates horizontally in intrinsic sizing, and auto or
+        // percentage widths feed back into the float's own width — an
+        // explicit width no wider than the existing content is the only
+        // thing that leaves the three-column layout untouched.
+        function attachStrip(fieldset, strip) {
+          if (!fieldset) return;
+          var cs = getComputedStyle(fieldset);
+          var w = fieldset.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0');
+          if (w > 40) strip.style.width = Math.floor(w) + 'px';
+          fieldset.appendChild(strip);
         }
-        if (p2 && p2.parentElement) {
-          p2.parentElement.appendChild(makeStrip((battle.trainerName || 'Trainer'), opponentTeam, 1, '#f2b46b'));
-        }
+        attachStrip(document.getElementById('p1'), makeStrip('Your team', playerTeam, 0, '#7ec8e3'));
+        attachStrip(document.getElementById('p2'), makeStrip((battle.trainerName || 'Trainer'), opponentTeam, 1, '#f2b46b'));
         // A dropdown pick should move the highlight too.
         $(document).on('change', 'input.set-selector', refreshHighlights);
       } catch (e) { /* the strips are optional */ }

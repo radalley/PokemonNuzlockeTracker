@@ -17,6 +17,8 @@ label[for="champions"], label[for="randoms"], label[for="oms"] {
 body {
   background: #0f131a !important;
   color: #f3f4f6 !important;
+  /* the stripped Showdown header used to provide the top breathing room */
+  padding-top: 12px !important;
 }
 
 .panel, fieldset, .results, .result-box, .modeSelection, .notationSelection,
@@ -26,7 +28,16 @@ body {
   color: #f3f4f6 !important;
 }
 
-fieldset.poke-info, .panel {
+/* The .panel wrappers are borderless shrink-to-fit floats sized to the
+   pixel: adding ANY border to them widens each by 2px and wraps the third
+   column below the first. Only the fieldsets (which already carry a stock
+   border to recolor) get the Lockley ring. */
+.panel {
+  border: none !important;
+  background: transparent !important;
+}
+
+fieldset.poke-info, fieldset {
   border: 1px solid #2e2f3a !important;
   border-radius: 10px !important;
 }
@@ -75,7 +86,11 @@ a { color: #7ec8e3 !important; }
 
 /* ---- the Lockley party strips under each panel ---- */
 .lockley-party-strip {
-  width: 100%;
+  /* The calc's .panel columns are shrink-to-fit floats sized to the pixel:
+     the strip must never contribute intrinsic width (a full team would
+     widen the panel and wrap Pokemon 2 below Pokemon 1), and Chrome's
+     percentage-min-width feedback grows floats, so the bridge sets an
+     explicit pixel width copied from the fieldset instead. */
   box-sizing: border-box;
   margin-top: 10px;
   padding: 8px 10px;
