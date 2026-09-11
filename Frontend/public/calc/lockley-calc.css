@@ -6,6 +6,8 @@
 /* ---- strip the surrounding chrome ---- */
 header,
 .genSelection,
+.modeSelection,
+.notationSelection,
 a.analysis,
 .poke-info .right:has(a.analysis),
 label:has(> #champions), label:has(> #randoms), label:has(> #oms),

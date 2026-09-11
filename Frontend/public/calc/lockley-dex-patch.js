@@ -19,7 +19,7 @@
   try {
     var skin = document.createElement('link');
     skin.rel = 'stylesheet';
-    skin.href = './lockley-calc.css?4';
+    skin.href = './lockley-calc.css?5';
     (document.head || document.documentElement).appendChild(skin);
     document.title = 'Lockley Damage Calc';
   } catch (e) { /* stock look stands */ }
