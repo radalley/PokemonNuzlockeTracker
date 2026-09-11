@@ -1,32 +1,26 @@
-// Bridge to the hzla Dynamic-Calc damage calculators.
+// Bridge to the Smogon damage calculator that Lockley serves at /calc/
+// (a verbatim mirror of calc.pokemonshowdown.com — see
+// public/calc/LOCKLEY-README.md).
 //
-// The calc's Import box takes Showdown-export text: pasting it registers each
-// mon as a custom "My Box" set (species, nickname, gender, level, nature,
-// ability, IVs) that persists in the calc's own storage. We build that text
-// from the attempt's party, copy it to the clipboard, and open the game's
-// calculator; the user pastes once into the Import box.
+// The calculator merges localStorage.customsets into its set index on
+// every page load. Because the mirror is same-origin, the battle modal
+// can write both teams there and open it: every mon of yours and the
+// trainer's is then one species pick away, preloaded with level, nature,
+// ability, item, IVs, and moves. No paste, no import step.
 
-// game_id -> the calculator that carries this game's data. Only games listed
-// here get a live Damage Calc button; everything else shows it greyed out.
-// The #import-1_wrapper fragment lands the page scrolled to the Import box
-// (it otherwise sits ~2000px below the fold and looks like there is no
-// import at all).
+// game_id -> calc settings. Only listed games get a live Calc button;
+// adding a game here is the entire enablement step.
 export const DAMAGE_CALCS = {
-  1001: { // Blaze Black
-    label: 'Blaze Black/Volt White Calculator',
-    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator#import-1_wrapper',
-  },
-  1002: { // Volt White
-    label: 'Blaze Black/Volt White Calculator',
-    url: 'https://hzla.github.io/Dynamic-Calc-Decomps/?data=9aa37533b7c000992d92&gen=5&types=5&view=calculator#import-1_wrapper',
-  },
+  1001: { gen: 5 }, // Blaze Black
+  1002: { gen: 5 }, // Volt White
 }
 
 export function getDamageCalc(gameId) {
   return DAMAGE_CALCS[Number(gameId)] || null
 }
 
-// Species spellings where the calc differs from our species table.
+// Species spellings where the calculator's dex differs from our species
+// table (which stores uppercase names; the calc is case-sensitive).
 const EXPORT_NAME_FIXES = {
   'NIDORAN M': 'Nidoran-M',
   'NIDORAN F': 'Nidoran-F',
@@ -37,65 +31,151 @@ const EXPORT_NAME_FIXES = {
   'PORYGON-Z': 'Porygon-Z',
 }
 
-function exportSpeciesName(name) {
+export function exportSpeciesName(name) {
   const trimmed = String(name || '').trim()
   const key = trimmed.toUpperCase()
   if (EXPORT_NAME_FIXES[key]) return EXPORT_NAME_FIXES[key]
-  // Our species table stores names uppercase, but the calc's import parser
-  // is case-sensitive ('SNIVY' silently fails, 'Snivy' imports).
   return trimmed === key
     ? trimmed.toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase())
     : trimmed
 }
 
-function formatAbilityName(ability) {
-  if (!ability) return null
-  return String(ability)
-    .replace(/^ABILITY_/i, '')
-    .replace(/_/g, ' ')
-    .toLowerCase()
-    .replace(/\b\w/g, c => c.toUpperCase())
+const titleCase = (s) => String(s || '').toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase())
+
+function formatAbilityName(raw) {
+  if (!raw) return undefined
+  return titleCase(String(raw).replace(/^ABILITY_/i, '').replace(/_/g, ' '))
 }
 
-const IV_LABELS = [
-  ['hp', 'HP'],
-  ['atk', 'Atk'],
-  ['def', 'Def'],
-  ['spa', 'SpA'],
-  ['spd', 'SpD'],
-  ['spe', 'Spe'],
-]
+// Item display names the generic cleanup can't reach: the data carries
+// compressed pre-gen-6 spellings, the calc's dex uses spaced ones.
+const ITEM_NAME_FIXES = {
+  twistedspoon: 'Twisted Spoon',
+  nevermeltice: 'Never-Melt Ice',
+  blackglasses: 'Black Glasses',
+  brightpowder: 'Bright Powder',
+  silverpowder: 'Silver Powder',
+  deepseatooth: 'Deep Sea Tooth',
+  deepseascale: 'Deep Sea Scale',
+}
+
+function formatItemName(raw) {
+  const token = String(raw || '').trim()
+    .replace(/^[\s{[("']+/, '')
+    .replace(/[\s})\]*("']+$/, '')
+    .replace(/^ITEM_/i, '')
+  if (!token || /^(none|null|no_item|no item)$/i.test(token)) return undefined
+  const fixed = ITEM_NAME_FIXES[token.toLowerCase().replace(/[^a-z0-9]/g, '')]
+  if (fixed) return fixed
+  // 'ITEM_ORAN_BERRY' -> 'Oran Berry'; 'FlameOrb' -> 'Flame Orb'
+  return titleCase(token.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' '))
+}
+
+const IV_KEYS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe']
+
+function recordedIvs(ivs) {
+  const out = {}
+  for (const key of IV_KEYS) {
+    const value = Number(ivs?.[key])
+    if (ivs?.[key] !== null && ivs?.[key] !== undefined && Number.isFinite(value)) out[key] = value
+  }
+  return out
+}
 
 /**
- * Showdown-export text for one party. `level` applies to every mon (Lockley
- * does not track current levels; the battle's level cap is the Nuzlocke
- * default). Unrecorded IV slots are omitted so the calc keeps its 31 default.
+ * The four moves a trainer mon is displayed with: confirmed sightings
+ * claim their slots first, estimates fill the rest (the trainer card's
+ * rule).
  */
-export function buildCalcExport(party, level) {
-  const blocks = []
-  for (const mon of party || []) {
-    if (!mon || !mon.species_name) continue
-    const species = exportSpeciesName(mon.species_name)
-    const nickname = (mon.nickname || '').trim()
-    const gender = mon.gender === 'female' ? 'F' : mon.gender === 'male' ? 'M' : ''
-    let header = nickname && nickname.toLowerCase() !== species.toLowerCase()
-      ? `${nickname} (${species})`
-      : species
-    if (gender) header += ` (${gender})`
+export function opponentMoveNames(mon) {
+  const observed = (mon?.observed_moves || []).map(m => m.move_name).filter(Boolean)
+  const seen = new Set(observed.map(n => n.toLowerCase()))
+  const inferred = (mon?.resolved_moves || [])
+    .map(m => (typeof m === 'object' && m ? m.move_name : m))
+    .filter(n => n && !seen.has(String(n).toLowerCase()))
+    .slice(0, Math.max(0, 4 - observed.length))
+  return [...observed, ...inferred].map(n => titleCase(String(n).replace(/_/g, ' ')))
+}
 
-    const lines = [header]
-    const numericLevel = Number(level)
-    if (Number.isFinite(numericLevel) && numericLevel > 0) lines.push(`Level: ${Math.min(100, numericLevel)}`)
-    if (mon.nature) lines.push(`${String(mon.nature).charAt(0).toUpperCase()}${String(mon.nature).slice(1).toLowerCase()} Nature`)
-    const ability = formatAbilityName(mon.chosen_ability)
-    if (ability) lines.push(`Ability: ${ability}`)
-    const ivs = mon.ivs || {}
-    const ivParts = IV_LABELS
-      .filter(([key]) => Number.isFinite(Number(ivs[key])) && ivs[key] !== null && ivs[key] !== '')
-      .map(([key, label]) => `${Number(ivs[key])} ${label}`)
-    if (ivParts.length > 0) lines.push(`IVs: ${ivParts.join(' / ')}`)
-
-    blocks.push(lines.join('\n'))
+/**
+ * Both teams as the calculator's customsets shape:
+ * { Species: { 'Set name': { level, nature, ability, item, ivs, moves } } }
+ * Player sets are tagged "(yours)"; trainer sets carry the trainer's name
+ * and each mon's real level.
+ */
+export function buildCustomSets(playerParty, opponentParty, trainerName, playerLevel) {
+  const sets = {}
+  const put = (speciesName, setName, set) => {
+    const species = exportSpeciesName(speciesName)
+    if (!species) return
+    sets[species] = sets[species] || {}
+    sets[species][setName] = { ...set, isCustomSet: true }
   }
-  return blocks.join('\n\n')
+
+  for (const mon of playerParty || []) {
+    if (!mon?.species_name) continue
+    const set = {
+      level: Number(playerLevel) > 0 ? Math.min(100, Number(playerLevel)) : 50,
+      ivs: recordedIvs(mon.ivs),
+      moves: [],
+    }
+    if (mon.nature) set.nature = titleCase(mon.nature)
+    const ability = formatAbilityName(mon.chosen_ability)
+    if (ability) set.ability = ability
+    if (mon.gender === 'female') set.gender = 'F'
+    if (mon.gender === 'male') set.gender = 'M'
+    const label = (mon.nickname || '').trim()
+    put(mon.species_name, `${label || exportSpeciesName(mon.species_name)} (yours)`, set)
+  }
+
+  for (const mon of opponentParty || []) {
+    if (!mon?.species_name) continue
+    const set = {
+      level: Number(mon.lvl) > 0 ? Number(mon.lvl) : 50,
+      ivs: {},
+      moves: opponentMoveNames(mon),
+    }
+    const ability = formatAbilityName(mon.ability1)
+    if (ability) set.ability = ability
+    const item = formatItemName(mon.held_item)
+    if (item) set.item = item
+    put(mon.species_name, `${trainerName || 'Trainer'} Lv${set.level}`, set)
+  }
+  return sets
+}
+
+/**
+ * Write both teams into the calculator's storage and open it.
+ * Lockley-written sets from earlier battles are replaced wholesale;
+ * sets the user imported inside the calc themselves are preserved.
+ */
+export function openCalcWithTeams(playerParty, opponentParty, trainerName, playerLevel, gen) {
+  const fresh = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
+  let existing = {}
+  try {
+    existing = JSON.parse(localStorage.getItem('customsets') || '{}') || {}
+  } catch {
+    existing = {}
+  }
+  // Drop our previous seeding (recognizable set names), keep the user's own.
+  const isOurs = (setName) => / \(yours\)$/.test(setName) || / Lv\d+$/.test(setName)
+  const merged = {}
+  for (const [species, bySet] of Object.entries(existing)) {
+    for (const [setName, set] of Object.entries(bySet || {})) {
+      if (isOurs(setName)) continue
+      merged[species] = merged[species] || {}
+      merged[species][setName] = set
+    }
+  }
+  for (const [species, bySet] of Object.entries(fresh)) {
+    merged[species] = merged[species] || {}
+    Object.assign(merged[species], bySet)
+  }
+  try {
+    localStorage.setItem('customsets', JSON.stringify(merged))
+  } catch {
+    return false
+  }
+  window.open(`/calc/index.html?gen=${Number(gen) || 5}`, '_blank', 'noopener')
+  return true
 }

@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildCalcExport, getDamageCalc } from './damageCalc'
+import { buildCustomSets, getDamageCalc, opponentMoveNames } from './damageCalc'
 
 describe('getDamageCalc', () => {
-  it('maps Blaze Black and Volt White to the BB/VW calculator', () => {
-    expect(getDamageCalc(1001)).toBeTruthy()
-    expect(getDamageCalc('1001')).toBeTruthy()
-    expect(getDamageCalc(1002).url).toBe(getDamageCalc(1001).url)
+  it('maps Blaze Black and Volt White to a gen-5 calc', () => {
+    expect(getDamageCalc(1001)).toEqual({ gen: 5 })
+    expect(getDamageCalc('1002')).toEqual({ gen: 5 })
   })
 
   it('has no calc for games not yet wired up', () => {
@@ -14,55 +13,86 @@ describe('getDamageCalc', () => {
   })
 })
 
-describe('buildCalcExport', () => {
-  it('exports a full mon in Showdown format', () => {
-    const text = buildCalcExport([{
-      species_name: 'Pignite',
-      nickname: 'Piggy',
-      gender: 'male',
-      nature: 'ADAMANT',
-      chosen_ability: 'Blaze',
-      ivs: { hp: 31, atk: 28, def: 20, spa: 12, spd: 15, spe: 31 },
-    }], 20)
-    expect(text).toBe([
-      'Piggy (Pignite) (M)',
-      'Level: 20',
-      'Adamant Nature',
-      'Ability: Blaze',
-      'IVs: 31 HP / 28 Atk / 20 Def / 12 SpA / 15 SpD / 31 Spe',
-    ].join('\n'))
+describe('opponentMoveNames', () => {
+  it('applies the four-slot rule: observed first, estimates fill the rest', () => {
+    const names = opponentMoveNames({
+      observed_moves: [{ move_name: 'Crunch' }, { move_name: 'Dig' }],
+      resolved_moves: [
+        { move_name: 'Crunch' }, { move_name: 'Bite' }, { move_name: 'Sand Tomb' },
+        { move_name: 'Torment' }, { move_name: 'Swagger' },
+      ],
+    })
+    expect(names).toEqual(['Crunch', 'Dig', 'Bite', 'Sand Tomb'])
+  })
+})
+
+describe('buildCustomSets', () => {
+  const playerParty = [{
+    species_name: 'SNIVY',
+    nickname: 'Kento',
+    gender: 'male',
+    nature: 'QUIET',
+    chosen_ability: 'Contrary',
+    ivs: { hp: 1, atk: null, def: null, spa: null, spd: null, spe: null },
+  }]
+  const opponentParty = [{
+    species_name: 'SANDILE',
+    lvl: 21,
+    ability1: 'ABILITY_MOXIE',
+    held_item: 'TwistedSpoon',
+    resolved_moves: [{ move_name: 'Crunch' }, { move_name: 'Sand Tomb' }],
+    observed_moves: [],
+  }]
+
+  it('builds both teams in the calculator storage shape', () => {
+    const sets = buildCustomSets(playerParty, opponentParty, 'CHEREN', 21)
+    expect(sets.Snivy['Kento (yours)']).toEqual({
+      level: 21,
+      nature: 'Quiet',
+      ability: 'Contrary',
+      gender: 'M',
+      ivs: { hp: 1 },
+      moves: [],
+      isCustomSet: true,
+    })
+    expect(sets.Sandile['CHEREN Lv21']).toEqual({
+      level: 21,
+      ability: 'Moxie',
+      item: 'Twisted Spoon',
+      ivs: {},
+      moves: ['Crunch', 'Sand Tomb'],
+      isCustomSet: true,
+    })
   })
 
-  it('keeps a recorded 0 IV and omits unrecorded slots', () => {
-    const text = buildCalcExport([{
-      species_name: 'Hoothoot',
-      gender: 'female',
-      ivs: { hp: null, atk: 0, def: null, spa: 30, spd: null, spe: null },
-    }], null)
-    expect(text).toBe('Hoothoot (F)\nIVs: 0 Atk / 30 SpA')
+  it('keeps a recorded 0 IV and drops unrecorded slots', () => {
+    const sets = buildCustomSets([{ species_name: 'HOOTHOOT', ivs: { atk: 0, spa: 30 } }], [], null, 18)
+    expect(sets.Hoothoot['Hoothoot (yours)'].ivs).toEqual({ atk: 0, spa: 30 })
   })
 
-  it('drops the nickname when it just repeats the species', () => {
-    const text = buildCalcExport([{ species_name: 'Lillipup', nickname: 'lillipup' }], 14)
-    expect(text).toBe('Lillipup\nLevel: 14')
+  it('title-cases uppercase species and fixes punctuated names', () => {
+    const sets = buildCustomSets([{ species_name: 'NIDORAN M' }], [], null, 20)
+    expect(Object.keys(sets)).toEqual(['Nidoran-M'])
   })
 
-  it('formats ability tokens and separates mons with blank lines', () => {
-    const text = buildCalcExport([
-      { species_name: 'Drilbur', chosen_ability: 'ABILITY_SAND_RUSH' },
-      { species_name: 'NIDORAN M' },
-    ], 25)
-    expect(text).toBe('Drilbur\nLevel: 25\nAbility: Sand Rush\n\nNidoran-M\nLevel: 25')
+  it('formats trainer item tokens the calc dex recognizes', () => {
+    const sets = buildCustomSets([], [
+      { species_name: 'ALAKAZAM', lvl: 40, held_item: 'ITEM_ORAN_BERRY' },
+      { species_name: 'BEARTIC', lvl: 40, held_item: 'NeverMeltIce' },
+      { species_name: 'DRILBUR', lvl: 40, held_item: 'Toxic Orb*' },
+    ], 'BOSS', 40)
+    expect(sets.Alakazam['BOSS Lv40'].item).toBe('Oran Berry')
+    expect(sets.Beartic['BOSS Lv40'].item).toBe('Never-Melt Ice')
+    expect(sets.Drilbur['BOSS Lv40'].item).toBe('Toxic Orb')
   })
 
-  it('title-cases the uppercase names the species table stores', () => {
-    // The calc's parser is case-sensitive: 'SNIVY' fails, 'Snivy' imports.
-    const text = buildCalcExport([{ species_name: 'SNIVY', nature: 'Quiet', chosen_ability: 'Contrary', ivs: { hp: 1 } }], 21)
-    expect(text).toBe('Snivy\nLevel: 21\nQuiet Nature\nAbility: Contrary\nIVs: 1 HP')
-  })
-
-  it('skips empty rows and returns an empty string for an empty party', () => {
-    expect(buildCalcExport([], 20)).toBe('')
-    expect(buildCalcExport([null, { species_name: '' }], 20)).toBe('')
+  it('uses each trainer mon\'s real level, and the cap for the player', () => {
+    const sets = buildCustomSets(
+      [{ species_name: 'NATU' }],
+      [{ species_name: 'PANSEAR', lvl: 23 }],
+      'CHEREN', 21,
+    )
+    expect(sets.Natu['Natu (yours)'].level).toBe(21)
+    expect(sets.Pansear['CHEREN Lv23'].level).toBe(23)
   })
 })
