@@ -12,8 +12,9 @@ Two deliberate deviations, both Lockley's, nothing else touched:
   key); canonicalizes imported sets' move names against the dex by id
   ('Mud Slap' -> 'Mud-Slap', unresolvable customs dropped); and, when
   `localStorage.lockleyBattle` names a battle, selects the player's
-  lead against the trainer's lead on load and shows a confirmation
-  banner.
+  lead against the trainer's lead on load and renders the party bar —
+  both teams as clickable sprites above the calculator, a click
+  loading that mon's set into its side's panel.
 - `index.html` gains the single script tag loading it (after the data
   files, before the calculator initializes; bump its `?n` query on
   every bridge change so cached copies retire).

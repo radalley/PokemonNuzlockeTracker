@@ -92,12 +92,14 @@
     }
   } catch (e) { /* sets load as written */ }
 
-  // --- 3. battle handoff --------------------------------------------------
+  // --- 3. battle handoff: pre-select the leads and render the party bar ---
   try {
     var rawBattle = localStorage.getItem('lockleyBattle');
     if (!rawBattle) return;
     var battle = JSON.parse(rawBattle);
     if (!battle || !window.jQuery) return;
+    var playerTeam = battle.playerSets || [];
+    var opponentTeam = battle.opponentSets || [];
 
     var attempts = 0;
     var timer = setInterval(function () {
@@ -121,26 +123,78 @@
           var span = containers[index] && containers[index].querySelector('.select2-choice span');
           if (span) span.textContent = fullname;
         } catch (e) { /* leave the panel's default */ }
+        refreshHighlights();
       }
-      pick(0, (battle.playerSets || [])[0]);
-      pick(1, (battle.opponentSets || [])[0]);
 
+      function refreshHighlights() {
+        var values = [];
+        try {
+          values = [selectors.eq(0).val(), selectors.eq(1).val()];
+        } catch (e) { return; }
+        var buttons = document.querySelectorAll('.lockley-party-mon');
+        for (var i = 0; i < buttons.length; i++) {
+          var btn = buttons[i];
+          var side = Number(btn.getAttribute('data-side'));
+          var active = btn.getAttribute('data-set') === values[side];
+          btn.style.borderColor = active ? (side === 0 ? '#7ec8e3' : '#f2b46b') : 'transparent';
+          btn.style.background = active ? 'rgba(255,255,255,0.08)' : 'transparent';
+        }
+      }
+
+      // The party bar: both teams as clickable sprites, hzla-style, above
+      // the calculator. Clicking a mon loads its set into that side's panel.
       try {
-        var note = document.createElement('div');
-        note.textContent = 'Lockley: loaded your team (' + (battle.playerSets || []).length +
-          ') and ' + (battle.trainerName || 'the trainer') + "'s team (" +
-          (battle.opponentSets || []).length + ') — every mon is in the set lists.';
-        note.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;' +
-          'background:#1d3a4f;color:#bfe3f7;font:13px/1.4 sans-serif;' +
-          'padding:6px 34px 6px 12px;text-align:center;';
-        var close = document.createElement('span');
-        close.textContent = '×';
-        close.style.cssText = 'position:absolute;right:12px;top:4px;cursor:pointer;font-size:15px;';
-        close.onclick = function () { note.remove(); };
-        note.appendChild(close);
-        document.body.appendChild(note);
-        setTimeout(function () { note.remove(); }, 12000);
-      } catch (e) { /* banner is optional */ }
+        var bar = document.createElement('div');
+        bar.id = 'lockley-party-bar';
+        bar.style.cssText = 'display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;' +
+          'padding:8px 14px;background:#20262c;color:#dfe7ee;font:12px/1.3 sans-serif;' +
+          'border-bottom:2px solid #39434c;';
+
+        function makeGroup(title, team, side, accent) {
+          var group = document.createElement('div');
+          group.style.cssText = 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;';
+          var caption = document.createElement('span');
+          caption.textContent = title;
+          caption.style.cssText = 'font-weight:bold;margin-right:6px;color:' + accent + ';';
+          group.appendChild(caption);
+          team.forEach(function (mon) {
+            if (!mon || !mon.id) return;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'lockley-party-mon';
+            btn.setAttribute('data-side', String(side));
+            btn.setAttribute('data-set', mon.id);
+            btn.title = mon.id;
+            btn.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:0;' +
+              'border:2px solid transparent;border-radius:8px;background:transparent;' +
+              'cursor:pointer;padding:2px 4px;color:inherit;font:inherit;';
+            if (mon.sprite) {
+              var img = document.createElement('img');
+              img.src = mon.sprite;
+              img.width = 40; img.height = 40;
+              img.style.cssText = 'image-rendering:pixelated;object-fit:contain;';
+              img.onerror = function () { this.style.display = 'none'; };
+              btn.appendChild(img);
+            }
+            var name = document.createElement('span');
+            name.textContent = mon.label || mon.id;
+            name.style.cssText = 'font-size:10px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            btn.appendChild(name);
+            btn.onclick = function () { pick(side, mon.id); };
+            group.appendChild(btn);
+          });
+          return group;
+        }
+
+        bar.appendChild(makeGroup('Your team', playerTeam, 0, '#7ec8e3'));
+        bar.appendChild(makeGroup((battle.trainerName || 'Trainer'), opponentTeam, 1, '#f2b46b'));
+        document.body.insertBefore(bar, document.body.firstChild);
+        // A dropdown pick should move the highlight too.
+        $(document).on('change', 'input.set-selector', refreshHighlights);
+      } catch (e) { /* the bar is optional */ }
+
+      pick(0, playerTeam[0] && playerTeam[0].id);
+      pick(1, opponentTeam[0] && opponentTeam[0].id);
     }, 250);
   } catch (e) { /* no handoff */ }
 })();

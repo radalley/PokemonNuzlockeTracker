@@ -175,13 +175,14 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
   const sets = {}
   const playerSets = []
   const opponentSets = []
-  const put = (speciesName, setName, set, order) => {
+  const put = (speciesName, setName, set, order, entry) => {
     const species = exportSpeciesName(speciesName)
     if (!species) return
     sets[species] = sets[species] || {}
     sets[species][setName] = { ...set, isCustomSet: true }
-    // "Species (Set name)" is the calculator's set-selector value format.
-    order.push(`${species} (${setName})`)
+    // id is "Species (Set name)" — the calculator's set-selector value
+    // format; label and sprite feed the party bar the bridge renders.
+    order.push({ id: `${species} (${setName})`, ...entry })
   }
 
   for (const mon of playerParty || []) {
@@ -197,7 +198,12 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
     if (mon.gender === 'female') set.gender = 'F'
     if (mon.gender === 'male') set.gender = 'M'
     const label = (mon.nickname || '').trim()
-    put(mon.species_name, `${label || exportSpeciesName(mon.species_name)} (yours)`, set, playerSets)
+    put(mon.species_name, `${label || exportSpeciesName(mon.species_name)} (yours)`, set, playerSets, {
+      label: label || exportSpeciesName(mon.species_name),
+      sprite: mon.species_id
+        ? `/sprites/${(mon.shiny === true || mon.shiny === 'True') ? 'Shiny' : 'Standard'}/${mon.species_id}.png`
+        : null,
+    })
   }
 
   for (const mon of opponentParty || []) {
@@ -211,7 +217,10 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
     if (ability) set.ability = ability
     const item = formatItemName(mon.held_item)
     if (item) set.item = item
-    put(mon.species_name, `${trainerName || 'Trainer'} Lv${set.level}`, set, opponentSets)
+    put(mon.species_name, `${trainerName || 'Trainer'} Lv${set.level}`, set, opponentSets, {
+      label: `${exportSpeciesName(mon.species_name)} L${set.level}`,
+      sprite: mon.species_id ? `/sprites/Standard/${mon.species_id}.png` : null,
+    })
   }
   return { sets, playerSets, opponentSets }
 }

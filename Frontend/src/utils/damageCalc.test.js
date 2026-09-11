@@ -135,9 +135,28 @@ describe('buildCustomSets', () => {
     expect(sets.Pansear['CHEREN Lv23'].level).toBe(23)
   })
 
-  it('returns both teams\' set names in party order for the calc handoff', () => {
-    const { playerSets, opponentSets } = buildCustomSets(playerParty, opponentParty, 'CHEREN', 21)
-    expect(playerSets).toEqual(['Snivy (Kento (yours))'])
-    expect(opponentSets).toEqual(['Sandile (CHEREN Lv21)'])
+  it('returns both teams in party order for the calc handoff and party bar', () => {
+    const { playerSets, opponentSets } = buildCustomSets(
+      [{ ...playerParty[0], species_id: 495 }],
+      [{ ...opponentParty[0], species_id: 551 }],
+      'CHEREN', 21,
+    )
+    expect(playerSets).toEqual([{
+      id: 'Snivy (Kento (yours))',
+      label: 'Kento',
+      sprite: '/sprites/Standard/495.png',
+    }])
+    expect(opponentSets).toEqual([{
+      id: 'Sandile (CHEREN Lv21)',
+      label: 'Sandile L21',
+      sprite: '/sprites/Standard/551.png',
+    }])
+  })
+
+  it('uses the shiny sprite for a shiny party member', () => {
+    const { playerSets } = buildCustomSets(
+      [{ species_name: 'NATU', species_id: 177, shiny: true }], [], null, 20,
+    )
+    expect(playerSets[0].sprite).toBe('/sprites/Shiny/177.png')
   })
 })
