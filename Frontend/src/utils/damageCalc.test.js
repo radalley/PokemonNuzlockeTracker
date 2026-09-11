@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCustomSets, getDamageCalc, opponentMoveNames } from './damageCalc'
+import { buildCustomSets, calcMoveName, formatDexPatch, getDamageCalc, opponentMoveNames } from './damageCalc'
 
 describe('getDamageCalc', () => {
   it('maps Blaze Black and Volt White to a gen-5 calc', () => {
@@ -10,6 +10,45 @@ describe('getDamageCalc', () => {
   it('has no calc for games not yet wired up', () => {
     expect(getDamageCalc(17)).toBeNull()
     expect(getDamageCalc(null)).toBeNull()
+  })
+})
+
+describe('calcMoveName', () => {
+  it('title-cases and maps period spellings to the calc dex names', () => {
+    expect(calcMoveName('MUD_SLAP')).toBe('Mud Slap')
+    expect(calcMoveName('mud-slap')).toBe('Mud-Slap')
+    expect(calcMoveName('Hi Jump Kick')).toBe('High Jump Kick')
+    expect(calcMoveName('Faint Attack')).toBe('Feint Attack')
+  })
+})
+
+describe('formatDexPatch', () => {
+  it('maps server override rows into the calculator data shapes', () => {
+    const patch = formatDexPatch({
+      generation: 5,
+      species: {
+        'SERPERIOR': { stats: { hp: 82, atk: 75, def: 95, spa: 75, spd: 95, spe: 113 }, ability: 'Contrary' },
+        'FARFETCHD': { types: ['fighting', 'flying'] },
+      },
+      moves: {
+        'Cut': { power: 60, type: 'grass', damage_class: 'physical' },
+        'Hi Jump Kick': { power: 130, type: 'fighting', damage_class: 'physical' },
+      },
+    })
+    expect(patch.generation).toBe(5)
+    expect(patch.species.Serperior).toEqual({
+      bs: { hp: 82, at: 75, df: 95, sa: 75, sd: 95, sp: 113 },
+      ability: 'Contrary',
+    })
+    expect(patch.species['Farfetch’d']).toEqual({ types: ['Fighting', 'Flying'] })
+    expect(patch.moves.Cut).toEqual({ bp: 60, type: 'Grass', category: 'Physical' })
+    expect(patch.moves['High Jump Kick'].bp).toBe(130)
+  })
+
+  it('produces an empty patch for vanilla payloads', () => {
+    const patch = formatDexPatch({ generation: 5, species: {}, moves: {} })
+    expect(patch.species).toEqual({})
+    expect(patch.moves).toEqual({})
   })
 })
 

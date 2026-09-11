@@ -2709,6 +2709,61 @@ def get_species_learnset(conn, species_id, game_id=None):
         })
     return {'version_group_id': selected_vg, 'moves': moves}
 
+
+def get_calc_dex_patch(conn, game_id):
+    """A hack's dex modifications for the damage calculator.
+
+    Returns the override rows the hack's ETL loaded under its reserved
+    version group — exactly the diff against the base game. Vanilla games
+    get an empty patch, so the calculator's stock data stands.
+    Shape: {generation, species: {NAME: {stats?, types?, ability?}},
+    moves: {NAME: {power, type, damage_class}}}.
+    """
+    game = conn.execute(
+        'select version_group_id, generation, coalesce(is_rom_hack, false) as is_rom_hack '
+        'from games where game_id = %s', (game_id,)
+    ).fetchone()
+    if not game:
+        return None
+    patch = {'generation': game['generation'], 'species': {}, 'moves': {}}
+    if not game['is_rom_hack']:
+        return patch
+    vg = game['version_group_id']
+
+    def species_entry(name):
+        return patch['species'].setdefault(name, {})
+
+    for row in conn.execute(
+        'select s.name, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
+        'from species_stats ss join species s on s.species_id = ss.species_id '
+        'where ss.version_group_id = %s', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['stats'] = {
+            'hp': row['hp'], 'atk': row['atk'], 'def': row['def'],
+            'spa': row['spa'], 'spd': row['spd'], 'spe': row['spe'],
+        }
+    for row in conn.execute(
+        'select s.name, st.type1, st.type2 '
+        'from species_types st join species s on s.species_id = st.species_id '
+        'where st.version_group_id = %s', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['types'] = [t for t in (row['type1'], row['type2']) if t]
+    for row in conn.execute(
+        'select s.name, sa.ability1 '
+        'from species_abilities sa join species s on s.species_id = sa.species_id '
+        'where sa.version_group_id = %s and sa.ability1 is not null', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['ability'] = row['ability1']
+    for row in conn.execute(
+        'select move_name, power, type, damage_class from moves '
+        'where version_group_id = %s', (vg,)
+    ).fetchall():
+        patch['moves'][row['move_name']] = {
+            'power': row['power'], 'type': row['type'], 'damage_class': row['damage_class'],
+        }
+    return patch
+
+
 def _attach_observed_moves(conn, party, trainer_version_group_id, trainer_key, display_version_group_id):
     """Attach admin-observed moves to party members.
 

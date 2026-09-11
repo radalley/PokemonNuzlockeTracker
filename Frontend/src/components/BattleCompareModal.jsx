@@ -3,7 +3,7 @@ import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
-import { getDamageCalc, openCalcWithTeams } from '../utils/damageCalc'
+import { getDamageCalc, openCalcWithTeams, prefetchDexPatch } from '../utils/damageCalc'
 
 function formatType(t) {
   if (!t) return null
@@ -77,14 +77,22 @@ function BattleCompareModal({
 
   const damageCalc = getDamageCalc(gameId)
 
-  const openDamageCalc = () => {
+  useEffect(() => {
+    if (damageCalc) prefetchDexPatch(gameId)
+  }, [damageCalc, gameId])
+
+  const openDamageCalc = async () => {
     if (!damageCalc || playerParty.length === 0) return
     // Lockley does not track current levels; the battle's cap is the
     // Nuzlocke default, falling back to the opponent's highest level.
     const opponentMax = opponentParty.reduce((max, m) => Math.max(max, Number(m?.lvl) || 0), 0)
     const level = Number(levelCap) > 0 ? Number(levelCap) : (opponentMax || null)
-    const ok = openCalcWithTeams(playerParty, opponentParty, trainerName, level, damageCalc.gen)
-    setCalcNote(ok ? 'Both teams are loaded in the calc’s set lists.' : 'Could not store the teams — browser storage is blocked.')
+    const ok = await openCalcWithTeams(playerParty, opponentParty, trainerName, level, damageCalc.gen, gameId)
+    setCalcNote(!ok
+      ? 'Could not store the teams — browser storage is blocked.'
+      : ok.patched
+        ? 'Both teams loaded, with this game’s modified Pokémon applied.'
+        : 'Both teams are loaded in the calc’s set lists.')
   }
 
   // The modal renders inside the trainer card, whose root click handler

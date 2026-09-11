@@ -2,8 +2,16 @@
 
 This directory is a verbatim mirror of https://calc.pokemonshowdown.com
 (the official Smogon damage calculator, MIT license,
-https://github.com/smogon/damage-calc), fetched 2026-09-11. No file is
-modified.
+https://github.com/smogon/damage-calc), fetched 2026-09-11.
+
+Two deliberate deviations, both Lockley's, nothing else touched:
+- `lockley-dex-patch.js` (a new file) applies the active game's dex
+  modifications — a ROM hack's changed base stats, types, abilities,
+  and move data, served by `/api/games/<id>/calc-dex-patch` and written
+  to `localStorage.lockleyDexPatch` by the battle modal's button. A
+  vanilla game clears the key, leaving stock data.
+- `index.html` gains the single script tag loading it (after the data
+  files, before the calculator initializes).
 
 Lockley serves it same-origin at /calc/ so the battle modal's Calc
 button can hand it both teams before opening it: the calculator merges
@@ -14,5 +22,6 @@ calc.pokemonshowdown.com is impossible (localStorage is origin-scoped
 and the site reads only `?gen=` from the URL), which is why the copy
 exists.
 
-To refresh the mirror, re-run the fetch against the live site and
-replace this directory wholesale; never hand-edit files here.
+To refresh the mirror, re-run the fetch against the live site, replace
+this directory wholesale, then re-add the two deviations above; never
+hand-edit any other file here.

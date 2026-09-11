@@ -26,7 +26,7 @@ const EXPORT_NAME_FIXES = {
   'NIDORAN F': 'Nidoran-F',
   'MR-MIME': 'Mr. Mime',
   'MIME-JR': 'Mime Jr.',
-  'FARFETCHD': "Farfetch'd",
+  'FARFETCHD': 'Farfetch’d', // the calc dex keys the curly apostrophe
   'HO-OH': 'Ho-Oh',
   'PORYGON-Z': 'Porygon-Z',
 }
@@ -41,6 +41,20 @@ export function exportSpeciesName(name) {
 }
 
 const titleCase = (s) => String(s || '').toLowerCase().replace(/(^|[\s-])\w/g, c => c.toUpperCase())
+
+// The calculator's dex uses modernized move names; period-correct gen-5
+// spellings from our data resolve through these renames.
+const MOVE_RENAMES = {
+  'hijumpkick': 'High Jump Kick',
+  'faintattack': 'Feint Attack',
+  'vicegrip': 'Vise Grip',
+  'smellingsalt': 'Smelling Salts',
+}
+
+export function calcMoveName(raw) {
+  const name = titleCase(String(raw || '').replace(/_/g, ' '))
+  return MOVE_RENAMES[name.toLowerCase().replace(/[^a-z0-9]/g, '')] || name
+}
 
 function formatAbilityName(raw) {
   if (!raw) return undefined
@@ -94,7 +108,61 @@ export function opponentMoveNames(mon) {
     .map(m => (typeof m === 'object' && m ? m.move_name : m))
     .filter(n => n && !seen.has(String(n).toLowerCase()))
     .slice(0, Math.max(0, 4 - observed.length))
-  return [...observed, ...inferred].map(n => titleCase(String(n).replace(/_/g, ' ')))
+  return [...observed, ...inferred].map(calcMoveName)
+}
+
+/**
+ * The hack's dex modifications, formatted for the calculator's data
+ * structures ({Species: {bs, types, ability}}, {Move: {bp, type,
+ * category}}). Vanilla games produce an empty patch.
+ */
+export function formatDexPatch(serverPatch) {
+  const patch = { generation: Number(serverPatch?.generation) || 5, species: {}, moves: {} }
+  for (const [rawName, entry] of Object.entries(serverPatch?.species || {})) {
+    const name = exportSpeciesName(rawName)
+    if (!name || !entry) continue
+    const out = {}
+    if (entry.stats) {
+      out.bs = {
+        hp: entry.stats.hp, at: entry.stats.atk, df: entry.stats.def,
+        sa: entry.stats.spa, sd: entry.stats.spd, sp: entry.stats.spe,
+      }
+    }
+    if (Array.isArray(entry.types) && entry.types.length > 0) {
+      out.types = entry.types.map(t => titleCase(t))
+    }
+    if (entry.ability) out.ability = titleCase(entry.ability)
+    if (Object.keys(out).length > 0) patch.species[name] = out
+  }
+  for (const [rawName, entry] of Object.entries(serverPatch?.moves || {})) {
+    const name = calcMoveName(rawName)
+    if (!name || !entry) continue
+    const damageClass = String(entry.damage_class || '').toLowerCase()
+    patch.moves[name] = {
+      bp: Number(entry.power) > 0 ? Number(entry.power) : 0,
+      type: entry.type ? titleCase(entry.type) : undefined,
+      category: damageClass === 'physical' ? 'Physical' : damageClass === 'special' ? 'Special' : 'Status',
+    }
+  }
+  return patch
+}
+
+// Warm the cache when the battle modal opens, so the click handler's
+// await resolves instantly and window.open stays inside the browser's
+// user-activation window.
+export function prefetchDexPatch(gameId) {
+  if (gameId == null) return
+  fetchDexPatch(gameId).catch(() => {})
+}
+
+const dexPatchCache = new Map()
+async function fetchDexPatch(gameId) {
+  if (dexPatchCache.has(gameId)) return dexPatchCache.get(gameId)
+  const res = await fetch(`/api/games/${gameId}/calc-dex-patch`)
+  if (!res.ok) throw new Error(`dex patch failed (${res.status})`)
+  const patch = formatDexPatch(await res.json())
+  dexPatchCache.set(gameId, patch)
+  return patch
 }
 
 /**
@@ -145,11 +213,30 @@ export function buildCustomSets(playerParty, opponentParty, trainerName, playerL
 }
 
 /**
- * Write both teams into the calculator's storage and open it.
- * Lockley-written sets from earlier battles are replaced wholesale;
- * sets the user imported inside the calc themselves are preserved.
+ * Write both teams (and the game's dex modifications) into the
+ * calculator's storage and open it. Lockley-written sets from earlier
+ * battles are replaced wholesale; sets the user imported inside the calc
+ * themselves are preserved. The dex patch is best-effort: if it cannot
+ * be fetched the calc still opens with its stock data.
  */
-export function openCalcWithTeams(playerParty, opponentParty, trainerName, playerLevel, gen) {
+export async function openCalcWithTeams(playerParty, opponentParty, trainerName, playerLevel, gen, gameId) {
+  let patched = false
+  try {
+    const patch = await fetchDexPatch(gameId)
+    if (Object.keys(patch.species).length > 0 || Object.keys(patch.moves).length > 0) {
+      localStorage.setItem('lockleyDexPatch', JSON.stringify(patch))
+      patched = true
+    } else {
+      localStorage.removeItem('lockleyDexPatch')
+    }
+  } catch {
+    localStorage.removeItem('lockleyDexPatch')
+  }
+  const opened = seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen)
+  return opened && { patched }
+}
+
+function seedTeamsAndOpen(playerParty, opponentParty, trainerName, playerLevel, gen) {
   const fresh = buildCustomSets(playerParty, opponentParty, trainerName, playerLevel)
   let existing = {}
   try {
