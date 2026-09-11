@@ -4,8 +4,6 @@ import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
 import { getDamageCalc, buildCalcExport } from '../utils/damageCalc'
-import { damagePanelEnabled } from '../utils/battleCalc'
-import DamagePanel from './DamagePanel'
 
 function formatType(t) {
   if (!t) return null
@@ -71,7 +69,6 @@ function BattleCompareModal({
   battleType = null,
   gameId = null,
   levelCap = null,
-  generation = null,
 }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [selectedOpponent, setSelectedOpponent] = useState(null)
@@ -243,17 +240,6 @@ function BattleCompareModal({
                     trackColor="var(--surface-deep)"
                   />
                 </div>
-                {damagePanelEnabled(gameId) && (
-                  <DamagePanel
-                    gameId={gameId}
-                    generation={generation}
-                    playerMon={playerMon}
-                    opponentMon={opponentMon}
-                    playerLevel={Number(levelCap) > 0
-                      ? Number(levelCap)
-                      : opponentParty.reduce((max, m) => Math.max(max, Number(m?.lvl) || 0), 0) || null}
-                  />
-                )}
               </div>
             ) : (
               /* Single pokemon view */
