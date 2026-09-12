@@ -11,6 +11,7 @@ import PaletteDebugPanel from '../components/PaletteDebugPanel'
 import ContactButton from '../components/ContactButton'
 import { getAttemptPageData, getParty, getPokebank, markRunOpened, updateStarter as saveStarter } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
+import useHoverCapable from '../utils/useHoverCapable'
 
 const EMPTY_POOL = []
 
@@ -63,7 +64,11 @@ function Attempt() {
   const [activeFilter, setActiveFilter] = useState('master')
   const [showDocsMenu, setShowDocsMenu] = useState(false)
   const [allSpecies, setAllSpecies] = useState([])
-  const [statsOpen, setStatsOpen] = useState(false)
+  // Session stats (with the starter-type picker) open by default on a
+  // desktop, where the side panel has its own column. On touch screens the
+  // mobile tier puts the panel in flow above the sheet, so it starts closed.
+  const hoverCapable = useHoverCapable()
+  const [statsOpen, setStatsOpen] = useState(hoverCapable)
   const [debugOpen, setDebugOpen] = useState(false)
 
   useEffect(() => {
