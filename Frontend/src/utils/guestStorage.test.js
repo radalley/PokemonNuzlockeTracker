@@ -7,6 +7,7 @@ import {
   deleteBonusLocation,
   deleteEncounter,
   deleteRun,
+  endAttempt,
   getBonusLocations,
   getEncounters,
   getParty,
@@ -225,6 +226,34 @@ describe('markTrainerVictory + getSessionStats', () => {
     expect(stats.pokemon_caught).toBe(1)
     expect(stats.pokemon_dead).toBe(1)
     expect(stats.pokemon_missed).toBe(1)
+  })
+})
+
+describe('endAttempt (declare defeat)', () => {
+  it('marks the party fallen, empties the party, and leaves boxed mons alive', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    const smug = upsertEncounter(run_id, 1, 1, 0, 495, 'SNIVY', 'Smug', 'Quiet', 'Captured', false, null, 'male', null)
+    const boxed = upsertEncounter(run_id, 1, 3, 0, 504, 'PATRAT', 'Boxed', 'Hardy', 'Captured', false, null, 'male', null)
+    const gone = upsertEncounter(run_id, 1, 6, 0, 506, 'LILLIPUP', 'Gone', 'Jolly', 'Dead', false, null, 'female', null)
+    addToParty(run_id, 1, smug)
+
+    const result = endAttempt(run_id, 1, { note: 'wiped' })
+
+    expect(result).toEqual({ success: true, outcome: 'dead', party_fallen: 1 })
+    const byId = Object.fromEntries(Object.values(getEncounters(run_id, 1)).map(e => [e.pokemon_id, e.status]))
+    expect(byId[smug]).toBe('Dead')
+    expect(byId[boxed]).toBe('Captured')
+    expect(byId[gone]).toBe('Dead')
+    expect(getParty(run_id, 1)).toEqual([])
+  })
+
+  it('refuses to end an already-ended attempt without touching anything', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    const smug = upsertEncounter(run_id, 1, 1, 0, 495, 'SNIVY', 'Smug', 'Quiet', 'Captured', false, null, 'male', null)
+    addToParty(run_id, 1, smug)
+    endAttempt(run_id, 1, {})
+    // the second declaration must not error or double-count
+    expect(endAttempt(run_id, 1, {}).success).toBe(false)
   })
 })
 

@@ -395,7 +395,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               Declare Attempt {attemptId} dead?
             </div>
             <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-              This ends the attempt and opens its summary. You can reopen it later if it was a mistake.
+              This ends the attempt, marks every Pokémon in your party as fallen, and opens the summary. Boxed Pokémon are untouched. You can reopen the attempt later if it was a mistake, and revive the fallen from the Box.
             </div>
             <textarea
               value={deathNote}

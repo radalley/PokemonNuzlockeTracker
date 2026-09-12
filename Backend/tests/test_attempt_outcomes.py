@@ -131,6 +131,60 @@ def test_attempt_summary_shape(db_conn):
     assert summary["counts"]["trainers_defeated"] == 1
 
 
+def test_end_attempt_marks_party_fallen_and_clears_party(db_conn):
+    run_id, attempt_id = seed_run(db_conn)
+    db_conn.execute("insert into species (species_id, name) values (495, 'SNIVY'), (504, 'PATRAT'), (506, 'LILLIPUP')")
+    ids = db_conn.execute(
+        "insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, status, level_met) "
+        "values (%s, %s, 495, 233, 'Smug', 'Captured', 5), "      # in party, alive
+        "       (%s, %s, 504, 233, 'Boxed', 'Captured', 3), "     # boxed, alive
+        "       (%s, %s, 506, 233, 'Gone', 'Dead', 4) "           # already fallen
+        "returning pokemon_id",
+        (run_id, attempt_id) * 3,
+    ).fetchall()
+    smug_id, boxed_id, gone_id = [r["pokemon_id"] for r in ids]
+    db_conn.execute(
+        "insert into party (attempt_id, party_slot, pokemon_id) values (%s, 1, %s)",
+        (attempt_id, smug_id))
+    db_conn.commit()
+
+    result = backend_module.end_attempt(db_conn, run_id, 1, note="wiped")
+
+    assert result["party_fallen"] == 1
+    statuses = {r["pokemon_id"]: r["status"] for r in db_conn.execute(
+        "select pokemon_id, status from pokebank where attempt_id = %s", (attempt_id,)).fetchall()}
+    assert statuses[smug_id] == "Dead"       # the party member fell
+    assert statuses[boxed_id] == "Captured"  # the boxed mon survived
+    assert statuses[gone_id] == "Dead"       # untouched
+    assert db_conn.execute(
+        "select count(*) as n from party where attempt_id = %s", (attempt_id,)).fetchone()["n"] == 0
+    # Reopening does not revive: the Box's Revive is the deliberate path.
+    backend_module.reopen_attempt(db_conn, run_id, 1)
+    assert db_conn.execute(
+        "select status from pokebank where pokemon_id = %s", (smug_id,)).fetchone()["status"] == "Dead"
+
+
+def test_end_attempt_won_does_not_kill_the_party(db_conn):
+    run_id, attempt_id = seed_run(db_conn)
+    db_conn.execute("insert into species (species_id, name) values (495, 'SNIVY')")
+    smug_id = db_conn.execute(
+        "insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, status, level_met) "
+        "values (%s, %s, 495, 233, 'Smug', 'Captured', 5) returning pokemon_id",
+        (run_id, attempt_id)).fetchone()["pokemon_id"]
+    db_conn.execute(
+        "insert into party (attempt_id, party_slot, pokemon_id) values (%s, 1, %s)",
+        (attempt_id, smug_id))
+    db_conn.commit()
+
+    result = backend_module.end_attempt(db_conn, run_id, 1, outcome="won")
+
+    assert result["party_fallen"] == 0
+    assert db_conn.execute(
+        "select status from pokebank where pokemon_id = %s", (smug_id,)).fetchone()["status"] == "Captured"
+    assert db_conn.execute(
+        "select count(*) as n from party where attempt_id = %s", (attempt_id,)).fetchone()["n"] == 1
+
+
 def test_attempts_listing_includes_outcome(db_conn):
     run_id, _ = seed_run(db_conn)
     db_conn.execute(

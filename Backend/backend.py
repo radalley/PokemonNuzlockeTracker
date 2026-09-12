@@ -620,10 +620,26 @@ def end_attempt(conn, run_id, attempt_number, outcome='dead', trainer_id=None, n
         'where run_id = %s and attempt_number = %s and outcome is null',
         (outcome, trainer_id, (note or '').strip()[:500] or None, run_id, attempt_number)
     )
-    conn.commit()
     if updated.rowcount != 1:
+        conn.rollback()
         raise ValueError(f'Attempt {attempt_number} already ended')
-    return {'success': True, 'outcome': outcome}
+    # A wipe is the party dying: the mons in the party fall, and leave the
+    # party the same way the Box's "Confirm fallen" does. Boxed mons are
+    # untouched, and Reopen does not revive (the Box's Revive covers a
+    # mistaken declaration).
+    party_fallen = 0
+    if outcome == 'dead':
+        attempt_id = attempt['attempt_id']
+        fallen = conn.execute(
+            "update pokebank set status = 'Dead' "
+            "where attempt_id = %s and status = 'Captured' "
+            "and pokemon_id in (select pokemon_id from party where attempt_id = %s)",
+            (attempt_id, attempt_id)
+        )
+        party_fallen = fallen.rowcount
+        conn.execute('delete from party where attempt_id = %s', (attempt_id,))
+    conn.commit()
+    return {'success': True, 'outcome': outcome, 'party_fallen': party_fallen}
 
 def reopen_attempt(conn, run_id, attempt_number):
     """Undo an accidental end-of-attempt declaration."""

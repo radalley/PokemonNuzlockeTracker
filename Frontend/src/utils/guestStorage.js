@@ -226,8 +226,20 @@ export function endAttempt(runId, attemptNumber, { trainerId = null, trainerName
   row.ended_by_trainer_name = trainerName || null
   row.ended_by_trainer_class = trainerClass || null
   row.death_note = (note || '').trim().slice(0, 500) || null
+  // A wipe is the party dying: party mons fall and leave the party, as
+  // the Box's "Confirm fallen" does. Boxed mons are untouched.
+  const key = attemptKey(runId, attemptNumber)
+  const partyIds = new Set((state.party[key] || []).map(p => String(p.pokemon_id)))
+  let partyFallen = 0
+  for (const encounter of Object.values(state.encounters[key] || {})) {
+    if (partyIds.has(String(encounter.pokemon_id)) && encounter.status === 'Captured') {
+      encounter.status = 'Dead'
+      partyFallen += 1
+    }
+  }
+  state.party[key] = []
   _setState(state)
-  return { success: true, outcome: 'dead' }
+  return { success: true, outcome: 'dead', party_fallen: partyFallen }
 }
 
 export function reopenAttempt(runId, attemptNumber) {

@@ -362,7 +362,7 @@ function BattleCompareModal({
               confirmingDefeat ? (
                 <>
                   <span style={{ fontSize: '0.78em', color: '#e05252' }}>
-                    End this attempt? {trainerName} is recorded as the killer.
+                    End this attempt? {trainerName} is recorded as the killer and your party is marked fallen.
                   </span>
                   <button type="button" onClick={() => setConfirmingDefeat(false)} disabled={defeatSaving} style={MODAL_ACTION_BUTTON_STYLE}>
                     Cancel
