@@ -95,10 +95,27 @@ describe('TrainerCard moves panel', () => {
 
   it('caps displayed moves at four: observed first, estimates fill the rest', async () => {
     const card = await renderExpandedCard()
-    expect(card.textContent).toContain('Tackle')
-    expect(card.textContent).toContain('Foresight')
+    const panel = card.querySelector('.trainer-card__moves').textContent
+    expect(panel.startsWith('*Estimated')).toBe(true)
+    // the sighting leads (tagged), then the estimates in learnset order
+    const order = ['Tackle', 'seen', 'Hypnosis', 'Growl', 'Foresight'].map(s => panel.indexOf(s))
+    expect(order.every(i => i >= 0)).toBe(true)
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
     // 1 observed + 3 estimates = 4; the fifth learnset move never renders
-    expect(card.textContent).not.toContain('Night Shade')
+    expect(panel).not.toContain('Night Shade')
+  })
+
+  it('says No moves for a party member with no move data', async () => {
+    apiFetch.mockImplementation((url) => Promise.resolve({
+      ok: true,
+      json: async () => (url.includes('/party')
+        ? [{ ...hoothoot(), observed_moves: [], resolved_moves: [], moves_estimated: false }]
+        : []),
+    }))
+    const card = await renderExpandedCard()
+    const panel = card.querySelector('.trainer-card__moves').textContent
+    expect(panel).toContain('No moves')
+    expect(panel).not.toContain('*Estimated')
   })
 
   it('hides all observed-move admin controls from non-admins', async () => {

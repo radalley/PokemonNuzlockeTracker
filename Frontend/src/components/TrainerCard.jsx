@@ -7,6 +7,7 @@ import BattleCompareModal from './BattleCompareModal'
 import BattleFormatPill, { normalizeBattleFormat } from './BattleFormatPill'
 import { apiFetch } from '../utils/api'
 import { getParty, markTrainerVictory, endAttempt } from '../utils/dataLayer'
+import { battleMoveSlots, hasEstimatedMoves } from '../utils/trainerMoves'
 import { useAuth } from '../contexts/AuthContext'
 
 function normalizeItemName(raw) {
@@ -425,9 +426,6 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
               gap: '12px'
             }}>
               {party.map((p, i) => {
-            const movesList = p.moves
-              ? p.moves.split(',').map(m => m.trim().replace('MOVE_', '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()))
-              : []
             const formatType = t => t ? t.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) : null
             const formatAbility = a => a ? a.replace(/^ABILITY_/i, '').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) : null
             const type1 = formatType(p.type1)
@@ -478,18 +476,9 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                   {/* Moves: observed (ground truth recorded in play) first,
                       then inferred moves that observation hasn't confirmed. */}
                   {(() => {
-                    const observed = p.observed_moves || []
-                    const observedNames = new Set(observed.map(m => (m.move_name || '').toLowerCase()))
-                    // A Pokemon holds four moves: confirmed sightings claim
-                    // their slots first, estimates only fill what remains.
-                    const inferred = (p.resolved_moves || movesList).filter(move => typeof move === 'string'
-                      ? !observedNames.has(move.toLowerCase())
-                      : !observedNames.has((move.move_name || '').toLowerCase()))
-                      .slice(0, Math.max(0, 4 - observed.length))
-                    const renderMoveRow = (move, idx, seen) => {
-                      if (typeof move === 'string') {
-                        return <div key={idx} style={{ fontSize: '0.78em', color: 'var(--text-primary)', marginBottom: '4px' }}>{move}</div>
-                      }
+                    const slots = battleMoveSlots(p)
+                    const renderMoveRow = (move, idx) => {
+                      const seen = move.seen
                       return (
                         <div key={`${seen ? 'seen' : 'inf'}-${move.move_id ?? move.move_name}-${idx}`} style={{ position: 'relative', border: seen ? '1px solid #5ba85b' : '1px solid var(--border-strong)', borderRadius: '5px', padding: '6px 28px 5px 8px', marginBottom: '3px', background: 'var(--surface-mid)', minHeight: '30px' }}>
                           {move.type && (
@@ -537,12 +526,11 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                     }
                     return (
                       <div className="trainer-card__moves" style={{ minWidth: 0, border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '7px', background: 'var(--surface-mid)' }}>
-                        {p.moves_estimated && inferred.length > 0 && (
+                        {hasEstimatedMoves(p, slots) && (
                           <div style={{ fontSize: '0.7em', color: '#f2b46b', marginBottom: '5px' }}>*Estimated</div>
                         )}
-                        {observed.map((move, idx) => renderMoveRow(move, idx, true))}
-                        {inferred.map((move, idx) => renderMoveRow(move, idx, false))}
-                        {observed.length === 0 && inferred.length === 0 && (
+                        {slots.map(renderMoveRow)}
+                        {slots.length === 0 && (
                           <div style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>No moves</div>
                         )}
                         {isAdmin && trainerId != null && p.slot != null && (

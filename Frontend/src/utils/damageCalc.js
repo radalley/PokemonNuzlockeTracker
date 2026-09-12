@@ -9,6 +9,7 @@
 // ability, item, IVs, and moves. No paste, no import step.
 
 import { apiFetch } from './api'
+import { battleMoveSlots } from './trainerMoves'
 
 // game_id -> calc settings. Only listed games get a live Calc button;
 // adding a game here is the entire enablement step.
@@ -110,13 +111,7 @@ function recordedIvs(ivs) {
  * rule).
  */
 export function opponentMoveNames(mon) {
-  const observed = (mon?.observed_moves || []).map(m => m.move_name).filter(Boolean)
-  const seen = new Set(observed.map(n => n.toLowerCase()))
-  const inferred = (mon?.resolved_moves || [])
-    .map(m => (typeof m === 'object' && m ? m.move_name : m))
-    .filter(n => n && !seen.has(String(n).toLowerCase()))
-    .slice(0, Math.max(0, 4 - observed.length))
-  return [...observed, ...inferred].map(calcMoveName)
+  return battleMoveSlots(mon).map(m => calcMoveName(m.move_name))
 }
 
 /**

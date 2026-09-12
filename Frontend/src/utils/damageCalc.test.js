@@ -69,6 +69,13 @@ describe('opponentMoveNames', () => {
     })
     expect(names).toEqual(['Crunch', 'Dig', 'Bite', 'Sand Tomb'])
   })
+
+  it('exports the calculator’s spellings of the chosen moves', () => {
+    expect(opponentMoveNames({
+      observed_moves: [{ move_name: 'Faint Attack' }],
+      resolved_moves: [{ move_name: 'Hi Jump Kick' }, { move_name: 'MUD_SLAP' }],
+    })).toEqual(['Feint Attack', 'High Jump Kick', 'Mud Slap'])
+  })
 })
 
 describe('buildCustomSets', () => {

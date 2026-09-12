@@ -2782,6 +2782,11 @@ code {
     column-gap: 4px !important;
   }
 
+  .battle-compare__move-row {
+    grid-template-columns: 32px minmax(0, 1fr) 22px 46px 46px !important;
+    column-gap: 5px !important;
+  }
+
   .battle-compare__footer {
     align-items: stretch !important;
     flex-direction: column;
