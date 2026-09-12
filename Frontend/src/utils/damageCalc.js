@@ -8,6 +8,8 @@
 // trainer's is then one species pick away, preloaded with level, nature,
 // ability, item, IVs, and moves. No paste, no import step.
 
+import { apiFetch } from './api'
+
 // game_id -> calc settings. Only listed games get a live Calc button;
 // adding a game here is the entire enablement step.
 export const DAMAGE_CALCS = {
@@ -164,7 +166,10 @@ export function prefetchDexPatch(gameId) {
 const dexPatchCache = new Map()
 async function fetchDexPatch(gameId) {
   if (dexPatchCache.has(gameId)) return dexPatchCache.get(gameId)
-  const res = await fetch(`/api/games/${gameId}/calc-dex-patch`)
+  // apiFetch prepends VITE_API_BASE_URL, so this reaches the backend on the
+  // deployed frontend. A raw relative '/api/...' only works under Vite's dev
+  // proxy; on Vercel it falls through the SPA rewrite and returns index.html.
+  const res = await apiFetch(`/api/games/${gameId}/calc-dex-patch`)
   if (!res.ok) throw new Error(`dex patch failed (${res.status})`)
   const patch = formatDexPatch(await res.json())
   dexPatchCache.set(gameId, patch)
