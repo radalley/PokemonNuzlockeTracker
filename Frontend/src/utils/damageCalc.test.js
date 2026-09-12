@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildCustomSets, calcMoveName, formatDexPatch, getDamageCalc, mergeCustomSets, opponentMoveNames } from './damageCalc'
+
+// api.js pulls in lib/supabase, which throws at import when the Supabase
+// env is absent (as on CI). Nothing here needs a network.
+vi.mock('./api', () => ({
+  apiFetch: vi.fn(),
+}))
 
 describe('getDamageCalc', () => {
   it('maps Blaze Black and Volt White to a gen-5 calc with their title art', () => {
