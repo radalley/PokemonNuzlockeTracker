@@ -109,7 +109,13 @@ create table pokebank (
     bonus_location integer default 0,
     gender text,
     level_met integer,
-    ability text
+    ability text,
+    iv_hp integer,
+    iv_atk integer,
+    iv_def integer,
+    iv_spa integer,
+    iv_spd integer,
+    iv_spe integer
 );
 
 create table canon_locations (

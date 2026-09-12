@@ -16,6 +16,7 @@ import {
   markTrainerVictory,
   removeFromParty,
   renameBonusLocation,
+  renameRun,
   upsertEncounter,
   _getState,
 } from './guestStorage.js'
@@ -79,6 +80,43 @@ describe('createRun / deleteRun', () => {
 
     expect(getRuns()).toHaveLength(0)
     expect(getEncounters(run_id, 1)).toEqual({})
+  })
+})
+
+describe('renameRun', () => {
+  it('renames an existing run and trims the name', () => {
+    const { run_id } = createRun({ game_id: 3, game_name: 'Emerald' }, 'Solo Run')
+    expect(renameRun(run_id, '  Monotype  ')).toBe(true)
+    expect(getRuns()[0].run_name).toBe('Monotype')
+  })
+
+  it('rejects blank names and unknown runs', () => {
+    const { run_id } = createRun({ game_id: 3, game_name: 'Emerald' }, 'Solo Run')
+    expect(renameRun(run_id, '   ')).toBe(false)
+    expect(renameRun('local_999', 'Nope')).toBe(false)
+    expect(getRuns()[0].run_name).toBe('Solo Run')
+  })
+})
+
+describe('upsertEncounter IVs', () => {
+  it('stores normalized IVs and keeps them across a status re-save', () => {
+    const { run_id } = createRun({ game_id: 1, name: 'Black' }, 'IV run')
+    const pokemonId = upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Captured', false, null, 'male', null,
+      { hp: 31, atk: '7', def: 0, spa: 40, spd: '', spe: 31 })
+    let row = Object.values(getEncounters(run_id, 1))[0]
+    // 0 is a real IV; 40 is out of range and 'null' means not recorded.
+    expect(row.ivs).toEqual({ hp: 31, atk: 7, def: 0, spa: null, spd: null, spe: 31 })
+
+    // Re-saving with the stored IVs (what a Box status flip does) keeps them.
+    upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Dead', false, pokemonId, 'male', null, row.ivs)
+    row = Object.values(getEncounters(run_id, 1))[0]
+    expect(row.status).toBe('Dead')
+    expect(row.ivs.hp).toBe(31)
+
+    // Omitting them clears them (explicit save semantics).
+    upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Captured', false, pokemonId, 'male', null)
+    row = Object.values(getEncounters(run_id, 1))[0]
+    expect(row.ivs).toEqual({ hp: null, atk: null, def: null, spa: null, spd: null, spe: null })
   })
 })
 

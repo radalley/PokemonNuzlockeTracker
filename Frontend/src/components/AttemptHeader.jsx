@@ -109,7 +109,7 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   const [deathNote, setDeathNote] = useState('')
   const [endingAttempt, setEndingAttempt] = useState(false)
   const [endError, setEndError] = useState('')
-  // Pages that don't load attempt info (Box, Graveyard) still know the
+  // Pages that don't load attempt info (the Box) still know the
   // outcome from the attempts list this header fetches anyway.
   const attemptIsDead = attemptOutcome
     ? attemptOutcome.outcome === 'dead'
@@ -186,7 +186,6 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   const menuItemStyle = { display: 'block', width: '100%', padding: '8px 12px', border: 0, borderBottom: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '0.8em', textAlign: 'left', boxSizing: 'border-box' }
   const isAttemptPage = location.pathname.startsWith('/attempt/')
   const isBoxPage = location.pathname.startsWith('/box/')
-  const isGraveyardPage = location.pathname.startsWith('/graveyard/')
 
   return (
     <header className="attempt-header" style={{
@@ -374,7 +373,6 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
           </button>
         )}
         {!isBoxPage && <button className="attempt-header__nav-button" onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>}
-        {!isGraveyardPage && <button className="attempt-header__nav-button" onClick={() => navigate(`/graveyard/${runId}/${attemptId}`)} style={btnStyle}>Graveyard</button>}
         <HeaderAuthMenu />
       </div>
 

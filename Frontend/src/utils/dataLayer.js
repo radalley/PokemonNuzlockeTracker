@@ -41,6 +41,18 @@ export async function createRun(isAuthenticated, gameId, runName, gameData = {})
   return res.json()
 }
 
+export async function renameRun(runId, runName) {
+  if (isLocalRun(runId)) {
+    const ok = guest.renameRun(runId, runName)
+    return ok ? { success: true, run_name: String(runName).trim().slice(0, 100) } : { success: false, error: 'Run name is required' }
+  }
+  const res = await apiFetch(`/api/runs/${runId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ run_name: runName }),
+  })
+  return res.json()
+}
+
 export async function deleteRun(runId) {
   if (isLocalRun(runId)) {
     guest.deleteRun(runId)
@@ -206,7 +218,7 @@ export async function getPokebank(runId, attemptNumber) {
   return res.json()
 }
 
-export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender, ability) {
+export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender, ability, ivs = null) {
   if (isLocalRun(runId)) {
     const localId = guest.upsertEncounter(
       runId,
@@ -222,6 +234,7 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       pokemonId,
       gender,
       ability,
+      ivs,
     )
     return { success: true, pokemon_id: localId }
   }
@@ -241,6 +254,7 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       pokemon_id: pokemonId || null,
       gender: gender || null,
       ability: ability || null,
+      ivs: ivs || null,
     }),
   })
   return res.json()
@@ -414,9 +428,25 @@ export async function getBox(runId, attemptNumber) {
   return res.json()
 }
 
+// Species reference data is public and game-aware, so guest runs use the
+// same endpoints as signed-in ones.
+export async function getSpeciesSummary(speciesId, gameId = null) {
+  const query = gameId ? `?game_id=${gameId}` : ''
+  const res = await apiFetch(`/api/species/${speciesId}/summary${query}`)
+  if (!res.ok) return null
+  return res.json()
+}
+
+export async function getSpeciesLearnset(speciesId, gameId = null) {
+  const query = gameId ? `?game_id=${gameId}` : ''
+  const res = await apiFetch(`/api/species/${speciesId}/learnset${query}`)
+  if (!res.ok) return { version_group_id: null, moves: [] }
+  return res.json()
+}
+
 export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
-  // Pass gender and ability through: a Box/Graveyard status flip re-saves
-  // the whole row, and omitting them would null what the row already has.
+  // Pass gender, ability and IVs through: a Box status flip (dead / revive)
+  // re-saves the whole row, and omitting them would null what it has.
   return saveEncounter(
     runId,
     attemptNumber,
@@ -431,5 +461,6 @@ export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
     pokemon.pokemon_id,
     pokemon.gender,
     pokemon.ability,
+    pokemon.ivs || null,
   )
 }

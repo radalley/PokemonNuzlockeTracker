@@ -155,7 +155,8 @@ function AttemptSummary() {
         {[
           { label: 'Badges', value: badges.length },
           { label: 'Trainers Defeated', value: counts?.trainers_defeated ?? 0 },
-          { label: 'Caught', value: counts?.captured ?? 0 },
+          // Everything obtained this attempt, alive or fallen.
+          { label: 'Caught', value: counts?.obtained ?? ((counts?.captured ?? 0) + (counts?.dead ?? 0)) },
           { label: 'Fallen', value: counts?.dead ?? 0 },
           { label: 'Missed', value: counts?.missed ?? 0 },
         ].map(stat => (

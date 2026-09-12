@@ -165,6 +165,17 @@ export function createRun(gameData, runName) {
   return { success: true, run_id, attempt_number: 1 }
 }
 
+export function renameRun(runId, runName) {
+  const cleaned = String(runName ?? '').trim().slice(0, 100)
+  if (!cleaned) return false
+  const state = _getState()
+  const run = (state.runs || []).find(r => String(r.run_id) === String(runId))
+  if (!run) return false
+  run.run_name = cleaned
+  _setState(state)
+  return true
+}
+
 export function deleteRun(runId) {
   const state = _getState()
   state.runs = (state.runs || []).filter(r => String(r.run_id) !== String(runId))

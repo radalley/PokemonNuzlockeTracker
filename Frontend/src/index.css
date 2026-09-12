@@ -1794,6 +1794,51 @@ p {
   color: var(--text-primary);
 }
 
+.load-run-summary__rename {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: -2px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  cursor: pointer;
+  align-self: center;
+  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.load-run-summary__rename:hover,
+.load-run-summary__rename:focus-visible {
+  opacity: 1;
+  color: #FFC631;
+  background: var(--surface-mid);
+  outline: none;
+}
+
+.load-run-summary__rename-form {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.load-run-summary__rename-input {
+  width: min(220px, 100%);
+  padding: 2px 6px;
+  border: 1px solid #FFC631;
+  border-radius: 4px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  outline: none;
+}
+
 .load-run-summary__game-name,
 .load-run-summary__attempts,
 .load-run-summary__range {
@@ -2282,7 +2327,7 @@ code {
    overflow leftward straight across the party strip. Measured spill, signed
    out (the worst case -- a signed-in nav is narrower): 185px at 660px,
    127px at 768px, 61px at 900px, 11px at 1100px, clear by 1150px. At 768px
-   both the Box and Graveyard chips sit on top of party slots.
+   the Box chip sat on top of party slots.
 
    Below 1150px the header therefore becomes the same two-row grid the phone
    layout uses: run and nav on the first row, the party strip across the
@@ -2370,24 +2415,11 @@ code {
     min-width: 0;
   }
 
-  /* Box and Graveyard nest a 20px-padded body inside the 28px-padded
+  /* The Box nests a 20px-padded body inside the 28px-padded
      content wrapper. Together those burned 96px of a 390px screen, and
      left the stats panel and the card grid on different left edges. */
   .attempt-page__body--inset {
     padding: 10px 0 !important;
-  }
-
-  /* PokemonCard is pinned to 220px inline, so on a phone one card sat
-     centred in the column with dead gutters either side and its action
-     row squeezed to 63px columns at 26px tall. */
-  .pokemon-card {
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: none !important;
-  }
-
-  .pokemon-card__action {
-    min-width: 0;
   }
 
   .attempt-filter {
@@ -2866,7 +2898,8 @@ code {
   }
 
   /* Cards and modals. */
-  .pokemon-card__action,
+  .pokemon-summary__action,
+  .pokemon-summary__close,
   .trainer-card-summary__battle,
   .battle-compare__footer button,
   .battle-compare__party-list button,
@@ -2943,5 +2976,564 @@ code {
     /* Against the real container width. The inline style still says 1380px,
        which left the panel floating 133px clear of the content at 1900px. */
     left: calc((100vw - 1126px) / 2 - 262px) !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Box page: a PC-style tile grid (alive on top, fallen below) beside a
+   sticky summary panel. Below 900px the summary becomes a full-screen
+   sheet so a phone still gets the whole grid width.
+--------------------------------------------------------------------------- */
+.box-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+.box-section + .box-section {
+  margin-top: 24px;
+}
+
+.box-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.box-section__count {
+  font-size: 0.75em;
+  font-weight: normal;
+  color: var(--text-secondary);
+}
+
+.box-section--fallen .box-section__title {
+  color: #e55;
+}
+
+.box-section__empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.box-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-deep);
+}
+
+.box-section--fallen .box-grid {
+  background: color-mix(in srgb, var(--surface-deep) 88%, #e55 12%);
+}
+
+.box-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 132px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.box-tile:hover,
+.box-tile:focus-visible {
+  border-color: var(--accent-border);
+  outline: none;
+}
+
+.box-tile--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg), 0 4px 12px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.box-tile--party {
+  border-color: #5ba85b;
+}
+
+.box-tile--fallen {
+  opacity: 0.6;
+  filter: saturate(0.4);
+}
+
+.box-tile--fallen.box-tile--selected {
+  opacity: 1;
+}
+
+.box-tile__flags {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.box-tile__flag {
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 0.58em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.box-tile__flag--party {
+  color: #5ba85b;
+  background: rgba(91, 168, 91, 0.16);
+}
+
+.box-tile__flag--fallen {
+  margin-left: auto;
+  color: #e55;
+  background: rgba(224, 82, 82, 0.16);
+}
+
+.box-tile__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.8em;
+  font-weight: bold;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.box-tile__shiny {
+  margin-left: 3px;
+  font-size: 0.85em;
+  color: #f2b46b;
+}
+
+.box-tile__species {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.box-tile__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.box-tile__level {
+  font-size: 0.62em;
+  color: var(--text-secondary);
+}
+
+.box-page__summary {
+  position: sticky;
+  top: 132px;
+  max-height: calc(100vh - 152px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.box-page__summary-placeholder {
+  padding: 40px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  text-align: center;
+}
+
+/* --- Summary panel ------------------------------------------------------ */
+.pokemon-summary {
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.pokemon-summary__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-mid);
+}
+
+.pokemon-summary[data-status="Dead"] .pokemon-summary__header img {
+  filter: saturate(0.3);
+  opacity: 0.8;
+}
+
+.pokemon-summary__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.pokemon-summary__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15em;
+  font-weight: bold;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pokemon-summary__shiny {
+  color: #f2b46b;
+  font-size: 0.85em;
+}
+
+.pokemon-summary__species {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__status {
+  margin-top: 4px;
+  font-size: 0.72em;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.pokemon-summary__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pokemon-summary__facts > div {
+  min-width: 0;
+}
+
+.pokemon-summary__facts dt {
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__facts dd {
+  margin: 1px 0 0;
+  font-size: 0.86em;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pokemon-summary__section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pokemon-summary__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.7em;
+  font-weight: bold;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__bst {
+  font-weight: normal;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.1em;
+}
+
+.pokemon-summary__empty {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__ivs {
+  display: grid;
+  grid-template-columns: auto repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.pokemon-summary__ivs-label {
+  padding-right: 6px;
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__iv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__iv span {
+  font-size: 0.6em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__iv strong {
+  font-size: 0.8em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pokemon-summary__abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pokemon-summary__ability {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  font-size: 0.78em;
+}
+
+.pokemon-summary__ability--chosen {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.pokemon-summary__ability-tag {
+  font-size: 0.78em;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.pokemon-summary__moves-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__moves {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76em;
+}
+
+.pokemon-summary__moves th {
+  position: sticky;
+  top: 0;
+  padding: 5px 6px;
+  background: var(--surface-mid);
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  font-weight: normal;
+  text-align: left;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__moves td {
+  padding: 4px 6px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.pokemon-summary__moves td img {
+  display: block;
+}
+
+.pokemon-summary__move-level {
+  width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pokemon-summary__move-name {
+  color: var(--text-primary);
+  font-weight: bold;
+  white-space: normal !important;
+}
+
+.pokemon-summary__move--known .pokemon-summary__move-level {
+  color: #5ba85b;
+}
+
+.pokemon-summary__record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pokemon-summary__record > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__record span {
+  font-size: 0.64em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__record strong {
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.pokemon-summary__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pokemon-summary__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  font-size: 0.74em;
+}
+
+.pokemon-summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface-mid);
+}
+
+.pokemon-summary__action {
+  flex: 1 1 100px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82em;
+  white-space: nowrap;
+}
+
+.pokemon-summary__action--add { color: #5ba85b; border-color: #5ba85b; background: rgba(91, 168, 91, 0.12); }
+.pokemon-summary__action--remove,
+.pokemon-summary__action--dead { color: #e55; border-color: #e55; background: rgba(224, 82, 82, 0.12); }
+.pokemon-summary__action--evolve { color: var(--accent); border-color: var(--accent-border); background: var(--accent-bg); }
+.pokemon-summary__action--revive { color: #7ec8e3; border-color: #7ec8e3; background: rgba(126, 200, 227, 0.12); }
+
+@media (max-width: 1149.98px) {
+  /* The header is sticky and in flow here, so there is no fixed bar to
+     clear; pin the summary just under the viewport top instead. */
+  .box-page__summary {
+    top: 12px;
+    max-height: calc(100vh - 24px);
+  }
+}
+
+@media (max-width: 899.98px) {
+  .box-page__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .box-page__summary {
+    display: none;
+  }
+
+  /* Selected: a full-screen sheet over the grid, tap outside to close. */
+  .box-page__summary--open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    max-height: none;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .box-page__summary--open > div {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .box-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+    padding: 8px;
   }
 }

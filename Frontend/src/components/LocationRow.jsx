@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '../utils/api'
 import Sprite from './Sprite'
+import { IV_MIN, IV_MAX, emptyIvs, normalizeIvs } from '../utils/pokemonFormat'
 import TrainerCard from './TrainerCard'
 import { TypeIconRow } from './TypeIcon'
 import {
@@ -67,6 +68,23 @@ const ROW_ACTION_GROUP_STYLE = {
   width: '312px',
   maxWidth: '100%',
   marginLeft: 'auto',
+}
+
+// Label, base value, bar, IV entry.
+const STAT_GRID_COLUMNS = '60px 30px 1fr 54px'
+
+const IV_INPUT_STYLE = {
+  width: '100%',
+  height: '30px',
+  boxSizing: 'border-box',
+  padding: '0 4px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '8px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-primary)',
+  font: 'inherit',
+  fontSize: '0.8em',
+  textAlign: 'center',
 }
 
 const STAT_ROWS = [
@@ -167,6 +185,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const [nature, setNature] = useState('')
   const [status, setStatus] = useState('')
   const [ability, setAbility] = useState('')
+  const [ivs, setIvs] = useState(emptyIvs)
   const [abilityOptions, setAbilityOptions] = useState([])
   const [saveNonce, setSaveNonce] = useState(0)
   const [isShiny, setIsShiny] = useState(false)
@@ -224,6 +243,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setNature(savedEncounter.nature || '')
     setStatus(savedEncounter.status || '')
     setAbility(savedEncounter.ability || '')
+    setIvs(normalizeIvs(savedEncounter.ivs))
     setIsShiny(savedEncounter.shiny === 'True' || savedEncounter.shiny === true)
     setGender(savedEncounter.gender || 'male')
   }, [savedEncounter?.pokemon_id])
@@ -316,6 +336,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         pokemonIdRef.current,
         gender,
         ability,
+        normalizeIvs(ivs),
       )
         .then(data => {
           if (!data?.pokemon_id) {
@@ -352,7 +373,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
     const timer = setTimeout(persistEncounter, saveDelay)
     return () => clearTimeout(timer)
-  }, [encounter, nickname, nature, status, isShiny, gender, ability, saveNonce, runId, attemptNumber, row.event_id, row.secondary_sort_order, onEncounterChange, onPartyChange])
+  }, [encounter, nickname, nature, status, isShiny, gender, ability, ivs, saveNonce, runId, attemptNumber, row.event_id, row.secondary_sort_order, onEncounterChange, onPartyChange])
 
   useEffect(() => {
     const canShowTrainerView = viewMode === 'master' || viewMode === 'trainers'
@@ -1315,10 +1336,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               </div>
 
               <div style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface-mid)', padding: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '60px 30px 1fr', gap: '8px', alignItems: 'center', paddingBottom: '8px', marginBottom: '10px', borderBottom: '1px solid var(--border-strong)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: STAT_GRID_COLUMNS, gap: '8px', alignItems: 'center', paddingBottom: '8px', marginBottom: '10px', borderBottom: '1px solid var(--border-strong)' }}>
                   <span style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)' }}>BST</span>
                   <span style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>{encounterDetails?.bst ?? '—'}</span>
                   <span />
+                  <span title={`Individual values, ${IV_MIN}-${IV_MAX}`} style={{ fontSize: '0.85em', fontWeight: 'bold', color: 'var(--text-secondary)', textAlign: 'center' }}>IV</span>
                 </div>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {STAT_ROWS.map(stat => {
@@ -1330,7 +1352,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     const deltaLeftPct = Math.min(widthPct, adjustedWidthPct)
                     const deltaWidthPct = Math.max(0, Math.abs(adjustedWidthPct - widthPct))
                     return (
-                      <div key={stat.key} style={{ display: 'grid', gridTemplateColumns: '60px 30px 1fr', gap: '8px', alignItems: 'center' }}>
+                      <div key={stat.key} style={{ display: 'grid', gridTemplateColumns: STAT_GRID_COLUMNS, gap: '8px', alignItems: 'center' }}>
                         <span style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
                           <span style={{ width: '28px', fontSize: '0.72em', color: 'var(--text-secondary)', textAlign: 'left' }}>{stat.label}</span>
                           <span style={{ width: '38px', fontSize: '0.72em', color: natureModifier?.color || 'transparent', textAlign: 'left' }}>
@@ -1365,6 +1387,27 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                             />
                           )}
                         </div>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={IV_MIN}
+                          max={IV_MAX}
+                          step={1}
+                          aria-label={`${stat.label} IV`}
+                          className="encounter-editor__iv"
+                          value={ivs[stat.key] ?? ''}
+                          onChange={e => {
+                            // Free typing while editing; the blur clamps.
+                            const raw = e.target.value
+                            setIvs(prev => ({ ...prev, [stat.key]: raw === '' ? null : Number(raw) }))
+                          }}
+                          onBlur={() => setIvs(prev => {
+                            const value = prev[stat.key]
+                            if (value == null || Number.isNaN(value)) return { ...prev, [stat.key]: null }
+                            return { ...prev, [stat.key]: Math.min(IV_MAX, Math.max(IV_MIN, Math.round(value))) }
+                          })}
+                          style={IV_INPUT_STYLE}
+                        />
                       </div>
                     )
                   })}

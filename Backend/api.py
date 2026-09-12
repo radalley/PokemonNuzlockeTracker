@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import time
 from backend import (get_games, create_run, get_runs, get_script,
                      get_encounter_pool, get_run_by_id, get_trainers_by_location,
-                     get_trainer_parties_by_encounter, get_trainer_party_by_id, get_species_search, update_starter, delete_run,
+                     get_trainer_parties_by_encounter, get_trainer_party_by_id, get_species_search, update_starter, delete_run, rename_run,
                      get_pokebank_for_attempt, upsert_encounter, delete_encounter, get_evolutions,
                      get_evolution_families, get_attempt_page_data, get_attempts_for_run, create_attempt_for_run,
                      get_party_for_attempt, add_to_party_for_attempt, remove_from_party_for_attempt,
@@ -25,7 +25,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
                      add_observed_move, delete_observed_move, search_move_names,
                      end_attempt, reopen_attempt, get_attempt_summary, get_species_abilities,
-                     get_calc_dex_patch)
+                     get_species_learnset, get_calc_dex_patch)
 
 load_dotenv()
 
@@ -231,6 +231,21 @@ def mark_run_opened_route(run_id):
         return jsonify({'error': 'Run or attempt not found'}), 404
     return jsonify({'success': True})
 
+@app.route('/api/runs/<int:run_id>', methods=['PATCH'])
+def rename_run_route(run_id):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    data = request.get_json() or {}
+    try:
+        run_name = rename_run(conn, run_id, data.get('run_name'))
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if run_name is None:
+        return jsonify({'error': 'Run not found'}), 404
+    return jsonify({'success': True, 'run_name': run_name})
+
 @app.route('/api/runs/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def get_run_route(run_id, attempt_number):
     conn = get_db()
@@ -386,6 +401,12 @@ def species_abilities_route(species_id):
     conn = get_db()
     game_id = request.args.get('game_id', type=int)
     return jsonify(get_species_abilities(conn, species_id, game_id=game_id))
+
+@app.route('/api/species/<int:species_id>/learnset', methods=['GET'])
+def species_learnset_route(species_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    return jsonify(get_species_learnset(conn, species_id, game_id=game_id))
 
 @app.route('/api/games/<int:game_id>/calc-dex-patch', methods=['GET'])
 def calc_dex_patch_route(game_id):
@@ -618,6 +639,7 @@ def save_encounter_route():
         int(data.get('bonus_location') or 0),
         data.get('gender') or None,
         (str(data.get('ability')).strip()[:80] or None) if data.get('ability') else None,
+        ivs=data.get('ivs'),
     )
     return jsonify({'success': True, 'pokemon_id': pokemon_id})
 

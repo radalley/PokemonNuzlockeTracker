@@ -508,6 +508,20 @@ def get_run_by_id(conn, run_id, attempt_number, user_id=None):
         params.append(user_id)
     return conn.execute(query, params).fetchone()
 
+def rename_run(conn, run_id, name):
+    """Update a run's display name. Returns the cleaned name, or None if the run does not exist."""
+    cleaned = str(name or '').strip()[:100]
+    if not cleaned:
+        raise ValueError('Run name is required')
+    row = conn.execute(
+        'update runs set name = %s where run_id = %s returning run_id',
+        (cleaned, run_id),
+    ).fetchone()
+    conn.commit()
+    if row is None:
+        return None
+    return cleaned
+
 def delete_run(conn, run_id):
     attempts = [x['attempt_id'] for x in conn.execute('select attempt_id from attempts where run_id = (%s)',(run_id,)).fetchall()]
     #delete from runs

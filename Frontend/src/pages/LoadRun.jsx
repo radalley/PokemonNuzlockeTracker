@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import SiteHeader from '../components/SiteHeader'
 import Sprite from '../components/Sprite'
 import { useAuth } from '../contexts/AuthContext'
-import { getRuns, deleteRun } from '../utils/dataLayer'
+import { getRuns, deleteRun, renameRun } from '../utils/dataLayer'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -56,7 +56,97 @@ function StatPill({ label, value }) {
   )
 }
 
-function LoadRunRow({ run, onLoad, onDelete }) {
+function RunNameEditor({ run, onRename }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(run.run_name || '')
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef(null)
+  const committingRef = useRef(false)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const startEditing = () => {
+    setDraft(run.run_name || '')
+    setEditing(true)
+  }
+
+  const cancel = () => {
+    setEditing(false)
+    setDraft(run.run_name || '')
+  }
+
+  const commit = async () => {
+    if (committingRef.current) return
+    const next = draft.trim()
+    if (!next || next === run.run_name) {
+      cancel()
+      return
+    }
+    committingRef.current = true
+    setSaving(true)
+    try {
+      const data = await renameRun(run.run_id, next)
+      if (data?.success) onRename(data.run_name || next)
+    } finally {
+      committingRef.current = false
+      setSaving(false)
+      setEditing(false)
+    }
+  }
+
+  if (!editing) {
+    return (
+      <>
+        <span className="load-run-summary__run-name">{run.run_name}</span>
+        <button
+          type="button"
+          className="load-run-summary__rename"
+          onClick={startEditing}
+          aria-label={`Rename ${run.run_name}`}
+          title="Rename run"
+        >
+          <svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M11.3 1.3a1 1 0 0 1 1.4 0l2 2a1 1 0 0 1 0 1.4l-8.5 8.5a1 1 0 0 1-.4.25l-3.2 1a.5.5 0 0 1-.63-.63l1-3.2a1 1 0 0 1 .25-.4zM10.5 4.2 11.8 5.5l1.2-1.2-1.3-1.3zM9.8 4.9 4.1 10.6l-.5 1.8 1.8-.5 5.7-5.7z"
+            />
+          </svg>
+        </button>
+      </>
+    )
+  }
+
+  return (
+    <form
+      className="load-run-summary__rename-form"
+      onSubmit={event => { event.preventDefault(); commit() }}
+    >
+      <input
+        ref={inputRef}
+        className="load-run-summary__rename-input"
+        value={draft}
+        maxLength={100}
+        disabled={saving}
+        aria-label="Run name"
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            cancel()
+          } else if (event.key === 'Enter') {
+            event.preventDefault()
+            commit()
+          }
+        }}
+        onBlur={commit}
+      />
+    </form>
+  )
+}
+
+function LoadRunRow({ run, onLoad, onDelete, onRename }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const won = isRunWon(run.victory_item)
   const totalAttempts = Number(run.total_attempts || 0)
@@ -97,7 +187,7 @@ function LoadRunRow({ run, onLoad, onDelete }) {
               </span>
             </div>
             <div className="load-run-summary__title-row">
-              <span className="load-run-summary__run-name">{run.run_name}</span>
+              <RunNameEditor run={run} onRename={onRename} />
               <span className="load-run-summary__attempts">{totalAttempts} Attempt{totalAttempts === 1 ? '' : 's'}</span>
             </div>
             <div className="load-run-summary__status-row">
@@ -147,6 +237,10 @@ function LoadRun() {
   const [runs, setRuns] = useState([])
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [genFilter, setGenFilter] = useState(null)
+
+  const handleRenameRun = (run_id, run_name) => {
+    setRuns(prev => prev.map(r => (String(r.run_id) === String(run_id) ? { ...r, run_name } : r)))
+  }
 
   const handleDeleteRun = async (run_id) => {
     const data = await deleteRun(run_id)
@@ -243,6 +337,7 @@ function LoadRun() {
                       run={r}
                       onLoad={() => navigate(`/attempt/${r.run_id}/${r.latest_attempt}`)}
                       onDelete={() => setConfirmDelete(r.run_id)}
+                      onRename={name => handleRenameRun(r.run_id, name)}
                     />
                   ))}
                 </tbody>

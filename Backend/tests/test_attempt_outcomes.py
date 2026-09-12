@@ -125,6 +125,8 @@ def test_attempt_summary_shape(db_conn):
     assert [d["species_name"] for d in summary["deaths"]] == ["PATRAT"]
     assert [s["nickname"] for s in summary["survivors"]] == ["Smug"]
     assert summary["counts"]["captured"] == 1
+    # Caught covers alive and fallen alike.
+    assert summary["counts"]["obtained"] == 2
     assert summary["counts"]["dead"] == 1
     assert summary["counts"]["trainers_defeated"] == 1
 
