@@ -10,10 +10,14 @@ function getGameLogoSrc(gameName) {
 }
 
 function GameRow({ game, isSelected, onSelect }) {
-  const [logoFailed, setLogoFailed] = useState(false)
+  // A hack without its own logo art falls back to its base game's logo
+  // before giving up.
+  const logoCandidates = [getGameLogoSrc(game.name)]
+  if (game.base_game_name) logoCandidates.push(getGameLogoSrc(game.base_game_name))
+  const [logoIndex, setLogoIndex] = useState(0)
 
   useEffect(() => {
-    setLogoFailed(false)
+    setLogoIndex(0)
   }, [game.game_id, game.name])
 
   return (
@@ -23,19 +27,34 @@ function GameRow({ game, isSelected, onSelect }) {
       onClick={() => onSelect(game)}
     >
       <div className="new-run-game-logo-cell">
-        {!logoFailed ? (
+        {logoIndex < logoCandidates.length ? (
           <img
             className="new-run-game-logo"
-            src={getGameLogoSrc(game.name)}
-            alt={`Pokemon ${game.name}`}
-            onError={() => setLogoFailed(true)}
+            src={logoCandidates[logoIndex]}
+            alt={game.is_rom_hack ? game.name : `Pokemon ${game.name}`}
+            onError={() => setLogoIndex(index => index + 1)}
           />
         ) : (
           <div className="new-run-game-logo-placeholder">No Logo</div>
         )}
       </div>
-      <div className="new-run-game-name">Pokemon {game.name}</div>
-      <div className="new-run-game-meta">Gen {game.generation}</div>
+      <div className="new-run-game-name">{game.is_rom_hack ? game.name : `Pokemon ${game.name}`}</div>
+      <div className="new-run-game-meta">
+        {game.is_rom_hack && game.base_game_name ? (
+          <span style={{
+            display: 'inline-block',
+            padding: '2px 8px',
+            borderRadius: '999px',
+            border: '1px solid var(--accent-border)',
+            color: 'var(--accent)',
+            fontSize: '0.8em',
+            marginRight: '8px',
+          }}>
+            Hack of {game.base_game_name}
+          </span>
+        ) : null}
+        Gen {game.generation}
+      </div>
     </button>
   )
 }
@@ -66,6 +85,8 @@ function NewRun() {
   const filteredGames = selectedGeneration === 'all'
     ? sortedGames
     : sortedGames.filter(game => Number(game.generation) === Number(selectedGeneration))
+  const vanillaGames = filteredGames.filter(game => !game.is_rom_hack)
+  const hackGames = filteredGames.filter(game => game.is_rom_hack)
 
   useEffect(() => {
     if (generations.length === 0) return
@@ -105,11 +126,20 @@ function NewRun() {
             }}
           >
             <option value="">Select a game...</option>
-            {games.map(g => (
+            {games.filter(g => !g.is_rom_hack).map(g => (
               <option key={g.game_id} value={g.game_id}>
                 Pokemon {g.name} (Gen {g.generation})
               </option>
             ))}
+            {games.some(g => g.is_rom_hack) && (
+              <optgroup label="ROM Hacks">
+                {games.filter(g => g.is_rom_hack).map(g => (
+                  <option key={g.game_id} value={g.game_id}>
+                    {g.name}{g.base_game_name ? ` (Hack of ${g.base_game_name})` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </label>
 
@@ -118,6 +148,9 @@ function NewRun() {
           <input
             type="text"
             placeholder="Run name"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={runName}
             onChange={(e) => setRunName(e.target.value)}
           />
@@ -150,7 +183,7 @@ function NewRun() {
         </div>
 
         <div className="new-run-game-table" role="list">
-          {filteredGames.map(game => (
+          {vanillaGames.map(game => (
             <GameRow
               key={game.game_id}
               game={game}
@@ -162,6 +195,37 @@ function NewRun() {
             />
           ))}
         </div>
+
+        {hackGames.length > 0 && (
+          <>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              margin: '18px 0 10px',
+              color: 'var(--text-secondary)',
+              fontSize: '0.8em',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
+              <span>ROM Hacks</span>
+              <span style={{ flex: 1, height: '1px', background: 'var(--border-strong)' }} />
+            </div>
+            <div className="new-run-game-table" role="list">
+              {hackGames.map(game => (
+                <GameRow
+                  key={game.game_id}
+                  game={game}
+                  isSelected={String(game.game_id) === String(gameid)}
+                  onSelect={(selected) => {
+                    setGameId(String(selected.game_id))
+                    setSelectedGame(selected)
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
     </div>

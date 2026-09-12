@@ -1,0 +1,60 @@
+{
+  "description": "Load and capture Lockley's local cross-agent memory.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "lockley_root=\"$PWD\"; while [ \"$lockley_root\" != \"/\" ] && [ ! -f \"$lockley_root/scripts/agent-memory.cjs\" ]; do lockley_root=$(dirname \"$lockley_root\"); done; node \"$lockley_root/scripts/agent-memory.cjs\" hook codex",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$payload = [Console]::In.ReadToEnd(); $lockleyRoot = (Get-Location).Path; while ($lockleyRoot -and -not (Test-Path -LiteralPath (Join-Path $lockleyRoot 'scripts/agent-memory.cjs'))) { $parent = Split-Path -Parent $lockleyRoot; if ($parent -eq $lockleyRoot) { exit 0 }; $lockleyRoot = $parent }; $payload | & node (Join-Path $lockleyRoot 'scripts/agent-memory.cjs') hook codex\"",
+            "timeout": 5,
+            "statusMessage": "Loading Lockley memory",
+            "additionalContextLimit": 4000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "lockley_root=\"$PWD\"; while [ \"$lockley_root\" != \"/\" ] && [ ! -f \"$lockley_root/scripts/agent-memory.cjs\" ]; do lockley_root=$(dirname \"$lockley_root\"); done; node \"$lockley_root/scripts/agent-memory.cjs\" hook codex",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$payload = [Console]::In.ReadToEnd(); $lockleyRoot = (Get-Location).Path; while ($lockleyRoot -and -not (Test-Path -LiteralPath (Join-Path $lockleyRoot 'scripts/agent-memory.cjs'))) { $parent = Split-Path -Parent $lockleyRoot; if ($parent -eq $lockleyRoot) { exit 0 }; $lockleyRoot = $parent }; $payload | & node (Join-Path $lockleyRoot 'scripts/agent-memory.cjs') hook codex\"",
+            "timeout": 5,
+            "statusMessage": "Checking Lockley memory",
+            "additionalContextLimit": 2500
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "lockley_root=\"$PWD\"; while [ \"$lockley_root\" != \"/\" ] && [ ! -f \"$lockley_root/scripts/agent-memory.cjs\" ]; do lockley_root=$(dirname \"$lockley_root\"); done; node \"$lockley_root/scripts/agent-memory.cjs\" hook codex",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$payload = [Console]::In.ReadToEnd(); $lockleyRoot = (Get-Location).Path; while ($lockleyRoot -and -not (Test-Path -LiteralPath (Join-Path $lockleyRoot 'scripts/agent-memory.cjs'))) { $parent = Split-Path -Parent $lockleyRoot; if ($parent -eq $lockleyRoot) { exit 0 }; $lockleyRoot = $parent }; $payload | & node (Join-Path $lockleyRoot 'scripts/agent-memory.cjs') hook codex\"",
+            "timeout": 5,
+            "statusMessage": "Recording Lockley memory"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "lockley_root=\"$PWD\"; while [ \"$lockley_root\" != \"/\" ] && [ ! -f \"$lockley_root/scripts/agent-memory.cjs\" ]; do lockley_root=$(dirname \"$lockley_root\"); done; node \"$lockley_root/scripts/agent-memory.cjs\" hook codex",
+            "commandWindows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"$payload = [Console]::In.ReadToEnd(); $lockleyRoot = (Get-Location).Path; while ($lockleyRoot -and -not (Test-Path -LiteralPath (Join-Path $lockleyRoot 'scripts/agent-memory.cjs'))) { $parent = Split-Path -Parent $lockleyRoot; if ($parent -eq $lockleyRoot) { exit 0 }; $lockleyRoot = $parent }; $payload | & node (Join-Path $lockleyRoot 'scripts/agent-memory.cjs') hook codex\"",
+            "timeout": 3,
+            "statusMessage": "Closing Lockley memory session"
+          }
+        ]
+      }
+    ]
+  }
+}

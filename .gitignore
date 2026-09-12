@@ -56,3 +56,9 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Local cross-agent memory and personal agent settings
+.agent-memory/
+.claude/settings.local.json
+
+imports/

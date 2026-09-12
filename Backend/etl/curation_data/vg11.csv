@@ -1,0 +1,316 @@
+version_group_id,trainer_key,canonical_location_id,area_name,status,is_rematch,is_event,game_id,note
+11,TRAINER_ACE_TRAINER_F_AUSTIN,492,,placed,t,f,,"Nimbasa Ferris Wheel companion (female player, Summer), daily-repeatable; Serebii Swoobat list and Bulbapedia Nimbasa_City confirm Swoobat L27"
+11,TRAINER_ACE_TRAINER_F_BECKETT,246,4F,placed,f,f,,"Serebii Stoutland trainer list: Ace Trainer Beckett, Celestial Tower 4F, Stoutland L33"
+11,TRAINER_ACE_TRAINER_F_CHARLIE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_ACE_TRAINER_F_HENRY,501,,placed,f,t,,Bulbapedia Royal_Unova BW passenger list confirms Ace Trainer Henry (Tauros/Wailord L66); ROM class slot says F but Bulbapedia lists him as male Ace Trainer
+11,TRAINER_ACE_TRAINER_F_JARED,244,1F,placed,f,f,,Bulbapedia Chargestone Cave BW: Ace Trainer Jared 1F with Archen L31
+11,TRAINER_ACE_TRAINER_F_JOSE,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_F_LOU,494,,placed,t,f,17," [Opelucid Battle House: triple=Black, rotation=White, daily]"
+11,TRAINER_ACE_TRAINER_F_LOU_2,494,,placed,t,f,18," [Opelucid Battle House: triple=Black, rotation=White, daily]"
+11,TRAINER_ACE_TRAINER_F_TERRY,495,,placed,,,,
+11,TRAINER_ACE_TRAINER_F_TOM,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_F_TRAINER_273,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ACE_TRAINER_F_TRAINER_522,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ACE_TRAINER_F_TRAINER_534,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ACE_TRAINER_F_VINCENT,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Ace Trainer Vincent, Magmortar L62"
+11,TRAINER_ACE_TRAINER_F_WEBSTER,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_M_BEVERLY,495,B1F,placed,f,f,,"Serebii Grumpig trainer list: Ace Trainer Beverly, Challenger's Cave B1F, Grumpig L64 (post-game cave)"
+11,TRAINER_ACE_TRAINER_M_CLARA,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_M_DARA,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_M_EILEEN,494,,placed,t,f,18," [Opelucid Battle House: triple=Black, rotation=White, daily]"
+11,TRAINER_ACE_TRAINER_M_EILEEN_2,494,,placed,t,f,17," [Opelucid Battle House: triple=Black, rotation=White, daily]"
+11,TRAINER_ACE_TRAINER_M_GLINDA,255,,placed,t,f,17,"Bulbapedia Marvelous Bridge: Glinda, eastern bridge gate, once per day (extra battle possible after beating the Opelucid Battle House trainer). Marvelous Bridge is the inverted pair: Triple Battle in Black / Rotation in White; bt=2 = triple -> Black."
+11,TRAINER_ACE_TRAINER_M_GLINDA_2,255,,placed,t,f,18,"Marvelous Bridge daily trainer, bt=3 = rotation flag -> White (Glinda's Rotation Battle is the White version per Bulbapedia)."
+11,TRAINER_ACE_TRAINER_M_KASSANDRA,246,4F,placed,f,f,,"Serebii Gothorita trainer list: Ace Trainer Kassandra, Celestial Tower 4F, Gothorita L32"
+11,TRAINER_ACE_TRAINER_M_LENA,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Ace Trainer Lena, Gardevoir/Gallade L61"
+11,TRAINER_ACE_TRAINER_M_LUCILLE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_ACE_TRAINER_M_MARIANA,501,,placed,f,t,,Bulbapedia Royal_Unova BW passenger list confirms Ace Trainer Mariana (Rotom/Butterfree/Alomomola L65); ROM class slot says M but Bulbapedia lists her as female Ace Trainer
+11,TRAINER_ACE_TRAINER_M_OLWEN,494,,placed,,,,
+11,TRAINER_ACE_TRAINER_M_STELLA,244,B2F,placed,f,f,,"Bulbapedia Chargestone Cave BW: Ace Trainer Stella B2F, exact party/levels match"
+11,TRAINER_ACE_TRAINER_M_TRAINER_268,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ACE_TRAINER_M_TRAINER_280,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ACE_TRAINER_M_TRAINER_521,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_ARTIST_PIERRE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, Smeargle L65 matches"
+11,TRAINER_BACKERS_AI_CIEL,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_ALF_FRED,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_AMI_EIRA,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 5-6 badge tier, Sun/Mon/Thu rotation; double battle"
+11,TRAINER_BACKERS_AMI_EIRA_2,502,Big Stadium,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium audience pair; _2 = 'After 7th and 8th Badges' L39 tier (Simipour/Simisear L39 confirmed); daily re-battleable
+11,TRAINER_BACKERS_AMI_EIRA_3,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_CAM_ABBY,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_HAWK_DAR,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 5-6 badge tier, Wed/Sat rotation; double battle"
+11,TRAINER_BACKERS_HAWK_DAR_2,502,Big Stadium,placed,t,f,,Bulbapedia BW stadium subpage: Backers Hawk & Dar accompany the football division in Big Stadium; tier progression L31/L39/L65 — this is the L39 tier (double battle)
+11,TRAINER_BACKERS_HAWK_DAR_3,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_JOE_ROSS,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court, 5-6 badge tier, Sun/Mon/Wed/Fri rotation; double battle"
+11,TRAINER_BACKERS_JOE_ROSS_2,502,Small Court,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court audience pair; _2 = 'After 7th and 8th Badges' L39 tier; daily re-battleable
+11,TRAINER_BACKERS_JOE_ROSS_3,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_KAT_PHAE,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_KAY_ALI,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 5-6 badge tier, Tue/Fri rotation; double battle"
+11,TRAINER_BACKERS_KAY_ALI_2,502,Big Stadium,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium audience pair; _2 = 'After 7th and 8th Badges' L39 tier (Swanna L39 x2 confirmed); daily re-battleable
+11,TRAINER_BACKERS_KAY_ALI_3,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_LES_WEB,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKERS_MASA_YAS,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court, 5-6 badge tier, Tue/Thu/Sat rotation; double battle"
+11,TRAINER_BACKERS_MASA_YAS_2,502,Small Court,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court audience pair; _2 = 'After 7th and 8th Badges' L39 tier; daily re-battleable
+11,TRAINER_BACKERS_MASA_YAS_3,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_BACKPACKER_F_EMI,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Backpacker Emi, Blissey L30"
+11,TRAINER_BACKPACKER_F_MOLLY,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Backpacker Molly, Azumarill L30"
+11,TRAINER_BACKPACKER_F_PATTY,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_BACKPACKER_M_ALEXANDER,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_BACKPACKER_M_CARLOS,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Backpacker Carlos, Staraptor L30"
+11,TRAINER_BACKPACKER_M_HERMAN,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Backpacker Herman, Porygon-Z L30"
+11,TRAINER_BACKPACKER_M_KIYO,503,,placed,f,f,17,"Bulbapedia Black_City + Backpacker class page: Kiyo is a one-time Rotation Battle in Black City's marketplace (alongside Roughneck Johnny), exact Lv.65 party. battle_type=3 = rotation = BLACK (Bulbapedia Rotation_Battle page confirms rotation is Black's format; brief's mapping is inverted). Black-only → game_id=17. [one-time marketplace battle, not a daily resident]"
+11,TRAINER_BACKPACKER_M_TORU,495,,placed,,,,
+11,TRAINER_BAKER_CHRIS,251,,placed,f,f,,Bulbapedia Village_Bridge: Baker Chris with Combee L64 + Ursaring L64 (exact match).
+11,TRAINER_BAKER_LILLY,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer, party/levels match exactly; rotates into either arena"
+11,TRAINER_BATTLE_GIRL_HILLARY,31,,placed,f,f,,Bulbapedia Battle Girl class page: BW Hillary on Unova Route 18; L35 fits Route 18 mid-game band
+11,TRAINER_BATTLE_GIRL_JANIE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer, Hitmonchan L66 confirmed; rotates into either arena"
+11,TRAINER_BATTLE_GIRL_KARENNA,503,,placed,t,f,17,"Bulbapedia Black_City resident (Slaking Lv.56, exact match). Black-only city; residents are re-battleable (daily, tied to point system)."
+11,TRAINER_BATTLE_GIRL_LEE,237,,placed,f,f,,Bulbapedia Pinwheel Forest / BW walkthrough Part 4: Battle Girl Lee stands near the Challenge Rock stairway (PP Max); Timburr L16 matches the badge-2 stage
+11,TRAINER_BATTLE_GIRL_MAGGIE,235,B1F,placed,f,f,,"Bulbapedia Wellspring_Cave B1F trainer, exact party match (Gurdurr/Sawk L35)"
+11,TRAINER_BATTLE_GIRL_SHARON,247,,placed,f,f,,"Bulbapedia Twist Mountain BW: Battle Girl Sharon, Throh L36"
+11,TRAINER_BATTLE_GIRL_SUSIE,34,,placed,f,f,,Bulbapedia Battle Girl class page: BW Susie on Unova Route 15; L64 fits post-game route band
+11,TRAINER_BATTLE_GIRL_XIAO,235,B1F,placed,f,f,,"Bulbapedia Wellspring_Cave B1F trainer, exact party match (Gurdurr/Throh L35); Serebii Throh list agrees"
+11,TRAINER_BIKER_JEREMY,500,,placed,f,f,,"Bulbapedia Biker_(Trainer_class): Biker Jeremy, Tubeline Bridge, Joltik/Scraggy/Krokorok (page lists Krokorok L37; same trainer). Adjacent rom_index to Morgann."
+11,TRAINER_BIKER_MORGANN,500,,placed,f,f,,"Bulbapedia Biker_(Trainer_class): Biker Morgann, Tubeline Bridge, Bouffalant L37."
+11,TRAINER_BIKER_PHILLIP,19,,placed,f,f,,Bulbapedia Unova_Route_9 BW trainer list confirms Biker Phillip (Krokorok/Scraggy L36)
+11,TRAINER_BIKER_TRAINER_527,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_BIKER_ZEKE,19,,placed,f,f,,Bulbapedia Unova_Route_9 BW trainer list confirms Biker Zeke (Pawniard L37)
+11,TRAINER_BLACK_BELT_COREY,20,,placed,f,f,,"Bulbapedia Unova Route 10 BW and Serebii Sawk trainer list: Black Belt Corey, Sawk L40, Route 10"
+11,TRAINER_BLACK_BELT_EDWARD,235,B1F,placed,f,f,,"Bulbapedia Wellspring_Cave: B1F (Surf-required area) trainer, exact party match; Serebii Sawk/Throh trainer lists agree"
+11,TRAINER_BLACK_BELT_LAO,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer, party/levels match exactly; rotates into either arena"
+11,TRAINER_BLACK_BELT_RYDER,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Black Belt Ryder, Machamp L56"
+11,TRAINER_BLACK_BELT_TEPPEI,247,1F,placed,f,f,,"Serebii BW Sawk trainer list: Black Belt Teppei, Twist Mountain 1F, Sawk L36"
+11,TRAINER_CLERK_F_BRITNEY,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Clerk Britney, Jumpluff L40; Black-exclusive daily battle"
+11,TRAINER_CLERK_F_PIPER,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Clerk Piper, Victreebel L40"
+11,TRAINER_CLERK_F_TRISHA,492,Ferris Wheel,placed,t,f,,"Bulbapedia Nimbasa City: Ferris Wheel ride partner, autumn, male protagonist; battled daily after defeating Elesa"
+11,TRAINER_CLERK_F_WREN,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_CLERK_M_CHAZ,501,,placed,f,t,,Bulbapedia Royal_Unova BW passenger list confirms Clerk♂ Chaz (Ariados/Floatzel L64); evening cruise battle
+11,TRAINER_CLERK_M_COLLIN,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Clerk Collin, Alakazam L40"
+11,TRAINER_CLERK_M_DOUG,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Clerk Doug, Luxray L40"
+11,TRAINER_CLERK_M_FREDRIC,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional rotating trainer, appears in either arena (three at a time, no set order)"
+11,TRAINER_CLERK_M_NELSON,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_CLERK_M_TRAINER_282,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_CYCLIST_F_KRISSA,29,,placed,f,f,,Bulbapedia Cyclist class page: BW Krissa on Unova Route 16 with L22 Ducklett and L22 Liepard (exact match)
+11,TRAINER_CYCLIST_M_HECTOR,29,,placed,f,f,,Bulbapedia Cyclist class page: BW Hector on Unova Route 16 with two L22 Whirlipede (exact match)
+11,TRAINER_DANCER_DAVEY,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_DANCER_DIRK,492,Rondez-View Ferris Wheel,placed,t,f,,"Bulbapedia Dancer_(Trainer_class)/Nimbasa_City: Ferris Wheel seasonal trainer, spring (female player), Darumaka L25; battled daily."
+11,TRAINER_DANCER_EDMOND,238,,placed,f,f,,Castelia City dance-trio sidequest; Edmond is battled on Narrow Street.
+11,TRAINER_DANCER_MICKEY,238,,placed,f,f,,Castelia City dance-trio sidequest (Bulbapedia Dancer class / BW walkthrough Part 4): Mickey by the fountain asks the player to recruit Edmond and Raymond; reward Amulet Coin.
+11,TRAINER_DANCER_RAYMOND,238,,placed,f,f,,Castelia City dance-trio sidequest; Raymond is battled on Unity Pier.
+11,TRAINER_DEPOT_AGENT_JOSH,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_DOCTOR_JULES,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_ELITE_FOUR_CAITLIN_2,226,,placed,t,f,,Elite Four rematch team (post-game L71-73 six-Pokemon version) at the Pokemon League.
+11,TRAINER_ELITE_FOUR_GRIMSLEY_2,226,,placed,t,f,,Elite Four rematch team (post-game L71-73 six-Pokemon version) at the Pokemon League.
+11,TRAINER_ELITE_FOUR_MARSHAL_2,226,,placed,t,f,,Elite Four rematch team (post-game L71-73 six-Pokemon version) at the Pokemon League.
+11,TRAINER_ELITE_FOUR_SHAUNTAL_2,226,,placed,t,f,,Elite Four rematch team (post-game L71-73 six-Pokemon version) at the Pokemon League.
+11,TRAINER_FISHERMAN_DEVON,502,,placed,t,f,,"Serebii BW Lumineon trainer list: Fisherman Devon, Nimbasa City Dome; post-game additional trainer, either arena"
+11,TRAINER_GENTLEMAN_FREDERIC,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Gentleman Frederic, Roserade L40"
+11,TRAINER_GENTLEMAN_RENAUD,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_GENTLEMAN_ROBERT,501,,placed,f,t,,Bulbapedia Royal_Unova confirms Gentleman Robert (Houndour/Noctowl/Houndoom L63) passenger battle
+11,TRAINER_HARLEQUIN_CHARLEY,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game 'additional trainers' set, appears daily in either arena (three at a time), party matches exactly"
+11,TRAINER_HARLEQUIN_KERRY,238,Castelia Gym,placed,f,f,,Bulbapedia Castelia_Gym BW trainer list confirms Harlequin Kerry (Sewaddle/Dwebble L20)
+11,TRAINER_HARLEQUIN_PAUL,14,,placed,f,f,,"Bulbapedia Unova_Route_5 BW trainer list: Harlequin Paul, two Whirlipede L22"
+11,TRAINER_HARLEQUIN_RICK,238,Castelia Gym,placed,f,f,,Bulbapedia Castelia_Gym BW trainer list confirms Harlequin Rick (Sewaddle L21)
+11,TRAINER_HARLEQUIN_TRAINER_197,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_HIKER_ANDY,492,Rondez-View Ferris Wheel,placed,t,f,,"Bulbapedia Nimbasa_City: Rondez-View Ferris Wheel seasonal trainer, summer (male player), Boldore L25; battled daily after defeating Elesa."
+11,TRAINER_HIKER_GENE,503,,placed,t,f,17,"Bulbapedia Black_City resident (Aggron Lv.40, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_HIKER_RUSSEL,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, party matches"
+11,TRAINER_HOOPSTER_BOBBY,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court Hoopster, base tier Whirlipede L25 (Scolipede L33/41/67 later); rotating daily re-battleable"
+11,TRAINER_HOOPSTER_BOBBY_2,502,Small Court,placed,t,f,,"Bulbapedia BW stadium subpage: Hoopster Bobby (basketball, Small Court), tier 2 L33"
+11,TRAINER_HOOPSTER_BOBBY_3,502,Small Court,placed,t,f,,"Bulbapedia BW stadium subpage: Hoopster Bobby tier 3 L41, Small Court"
+11,TRAINER_HOOPSTER_BOBBY_4,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_HOOPSTER_JOHN,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court Hoopster, 7+ badge tier Stoutland/Boldore L40 (Stoutland/Gigalith L67 post-game); rotating daily re-battleable"
+11,TRAINER_HOOPSTER_JOHN_2,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_HOOPSTER_LAMARCUS,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_INFIELDER_ALEX,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 3-4 badge tier, Sun/Mon/Thu rotation"
+11,TRAINER_INFIELDER_ALEX_2,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Infielder Alex (baseball, Big Stadium), tier 2 L31 elemental monkeys"
+11,TRAINER_INFIELDER_ALEX_3,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Infielder Alex tier 3 (L39 evolved monkeys), Big Stadium"
+11,TRAINER_INFIELDER_ALEX_4,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_INFIELDER_CONNOR,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 7-8 badge tier, Sun/Mon/Thu rotation"
+11,TRAINER_INFIELDER_CONNOR_2,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_INFIELDER_TODD,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_JANITOR_CALEB,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_JANITOR_GEOFF,238,Battle Company,placed,f,f,,"Bulbapedia Battle Company (Castelia City): Janitor Geoff, 55F, Trubbish/Minccino L20"
+11,TRAINER_LADY_COLETTE,492,Nimbasa Gym,placed,f,f,,"Bulbapedia Nimbasa_Gym BW trainer list: Lady Colette, Emolga L25"
+11,TRAINER_LADY_ELIZANDRA,501,,placed,f,t,,Bulbapedia Royal_Unova confirms Lady Elizandra (Meowth/Vulpix/Eevee L63) passenger battle
+11,TRAINER_LADY_ISABEL,19,Shopping Mall Nine,placed,,,,
+11,TRAINER_LADY_LYNETTE,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Lady Lynette, Vileplume/Bellossom L34"
+11,TRAINER_LADY_MAGNOLIA,492,Nimbasa Gym,placed,f,f,, [Nimbasa Gym trainer]
+11,TRAINER_LADY_SOPHIE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_LADY_TRAINER_286,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_LASS_DANA,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_LASS_DYE,236,,placed,f,f,18,"Bulbapedia Lass class page + Nacrene_City: Dye battles after the Cottonee/Petilil in-game trade; she uses LILLIGANT in White, Whimsicott in Black. Level scales with the traded Pokémon (L10 = ROM baseline). White copy → game_id=18."
+11,TRAINER_LASS_DYE_2,236,,placed,f,f,17,Same Nacrene City post-trade battle; WHIMSICOTT is her team in Black (Bulbapedia Lass class page). Level scales at runtime (L10 = ROM baseline). Black copy → game_id=17.
+11,TRAINER_LASS_MAYA,492,,placed,t,f,,"Nimbasa Ferris Wheel companion (male player, seasonal), daily-repeatable; Serebii Gothita list and Bulbapedia Nimbasa_City confirm Gothita L25"
+11,TRAINER_LASS_MIKI,503,,placed,t,f,17,"Bulbapedia Black_City resident (Togekiss Lv.30, exact match); Lass class page also places Miki in Black City. Re-battleable resident."
+11,TRAINER_LASS_SIBYL,501,,placed,f,t,,Bulbapedia Royal_Unova BW passenger list confirms Lass Sibyl (Chingling/Wormadam L64)
+11,TRAINER_LINEBACKER_BOB,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium, 7-8 badge tier, Wed/Sat rotation"
+11,TRAINER_LINEBACKER_BOB_2,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_LINEBACKER_DAN,502,Big Stadium,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Big Stadium Linebacker, base tier Darumaka/Timburr L24; rotating daily re-battleable"
+11,TRAINER_LINEBACKER_DAN_2,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Linebacker Dan (football, Big Stadium), tier 2 L32"
+11,TRAINER_LINEBACKER_DAN_3,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Linebacker Dan tier 3 L40, Big Stadium"
+11,TRAINER_LINEBACKER_DAN_4,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_LINEBACKER_JONAH,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_MAID_ALICA,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, party matches"
+11,TRAINER_MAID_TANYA,501,,placed,f,t,,"Bulbapedia Maid_(Trainer_class): Maid Tanya, Royal Unova, Emolga L65 — post-game cruise passenger battle."
+11,TRAINER_MOTORCYCLIST_CHARLES,241,,placed,f,f,18,"Charles 'the Heartbreaker', Driftveil City (Bulbapedia Driftveil_City, exact party L27). Bulbapedia Rotation_Battle + Driftveil pages confirm the spot is a Rotation Battle in BLACK and Triple Battle in WHITE, so this battle_type=2 (triple) row is the White copy — the brief's 2=Black/3=White mapping is inverted."
+11,TRAINER_MOTORCYCLIST_CHARLES_2,241,,placed,f,f,17,"Charles is battled in Driftveil City (Bulbapedia Charles; Serebii), NOT Castelia. battle_type=3 = ROM rotation flag; Charles's Rotation Battle is the BLACK version (his Triple is White-only per Bulbapedia Triple Battle page), so this row is Black. Counterpart rom_index 506 (bt=2 triple) is the White row — the generic bt2=Black/bt3=White rule is inverted for Charles."
+11,TRAINER_MUSICIAN_BORIS,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_MUSICIAN_PRESTON,14,,placed,f,f,,"Bulbapedia Unova_Route_5 BW trainer list: Musician Preston, two Blitzle L22"
+11,TRAINER_NURSE_KIRSTEN,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_NURSERY_AIDE_BRIANA,254,,placed,t,f,18,Bulbapedia Nursery_Aide_(Trainer_class) and Triple_Battle: Briana is a White Forest resident (White exclusive) with Chandelure/Cinccino/Vanilluxe L65; triple battle in White (BW1 triples are White-side).
+11,TRAINER_NURSERY_AIDE_LEAH,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_NURSERY_AIDE_MIHO,503,,placed,t,f,17,"Bulbapedia Black_City resident (Shiftry Lv.40, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_PARASOL_LADY_GWYNETH,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, Castform L65 matches"
+11,TRAINER_PILOT_CHASE,493,,placed,,,,
+11,TRAINER_PILOT_LEONARD,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer, party/levels match exactly; rotates into either arena"
+11,TRAINER_PILOT_TED,493,,placed,,,,
+11,TRAINER_PKMN_BREEDER_F_BROOKE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_PKMN_BREEDER_M_OWEN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_PKMN_RANGER_F_AUDRA,237,,placed,f,f,,Bulbapedia Pinwheel_Forest lists Ranger Audra (gives Chesto Berries); adjacent rom_index with Irene/Miguel
+11,TRAINER_PKMN_RANGER_F_ELIZA,503,,placed,t,f,17,"Bulbapedia Black_City resident (Flygon Lv.61, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_PKMN_RANGER_F_HEIDI,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional rotating trainer, appears in either arena"
+11,TRAINER_PKMN_RANGER_F_IRENE,237,,placed,f,f,,"Bulbapedia Pinwheel_Forest lists Ranger Irene (gives Pecha Berries); rom_index 27-29 adjacent with Miguel/Audra, elemental-monkey L18 fits Pinwheel stage"
+11,TRAINER_PKMN_RANGER_M_ALAIN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional rotating trainer, appears in either arena"
+11,TRAINER_PKMN_RANGER_M_MIGUEL,237,,placed,f,f,,Bulbapedia Pinwheel_Forest lists Ranger Miguel (gives Pecha Berries); adjacent rom_index with Irene/Audra
+11,TRAINER_PKMN_RANGER_M_RALPH,503,,placed,t,f,17,"Bulbapedia Black_City resident (Ludicolo Lv.61, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_PKMN_TRAINER_BIANCA_16,496,,placed,t,f,,Bulbapedia Bianca: post-game she battles the player in Nuvema Town on weekends (repeatable); team matches the page exactly. Samurott L65 variant = player chose Snivy.
+11,TRAINER_PKMN_TRAINER_BIANCA_17,496,,placed,t,f,,Bulbapedia Bianca: post-game weekend battles in Nuvema Town. Serperior L65 variant = player chose Tepig.
+11,TRAINER_PKMN_TRAINER_BIANCA_18,496,,placed,t,f,,Bulbapedia Bianca: post-game weekend battles in Nuvema Town. Emboar L65 variant = player chose Oshawott.
+11,TRAINER_PKMN_TRAINER_CHEREN_22,48,,placed,t,f,,Bulbapedia Cheren: post-game he moves to Victory Road (upper cave before the League exit) and is battled once a day at L65+; Emboar/Simisage variant (player chose Snivy).
+11,TRAINER_PKMN_TRAINER_CHEREN_23,48,,placed,t,f,,Bulbapedia Cheren: same once-a-day post-game Victory Road rematch; Samurott/Simisear variant (player chose Tepig).
+11,TRAINER_PKMN_TRAINER_CHEREN_24,48,,placed,t,f,,Bulbapedia Cheren: after the Hall of Fame he waits in Victory Road and can be battled once a day. L65/67 post-game team; Serperior L67 variant = player chose Oshawott.
+11,TRAINER_PKMN_TRAINER_TRAINER_219,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_510,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_511,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_512,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_558,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_559,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_560,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_PKMN_TRAINER_TRAINER_561,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_POKEFAN_F_DARCY,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_POKEFAN_M_COLIN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer, party confirmed; rotates into either arena"
+11,TRAINER_POLICEMAN_JEFF,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, party matches"
+11,TRAINER_PRESCHOOLER_F_BILLY,14,,placed,f,f,,"Bulbapedia Preschooler class page lists BW Billy on Unova Route 5; paired with Sarah, L26 fits"
+11,TRAINER_PRESCHOOLER_F_EVAN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, Mime Jr. L64 matches (ROM gender tag swapped; Evan is male)"
+11,TRAINER_PRESCHOOLER_M_MIA,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game additional trainer, either arena, Smoochum L64 matches (ROM gender tag swapped; Mia is female)"
+11,TRAINER_PRESCHOOLER_M_SARAH,14,,placed,f,f,,Bulbapedia Preschooler class page lists BW Sarah on Unova Route 5; L26 fits mid-game route level band
+11,TRAINER_PRESCHOOLER_M_WINTER,492,Rondez-View Ferris Wheel,placed,t,f,,"Bulbapedia Nimbasa_City: Ferris Wheel seasonal trainer, winter (male player), Solosis L24; battled daily."
+11,TRAINER_PSYCHIC_F_BELLE,246,3F,placed,f,f,,"Serebii Musharna trainer list: Psychic Belle, Celestial Tower 3F, Musharna L32"
+11,TRAINER_PSYCHIC_F_FUTURE,234,,placed,f,f,,Bulbapedia Psychic class page: BW Future at Dreamyard; L64 fits post-game Dreamyard
+11,TRAINER_PSYCHIC_F_LIN,246,3F,placed,f,f,,"Bulbapedia Celestial Tower BW: Psychic Lin 3F, Litwick/Swoobat L31"
+11,TRAINER_PSYCHIC_F_MADHU,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_PSYCHIC_M_BRYCE,246,3F,placed,f,f,,"Bulbapedia Celestial Tower BW: Psychic Bryce 3F, Duosion L32"
+11,TRAINER_PSYCHIC_M_GERARD,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_PSYCHIC_M_MICKI,246,3F,placed,f,f,,"Bulbapedia Celestial Tower BW: Psychic Micki 3F, Yamask/Golett L31"
+11,TRAINER_PSYCHIC_M_TOMMY,234,,placed,f,f,,Bulbapedia Psychic class page: BW Tommy at Dreamyard; L63 fits post-game Dreamyard
+11,TRAINER_RICH_BOY_ANTHONY,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_RICH_BOY_BRAD,501,,placed,f,t,,Bulbapedia Royal_Unova confirms Rich Boy Brad (Aipom/Murkrow L64) as a cruise passenger battle
+11,TRAINER_RICH_BOY_CODY,492,Nimbasa Gym,placed,f,f,, [Nimbasa Gym trainer]
+11,TRAINER_RICH_BOY_MANUEL,19,Shopping Mall Nine,placed,,,,
+11,TRAINER_RICH_BOY_MARTIN,492,,placed,t,f,,"Nimbasa Ferris Wheel companion (female player, Winter), daily-repeatable, Tranquill L24; rom_index adjacent to the other Ferris Wheel trainers"
+11,TRAINER_RICH_BOY_PIERCE,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Rich Boy Pierce, Ampharos L35"
+11,TRAINER_RICH_BOY_ROLAN,492,Nimbasa Gym,placed,f,f,,"Bulbapedia Nimbasa_Gym BW trainer list: Rich Boy Rolan, two Blitzle L24 (Elesa's gym uses Rich Boys/Ladies with Blitzle/Emolga lines)"
+11,TRAINER_ROUGHNECK_DAVE,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Roughneck Dave, Gengar L30"
+11,TRAINER_ROUGHNECK_FLETCHER,502,,placed,t,f,,Serebii Crawdaunt/Mightyena trainer lists: Nimbasa City Dome; Bulbapedia lists him among post-game additional trainers appearing in either arena
+11,TRAINER_ROUGHNECK_JOHNNY,503,,placed,f,f,17,"Bulbapedia Black City: Roughneck Johnny in the marketplace, one-time Rotation Battle (bt=3 rotation flag), Black version only; Galvantula/Gothitelle/Krookodile L65 matches exactly."
+11,TRAINER_SCHOOL_KID_F_ANN,23,,placed,f,f,,Bulbapedia School Kid class page: BW Ann on Unova Route 12; L64 fits post-game eastern route band
+11,TRAINER_SCHOOL_KID_F_LYDIA,236,Nacrene Gym,placed,f,f,,"Serebii BW Lillipup trainer list: School Kid Lydia, Nacrene City Gym, Lillipup L15 x3"
+11,TRAINER_SCHOOL_KID_F_SALLY,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_SCHOOL_KID_F_SILVIA,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: School Kid Silvia, Beautifly/Dustox L44"
+11,TRAINER_SCHOOL_KID_M_ALAN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_SCHOOL_KID_M_LEO,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: School Kid Leo, Pidgeot L45"
+11,TRAINER_SCHOOL_KID_M_SHANE,503,,placed,t,f,17,"Bulbapedia Black_City resident (Rhyperior Lv.45, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_SCHOOL_KID_M_SHAYE,254,,placed,t,f,18,"Bulbapedia Triple_Battle/White_Forest: School Kid Shayne, White Forest resident (White-only venue), Scrafty/Cofagrigus/Reuniclus; triple battle. BW1 gives White the triples, so battle_type=2 here is the White battle; trainer cannot exist in Black."
+11,TRAINER_SCIENTIST_BLYTHE,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_SCIENTIST_CHAN,234,,placed,f,f,,Bulbapedia Scientist class page: BW Chan at Dreamyard; L63 fits post-game Dreamyard interior
+11,TRAINER_SCIENTIST_DUDLEY,,,excluded,f,t,,unused in BW: Dudley is the B2W2-only P2 Lab Genesect event battle; present in the ROM trainer table but unreachable in Black/White
+11,TRAINER_SCIENTIST_JACQUES,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Scientist Jacques, Nidoqueen L50"
+11,TRAINER_SCIENTIST_LUKE,234,,placed,f,f,,Bulbapedia Scientist class page: BW Luke at Dreamyard; Musharna party and L64 fit post-game Dreamyard
+11,TRAINER_SCIENTIST_MARIE,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Scientist Marie, Magnezone L50"
+11,TRAINER_SCIENTIST_SATOMI,236,Nacrene Gym,placed,f,f,,"Serebii BW Herdier trainer list: Scientist Satomi, Nacrene City Gym; L17 matches Lenora's gym stage"
+11,TRAINER_SCIENTIST_SIMON,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_SMASHER_ASPEN,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court Smasher, 7+ badge tier Whimsicott/Lilligant L40 (L67 pair post-game); rotating daily re-battleable"
+11,TRAINER_SMASHER_ASPEN_2,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_SMASHER_ELENA,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Small Court Smasher, base tier Blitzle L25 (later Zebstrika L33/41, L67 post-game); rotating daily re-battleable"
+11,TRAINER_SMASHER_ELENA_2,502,Small Court,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: Smasher Elena, Small Court tennis, tier 2 (5-6 badges, L33)"
+11,TRAINER_SMASHER_ELENA_3,502,Small Court,placed,t,f,,"Bulbapedia BW stadium subpage: Smasher Elena tier 3 (7-8 badges, L41), Small Court"
+11,TRAINER_SMASHER_ELENA_4,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_SMASHER_MARI,502,Small Court,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_SOCIALITE_CASSANDRA,501,,placed,f,t,,Bulbapedia Royal_Unova confirms Socialite Cassandra (Liepard/Arbok L64) passenger battle
+11,TRAINER_SOCIALITE_EMILIA,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_SOCIALITE_GRACE,503,,placed,t,f,17,"Bulbapedia Black_City resident (Salamence Lv.40, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_STRIKER_MARCO,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_STRIKER_ROBERTO,502,Big Stadium,placed,t,f,,"Bulbapedia Big Stadium and Small Court/Black_and_White: Striker Roberto, Big Stadium, Tue/Fri, 7th-8th badge tier Liepard L41"
+11,TRAINER_STRIKER_ROBERTO_2,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_STRIKER_TONY,502,Big Stadium,placed,t,f,,"Bulbapedia Big Stadium and Small Court/Black_and_White: Striker Tony, Big Stadium, Tue/Fri, base tier (3rd-4th badges) Ducklett L25"
+11,TRAINER_STRIKER_TONY_2,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Striker Tony (soccer, Big Stadium), tier 2 L33"
+11,TRAINER_STRIKER_TONY_3,502,Big Stadium,placed,t,f,,"Bulbapedia BW stadium subpage: Striker Tony tier 3 L41, Big Stadium"
+11,TRAINER_STRIKER_TONY_4,502,Big Stadium,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_SUBWAY_BOSS_EMMET,,,excluded,f,f,,"Battle Subway facility placeholder: Patrat L10 dummy table entry; real Subway battles use the subway roster system, out of run-script scope"
+11,TRAINER_SUBWAY_BOSS_INGO,,,excluded,f,f,,"Battle Subway facility placeholder: Patrat L10 dummy table entry; real Subway battles use the subway roster system, out of run-script scope"
+11,TRAINER_TEAM_PLASMA_GRUNT,235,,placed,f,f,,"Bulbapedia Wellspring_Cave: three grunts on 1F, each Patrat L12 (two fought as Multi Battle with Cheren); Dreamyard grunts are L7, so L12 pins Wellspring. rom_index 62/63 adjacent pair"
+11,TRAINER_TEAM_PLASMA_GRUNT_11,242,,placed,f,f,,"Bulbapedia Cold_Storage: story grunt in the container, Watchog/Scraggy L23 exact match"
+11,TRAINER_TEAM_PLASMA_GRUNT_12,242,,placed,f,f,,"Bulbapedia Cold_Storage: female story grunt in the container, solo Trubbish L24 exact match"
+11,TRAINER_TEAM_PLASMA_GRUNT_13,492,,placed,f,f,,"Bulbapedia Nimbasa_City: story grunt near the city entrance/amusement park chase, Watchog/Trubbish L18 exact match"
+11,TRAINER_TEAM_PLASMA_GRUNT_14,234,,placed,f,f,,Bulbapedia Dreamyard: male grunt in the Munna story event has solo Patrat L10 (his partner has Purrloin L10)
+11,TRAINER_TEAM_PLASMA_GRUNT_15,235,1F,placed,f,f,,"Bulbapedia Wellspring_Cave: all three 1F story grunts use Patrat L12, exact match"
+11,TRAINER_TEAM_PLASMA_GRUNT_16,237,,placed,f,f,,"Bulbapedia Pinwheel Forest page + BW walkthrough Part 4: first dragon-skull chase grunt, Sandile L16 (interior)"
+11,TRAINER_TEAM_PLASMA_GRUNT_17,237,,placed,f,f,,"Bulbapedia BW walkthrough Part 4 wikitext: third skull-chase grunt has lone Patrat L16; rom_index 296 sits between the two confirmed Pinwheel grunts (295, 297)"
+11,TRAINER_TEAM_PLASMA_GRUNT_18,237,,placed,f,f,,"Bulbapedia Pinwheel Forest trainerentry: final skull-chase grunt (holds Dragon Skull), Patrat/Patrat/Sandile L14"
+11,TRAINER_TEAM_PLASMA_GRUNT_2,235,,placed,f,f,,"Bulbapedia Wellspring_Cave: three grunts on 1F, each Patrat L12; adjacent rom_index with previous grunt"
+11,TRAINER_TEAM_PLASMA_GRUNT_26,249,,placed,f,f,,"Dragonspiral Tower 6F, first of four consecutive grunts before Sage Giallo (thonky BW guide); rom 305-307 block"
+11,TRAINER_TEAM_PLASMA_GRUNT_27,249,,placed,f,f,,"Dragonspiral Tower 6F, second consecutive grunt before Giallo (thonky BW guide)"
+11,TRAINER_TEAM_PLASMA_GRUNT_28,249,,placed,f,f,,Dragonspiral Tower grunt with Watchog L34 (matches 6F fourth grunt in the Giallo gauntlet; a 4F Watchog L34 grunt also exists — same location either way)
+11,TRAINER_TEAM_PLASMA_GRUNT_29,234,,placed,f,f,,Bulbapedia Dreamyard: female grunt with Purrloin L10 in the Munna/Musharna story event (ruins area)
+11,TRAINER_TEAM_PLASMA_GRUNT_3,242,,placed,f,f,,Bulbapedia Cold_Storage BW: male grunt in the container with exactly Sandile L23 + Watchog L23
+11,TRAINER_TEAM_PLASMA_GRUNT_30,237,,placed,f,f,,"Bulbapedia Pinwheel Forest trainerentry: female skull-chase grunt, Purrloin L16"
+11,TRAINER_TEAM_PLASMA_GRUNT_34,249,,placed,f,f,,"Dragonspiral Tower 6F, third consecutive grunt before Giallo: Trubbish L33 + Liepard L33 (thonky BW guide)"
+11,TRAINER_TEAM_PLASMA_GRUNT_35,238,,placed,f,f,,Bulbapedia Team_Plasma_Grunt: the BW grunt with two Sandile L17 is battled in Castelia City (hideout raid with Burgh); Liberty Garden's Sandile grunts have different parties.
+11,TRAINER_TEAM_PLASMA_GRUNT_40,257,,placed,f,t,,"Bulbapedia Liberty_Garden: basement grunt guarding Victini has a lone Watchog L20 (exact match); venue is gated behind the event-exclusive Liberty Pass, hence is_event."
+11,TRAINER_TEAM_PLASMA_GRUNT_41,244,,placed,f,f,,Bulbapedia Chargestone Cave: post-game (Seven Sages hunt) female grunt guarding Sage Bronius on B2F — Liepard/Garbodor/Liepard L62 matches exactly.
+11,TRAINER_TEAM_PLASMA_GRUNT_42,240,,placed,f,f,,Bulbapedia Relic Castle: post-game grunt on the lowest floor with Sage Ryoku; Krookodile L64 is the highest-level Pokémon ever used by a villain-team grunt.
+11,TRAINER_TEAM_PLASMA_GRUNT_43,244,,placed,f,f,,Bulbapedia Chargestone Cave: post-game male grunt guarding Sage Bronius on B2F — Watchog/Scrafty L63 matches exactly.
+11,TRAINER_TEAM_PLASMA_GRUNT_44,242,,placed,f,f,,"Bulbapedia Cold Storage story battles (with Clay): female grunt with a single Liepard L24. The other three Cold Storage grunt parties match CSV rom_index 81/276/278 exactly, leaving this as the fourth; no other BW grunt has Liepard L24 alone."
+11,TRAINER_TEAM_PLASMA_TRAINER_220,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_TEAM_PLASMA_TRAINER_277,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_TEAM_PLASMA_TRAINER_497,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_TEAM_PLASMA_TRAINER_80,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_THE_RICHES_CLAIRDONNA,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches' villa, day 3 of the family gauntlet (Bronzor/Kangaskhan/Golurk Lv.62, exact match)."
+11,TRAINER_THE_RICHES_DRACO,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches' villa, day 1 of the consecutive-day family gauntlet (Buizel Lv.60, exact match). One battle per day, sequence ends permanently after Miles."
+11,TRAINER_THE_RICHES_MILES,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches villa, 6th and final family member (exact party match); one battle per day sequence, no rematches after he is beaten."
+11,TRAINER_THE_RICHES_SUSAN,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches villa, 2nd of 6 family members battled one per day (Teddiursa/Lopunny L61 exact match); sequence ends after Miles, not re-battleable."
+11,TRAINER_THE_RICHES_TRISH,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches' villa, day 5 of the family gauntlet (5-Pokémon Lv.64 party, exact match)."
+11,TRAINER_THE_RICHES_ZILLION,252,,placed,f,f,,"Bulbapedia Undella_Town: The Riches' villa, day 4 of the family gauntlet (4-Pokémon Lv.63 party, exact match)."
+11,TRAINER_TWINS_KUMI_AMY,8,,placed,f,f,,"Route 3: the twins blocking the westward path — the game's first (mandatory) Double Battle; Serebii Purrloin trainer list confirms Kumi & Amy, Purrloin L10 x2"
+11,TRAINER_TWINS_TRAINER_204,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_VETERAN_F_JULIA,495,,placed,,,,
+11,TRAINER_VETERAN_F_KIM,494,,placed,,,,
+11,TRAINER_VETERAN_F_ROSA,503,,placed,t,f,17,"Bulbapedia Black_City resident (Exploud Lv.67, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_VETERAN_F_SAYURI,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_VETERAN_M_ARLEN,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_VETERAN_M_HUGO,494,Opelucid Gym,placed,f,f,,Bulbapedia Opelucid Gym / BW walkthrough Part 11: Veteran Hugo battles on the dragon-statue walkway inside Drayden/Iris's gym with Druddigon
+11,TRAINER_VETERAN_M_KEN,503,,placed,t,f,17,"Bulbapedia Black_City resident (Nidoking Lv.67, exact match). Re-battleable resident battle, Black version only."
+11,TRAINER_VETERAN_M_SHAUN,495,,placed,,,,
+11,TRAINER_VETERAN_M_TRAINER_562,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_WAITER_BERT,19,Shopping Mall Nine,placed,,,,
+11,TRAINER_WAITER_CLINT,502,,placed,t,f,," [moved from Nimbasa City: Big Stadium & Small Court roster, daily rematch]"
+11,TRAINER_WAITER_TRAINER_283,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_WAITRESS_AURORA,492,Rondez-View Ferris Wheel,placed,t,f,,"Bulbapedia Nimbasa_City: Ferris Wheel seasonal trainer, autumn (female player), Swadloon L25; battled daily."
+11,TRAINER_WAITRESS_BONITA,502,,placed,t,f,,"Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game, appears at either venue in random groups of three, daily"
+11,TRAINER_WAITRESS_FLO,19,Shopping Mall Nine,placed,,,,
+11,TRAINER_WORKER_ARNOLD,493,,placed,,,,
+11,TRAINER_WORKER_BRADY,493,,placed,,,,
+11,TRAINER_WORKER_CAIRN,247,,placed,f,f,,"Serebii BW Excadrill trainer list: Worker Cairn, Twist Mountain 2F, Excadrill L35"
+11,TRAINER_WORKER_CLIFF,493,,placed,,,,
+11,TRAINER_WORKER_HEATH,247,,placed,f,f,,"Bulbapedia Twist Mountain BW: Worker Heath, Swoobat L35"
+11,TRAINER_WORKER_MATTHEW,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White 'Additional Trainers': post-game daily visitors appearing in either arena three at a time (Serebii lists him under 'Nimbasa City - Dome'); no fixed venue so area_name null
+11,TRAINER_WORKER_RICH,247,1F,placed,f,f,,"Serebii BW Gurdurr trainer list: Worker Rich, Twist Mountain 1F, Gurdurr L34; rom_index adjacent to Rob/Heath"
+11,TRAINER_WORKER_ROB,247,,placed,f,f,,"Bulbapedia Twist Mountain BW: Worker Rob, 3x Boldore L33"
+11,TRAINER_WORKER_SCOTT,9,,placed,f,f,,"Serebii BW Roggenrola trainer list: Worker Scott, Route 4, Roggenrola L18 + Timburr L18 (Route 4 construction site workers)"
+11,TRAINER_WORKER_TRAINER_126,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_WORKER_TRAINER_79,,,excluded,,,,unused ROM placeholder (nameless Patrat L10 template)
+11,TRAINER_WORKER_TYLER,502,,placed,t,f,,Bulbapedia Big_Stadium_and_Small_Court/Black_and_White: post-game Additional Trainer; rotates into either arena
+11,TRAINER_YOUNGSTER_ABE,501,Cabin,placed,f,t,,"Serebii BW Fearow trainer list: Youngster Abe, Royal Unova - Cabin, L63 (post-game cruise passenger)"
+11,TRAINER_YOUNGSTER_KEVIN,502,,placed,t,f,,"Serebii BW Venomoth trainer list: Nimbasa City Dome; post-game additional trainer, can appear in either arena"
+11,TRAINER_YOUNGSTER_KYLE,241,,placed,f,f,,"Bulbapedia Youngster class page + Driftveil_City: Kyle battled in Driftveil City after the Minccino in-game trade (his Cinccino's level is set at runtime, listed up to Lv.65; L10 is the ROM baseline). Both versions."
+11,TRAINER_YOUNGSTER_ROBBIE,503,,placed,t,f,17,"Bulbapedia Black_City resident trainer: Youngster Robbie, Electivire L30"

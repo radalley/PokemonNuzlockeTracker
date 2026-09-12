@@ -3,7 +3,7 @@ import { getSessionStats } from '../utils/dataLayer'
 
 function StatItem({ label, value, compact = false }) {
   return (
-    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
+    <div className="attempt-session-stats__item" style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
       <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
       <div style={{ marginTop: '4px', fontSize: '1.05em', color: 'var(--text-primary)', fontWeight: 'bold' }}>{value}</div>
     </div>
@@ -12,7 +12,7 @@ function StatItem({ label, value, compact = false }) {
 
 function BadgeStatItem({ badgeIds = [], compact = false }) {
   return (
-    <div style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
+    <div className="attempt-session-stats__item attempt-session-stats__item--badges" style={{ width: compact ? '100%' : 'auto', minWidth: compact ? 0 : '130px', boxSizing: 'border-box', border: '1px solid var(--border-strong)', borderRadius: '6px', padding: '8px 10px', background: 'var(--surface-mid)' }}>
       <div style={{ fontSize: '0.72em', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Badges Earned</div>
       <div style={{ marginTop: '6px', minHeight: '28px', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
         {badgeIds.length > 0 ? (
@@ -37,6 +37,7 @@ function StarterButton({ label, color, selected, onClick, compact = false }) {
   return (
     <button
       type="button"
+      className="attempt-session-stats__starter"
       onClick={onClick}
       style={{
         flex: compact ? '1 1 calc(50% - 6px)' : 1,
@@ -91,10 +92,10 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
   const starterOptions = isYellow ? YELLOW_EEVEE_OPTIONS : STARTER_OPTIONS
 
   return (
-    <div style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+    <div className="attempt-session-stats" style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Run Stats</div>
-        {onToggle && <button onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
+        {onToggle && <button className="attempt-session-stats__toggle" onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
       </div>
 
       {showStarterControls && onStarterChange && (
@@ -118,7 +119,7 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
       {!stats ? (
         <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Loading...</div>
       ) : (
-        <div style={{ display: 'flex', minWidth: 0, flexDirection: compact ? 'column' : 'row', flexWrap: compact ? 'nowrap' : 'wrap', gap: '8px' }}>
+        <div className="attempt-session-stats__grid" style={{ display: 'flex', minWidth: 0, flexDirection: compact ? 'column' : 'row', flexWrap: compact ? 'nowrap' : 'wrap', gap: '8px' }}>
           <BadgeStatItem badgeIds={stats.badge_ids || []} compact={compact} />
           <StatItem label="Trainers Defeated" value={stats.trainers_defeated ?? 0} compact={compact} />
           <StatItem label="Pokemon Caught" value={stats.pokemon_caught ?? 0} compact={compact} />

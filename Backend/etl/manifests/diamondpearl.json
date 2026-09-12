@@ -1,0 +1,20 @@
+{
+    "key":  "diamondpearl",
+    "label":  "Pokemon Diamond / Pearl",
+    "generation":  4,
+    "version_group_id":  8,
+    "load_build":  5,
+    "game_ids":  {
+                     "pearl":  13,
+                     "diamond":  12
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokediamond"
+               },
+    "preview_dir":  "diamondpearl_build5_preview",
+    "expected":  {
+                     "trainers":  849,
+                     "trainer_pokemon":  1585
+                 }
+}

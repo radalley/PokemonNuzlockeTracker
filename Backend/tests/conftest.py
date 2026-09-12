@@ -58,7 +58,14 @@ create table games (
     name text,
     game_tag text,
     generation integer,
-    version_group_id integer
+    version_group_id integer,
+    valid_game text default 'valid',
+    pool_game_id integer,
+    base_game_id integer,
+    is_rom_hack boolean not null default false,
+    s_ref text,
+    b_ref text,
+    pdb_ref text
 );
 
 create table runs (
@@ -75,7 +82,12 @@ create table attempts (
     attempt_id serial primary key,
     run_id integer,
     attempt_number integer,
-    starter text
+    starter text,
+    started_at timestamp with time zone default current_timestamp,
+    outcome text,
+    ended_at timestamp with time zone,
+    ended_by_trainer_id integer,
+    death_note text
 );
 
 create table party (
@@ -96,12 +108,53 @@ create table pokebank (
     shiny boolean,
     bonus_location integer default 0,
     gender text,
-    level_met integer
+    level_met integer,
+    ability text,
+    iv_hp integer,
+    iv_atk integer,
+    iv_def integer,
+    iv_spa integer,
+    iv_spd integer,
+    iv_spe integer
 );
 
 create table canon_locations (
     canonical_location_id integer primary key,
     canonical_location_name text
+);
+
+create table curated_trainer_placements (
+    version_group_id integer not null,
+    trainer_key text not null,
+    canonical_location_id integer,
+    area_id integer,
+    decided_at timestamp with time zone not null default current_timestamp,
+    status text not null default 'placed',
+    is_rematch boolean,
+    is_event boolean,
+    game_id integer,
+    note text,
+    primary key (version_group_id, trainer_key)
+);
+
+create table trainer_placement_suggestions (
+    version_group_id integer not null,
+    trainer_key text not null,
+    canonical_location_id integer not null,
+    area_name text,
+    source text not null,
+    detail text,
+    primary key (version_group_id, trainer_key, canonical_location_id, source)
+);
+
+create table location_areas (
+    area_id serial primary key,
+    canonical_location_id integer not null,
+    version_group_id integer,
+    area_name text not null,
+    area_kind text not null default 'interior',
+    sort_order integer,
+    source_key text
 );
 
 create table event_locations (
@@ -126,14 +179,16 @@ create table species_stats (
     def integer,
     spa integer,
     spd integer,
-    spe integer
+    spe integer,
+    version_group_id integer
 );
 
 create table species_types (
     species_id integer,
     generation integer,
     type1 text,
-    type2 text
+    type2 text,
+    version_group_id integer
 );
 
 create table species_abilities (
@@ -141,7 +196,8 @@ create table species_abilities (
     generation integer,
     ability1 text,
     ability2 text,
-    ability3 text
+    ability3 text,
+    version_group_id integer
 );
 
 create table trainers_defeated (
@@ -154,20 +210,100 @@ create table event_bosses (
     event_id serial primary key,
     trainer_id integer,
     version_group_id integer,
-    encounter_title text
+    encounter_title text,
+    sort_order text,
+    starter text,
+    type_focus text,
+    event_type text,
+    game_id integer,
+    badge_id integer,
+    battle_type text,
+    is_level_cap boolean
+);
+
+create table encounter_pool (
+    game_id text,
+    location_id integer,
+    canonical_location_id integer,
+    species_id integer,
+    min_level integer,
+    max_level integer,
+    method text,
+    enounter_rate integer
 );
 
 create table trainer_pool (
     trainer_id serial primary key,
-    trainer_name text
+    encounter_name text,
+    trainer_name text,
+    trainer_class text,
+    canonical_location_id integer,
+    is_rematch text,
+    is_event text,
+    trainer_items text,
+    trainer_pic text,
+    trainer_double text,
+    details text,
+    version_group_id integer,
+    load_build integer,
+    game_id integer,
+    area_id integer
+);
+
+create table trainer_pokemon (
+    pk_id serial primary key,
+    encounter_name text,
+    species_name text,
+    lvl integer,
+    moves text,
+    held_item text,
+    iv integer,
+    version_group_id integer,
+    load_build integer,
+    trainer_id integer,
+    slot integer,
+    ability text,
+    ability_clean text,
+    nature text
+);
+
+create table moves (
+    move_id integer,
+    move_name text,
+    type text,
+    damage_class text,
+    power integer,
+    accuracy integer,
+    version_group_id integer
+);
+
+create table curated_trainer_moves (
+    version_group_id integer not null,
+    trainer_key text not null,
+    slot integer not null,
+    species_name text not null,
+    move_name text not null,
+    noted_at timestamp with time zone not null default current_timestamp,
+    note text,
+    primary key (version_group_id, trainer_key, slot, move_name)
+);
+
+create table movesets (
+    species_id integer,
+    move_id integer,
+    learn_method text,
+    learn_level integer,
+    version_group_id integer
 );
 """
 
 TABLES = [
     "party", "pokebank", "bonus_locations", "attempts", "runs",
-    "event_locations", "canon_locations", "games",
+    "event_locations", "canon_locations", "location_areas", "games",
+    "curated_trainer_placements", "trainer_placement_suggestions",
     "species", "species_stats", "species_types", "species_abilities", "trainers_defeated",
-    "event_bosses", "trainer_pool",
+    "event_bosses", "trainer_pool", "trainer_pokemon", "moves", "movesets",
+    "encounter_pool", "curated_trainer_moves",
 ]
 
 
@@ -206,7 +342,7 @@ def db_conn(pg_uri, _schema_initialized):
     cur.execute("select to_regclass('public.bonus_locations') is not null")
     has_bonus_table = cur.fetchone()[0]
     tables_to_clear = [t for t in TABLES if t != "bonus_locations" or has_bonus_table]
-    for badge_table in ("attempt_badges", "pokemon_badges", "badges"):
+    for badge_table in ("attempt_badges", "pokemon_badges", "badges", "schema_migrations"):
         cur.execute(f"select to_regclass('public.{badge_table}') is not null")
         if cur.fetchone()[0]:
             tables_to_clear.append(badge_table)

@@ -16,6 +16,11 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Minimum comfortable tap target. Applied by the (pointer: coarse)
+     tier at the end of this file, which is deliberately NOT width-gated:
+     an iPhone in landscape is 844px wide and would miss a 640px query. */
+  --tap-min: 44px;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -63,6 +68,14 @@
   }
 }
 
+html,
+body {
+  /* Guard only: a stray over-wide child now clips instead of panning the
+     whole document sideways. clip rather than hidden so no scroll
+     container is created and position: fixed/sticky are unaffected. */
+  overflow-x: clip;
+}
+
 body {
   /*
   background-color: var(--bg-color);
@@ -74,6 +87,17 @@ body {
 }
 
 button {
+  font: inherit;
+}
+
+/* Same treatment as button. Without it these fall back to the UA's ~13.3px
+   in a different family -- inconsistent with the app's type, and under the
+   16px at which iOS zooms the page on focus and does not zoom back. Affects
+   the controls that set no font of their own: the auth dialog's email and
+   password, and New Run's game select and run name. */
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -112,7 +136,15 @@ button {
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-.attempt-footer__button:hover,
+@media (hover: hover) and (pointer: fine) {
+  .attempt-footer__button:hover {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
 .attempt-footer__button:focus-visible {
   background: var(--surface-mid);
   border-color: #FFC631;
@@ -290,11 +322,13 @@ button {
   color: var(--text-primary);
   cursor: pointer;
 }
-.site-header__nav-button:hover {
-  background: var(--surface-mid);
-  border-color: #FFC631;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .site-header__nav-button:hover {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .site-header__auth {
@@ -323,11 +357,13 @@ button {
   background: var(--surface-mid);
 }
 
-.site-header__auth-button:hover {
-  background: var(--surface-mid);
-  border-color: #FFC631;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .site-header__auth-button:hover {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .site-header__user-button {
@@ -343,7 +379,15 @@ button {
   white-space: nowrap;
 }
 
-.site-header__user-button:hover,
+@media (hover: hover) and (pointer: fine) {
+  .site-header__user-button:hover {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
 .site-header__user-button.is-open {
   background: var(--surface-mid);
   border-color: #FFC631;
@@ -527,11 +571,13 @@ p {
   transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.home-action-button:hover {
-  background: var(--surface-mid);
-  border-color: #FFC631;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .home-action-button:hover {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .home-auth-note {
@@ -548,6 +594,11 @@ p {
   justify-content: center;
   padding: 20px;
   background: rgba(9, 11, 15, 0.76);
+  /* The dialog is taller than a landscape phone, and taller than any phone
+     once the keyboard is up. Without this the title and the submit button
+     are simply clipped with no way to reach them. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .auth-dialog {
@@ -558,6 +609,48 @@ p {
   background: var(--surface);
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.42);
   text-align: left;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+/* .auth-dialog__oauth and __divider had no rules anywhere, so the Google
+   button rendered as a raw native control on every sign-in. */
+.auth-dialog__oauth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92em;
+}
+
+.auth-dialog__oauth:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-dialog__divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--text-secondary);
+  font-size: 0.82em;
+}
+
+.auth-dialog__divider::before,
+.auth-dialog__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
 }
 
 .auth-dialog__header {
@@ -1269,11 +1362,13 @@ p {
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
-.new-run-generation-pill:hover {
-  border-color: #FFC631;
-  background: var(--surface-mid);
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .new-run-generation-pill:hover {
+    border-color: #FFC631;
+    background: var(--surface-mid);
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .continue-run-button {
@@ -1295,11 +1390,13 @@ p {
   transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
-.continue-run-button:hover {
-  border-color: #2f9e68;
-  background: var(--surface-mid);
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 2px rgba(47, 158, 104, 0.16);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .continue-run-button:hover {
+    border-color: #2f9e68;
+    background: var(--surface-mid);
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 2px rgba(47, 158, 104, 0.16);
+    transform: translateY(-1px);
+  }
 }
 
 .continue-run-button:focus-visible {
@@ -1509,7 +1606,15 @@ p {
   transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
 }
 
-.page-action-button:hover:not(:disabled),
+@media (hover: hover) and (pointer: fine) {
+  .page-action-button:hover:not(:disabled) {
+    background: var(--surface-mid);
+    border-color: #FFC631;
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
+}
+
 .page-action-button:focus-visible:not(:disabled) {
   background: var(--surface-mid);
   border-color: #FFC631;
@@ -1556,11 +1661,13 @@ p {
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
-.load-run-filter-btn:hover {
-  border-color: #FFC631;
-  background: var(--surface-mid);
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .load-run-filter-btn:hover {
+    border-color: #FFC631;
+    background: var(--surface-mid);
+    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
+    transform: translateY(-1px);
+  }
 }
 
 .load-run-filter-btn.is-active {
@@ -1685,6 +1792,51 @@ p {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.load-run-summary__rename {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: -2px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0.55;
+  cursor: pointer;
+  align-self: center;
+  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.load-run-summary__rename:hover,
+.load-run-summary__rename:focus-visible {
+  opacity: 1;
+  color: #FFC631;
+  background: var(--surface-mid);
+  outline: none;
+}
+
+.load-run-summary__rename-form {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.load-run-summary__rename-input {
+  width: min(220px, 100%);
+  padding: 2px 6px;
+  border: 1px solid #FFC631;
+  border-radius: 4px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  outline: none;
 }
 
 .load-run-summary__game-name,
@@ -1854,32 +2006,108 @@ p {
 
 @media (max-width: 640px) {
   .load-run-table-wrap {
+    display: block;
     padding: 0 10px 16px;
-    overflow-x: auto;
+  }
+
+  .load-run-table,
+  .load-run-table tbody,
+  .load-run-row,
+  .load-run-cell {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .load-run-table {
-    width: 100%;
-    min-width: 720px;
+    border-spacing: 0;
+  }
+
+  .load-run-table thead {
+    display: none;
+  }
+
+  /* Each row becomes one card: the three cells stack, so the borders that
+     made a horizontal strip have to be redrawn vertically. */
+  .load-run-row {
+    margin-bottom: 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .load-run-cell {
+    border: 0;
+    border-radius: 0;
+  }
+
+  .load-run-cell + .load-run-cell {
+    border-top: 1px solid var(--border-strong);
+  }
+
+  .load-run-cell--latest-attempt {
+    min-width: 0;
+  }
+
+  .load-run-latest-attempt {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  /* SiteHeader wraps to two rows on a phone -- measured 125px against an
+     84px reserve, which buried each page's heading. It is the first child
+     of each of these pages, so sticky keeps it pinned while leaving it in
+     flow, and the reserve can go entirely. The negative inline margin
+     cancels the page's own side padding so the bar stays full-bleed. */
+  .load-run-page > .site-header,
+  .new-run-page > .site-header,
+  .guides-page > .site-header {
+    position: sticky;
+    margin-inline: -16px;
   }
 
   .new-run-page {
-    padding: 84px 16px 28px;
+    padding: 0 16px 28px;
   }
 
   .load-run-page {
-    padding: 84px 16px 20px;
+    padding: 0 16px 20px;
+  }
+
+  .guides-page {
+    padding: 0 16px 28px;
   }
 
   .new-run-controls {
     grid-template-columns: 1fr;
   }
 
+  /* Collapsing all three cells into one column made every row 154px tall,
+     so the 36-game list ran to 5623px. Keep the logo beside the text and
+     stack only the name over the meta. */
   .new-run-game-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-areas:
+      "logo name"
+      "logo meta";
+    align-items: center;
+    gap: 2px 10px;
+    padding: 8px 10px;
+  }
+
+  .new-run-game-logo-cell {
+    grid-area: logo;
+  }
+
+  .new-run-game-name {
+    grid-area: name;
+    align-self: end;
   }
 
   .new-run-game-meta {
+    grid-area: meta;
+    align-self: start;
     text-align: left;
   }
 
@@ -2090,6 +2318,485 @@ code {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Header structure below 1150px.
+
+   The single-row flex header gives .attempt-header__nav `flex: 1` with a
+   zero basis, so it is allocated only a share of the free space while its
+   children need far more than that. Being justify-content: flex-end, they
+   overflow leftward straight across the party strip. Measured spill, signed
+   out (the worst case -- a signed-in nav is narrower): 185px at 660px,
+   127px at 768px, 61px at 900px, 11px at 1100px, clear by 1150px. At 768px
+   the Box chip sat on top of party slots.
+
+   Below 1150px the header therefore becomes the same two-row grid the phone
+   layout uses: run and nav on the first row, the party strip across the
+   second. Sticky rather than fixed for the same reason as the phone layout
+   -- two rows are taller than the 120px the pages reserve inline, and a
+   sticky header needs no reserve at all.
+
+   Cosmetic compression (smaller logo, hidden user label, tighter fonts)
+   stays in the 640px block below; this tier only changes structure.
+--------------------------------------------------------------------------- */
+@media (max-width: 1149.98px) {
+  .attempt-header {
+    position: sticky !important;
+    top: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "primary nav"
+      "party party";
+    align-items: center !important;
+    row-gap: 6px;
+  }
+
+  .attempt-header__primary {
+    grid-area: primary;
+    min-width: 0;
+  }
+
+  .attempt-header__nav {
+    grid-area: nav;
+  }
+
+  .attempt-header__party {
+    grid-area: party;
+    width: 100%;
+    justify-content: center !important;
+  }
+
+  .attempt-page {
+    padding-top: 0 !important;
+  }
+
+  /* Anchored to the sticky header, which is a containing block for
+     absolute descendants, instead of a hardcoded viewport offset. */
+  .attempt-header__run-control {
+    position: static !important;
+  }
+
+  .attempt-header__run-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 8px !important;
+    min-width: 0 !important;
+    max-height: 60dvh;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 640px) {
+  html,
+  body {
+    min-width: 0;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    border-inline: 0;
+  }
+
+  .attempt-page {
+    /* Zero, not absent: the pages set paddingTop inline and an inline
+       style beats a class, so the reserve has to be explicitly cancelled. */
+    padding-top: 0 !important;
+    padding-bottom: 66px !important;
+  }
+
+  .attempt-page__content {
+    width: 100%;
+    padding-inline: 10px !important;
+    box-sizing: border-box;
+  }
+
+  .attempt-page__body {
+    min-width: 0;
+  }
+
+  /* The Box nests a 20px-padded body inside the 28px-padded
+     content wrapper. Together those burned 96px of a 390px screen, and
+     left the stats panel and the card grid on different left edges. */
+  .attempt-page__body--inset {
+    padding: 10px 0 !important;
+  }
+
+  .attempt-filter {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .attempt-filter__label {
+    grid-column: 1 / -1;
+    margin-right: 0 !important;
+  }
+
+  .attempt-filter__button {
+    min-width: 0;
+    padding: 7px 5px !important;
+    font-size: 0.76em !important;
+  }
+
+  .attempt-header {
+    position: sticky !important;
+    top: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "primary nav"
+      "party party";
+    align-items: center !important;
+    gap: 5px 8px !important;
+    padding: 6px 8px !important;
+    box-sizing: border-box;
+  }
+
+  .attempt-header__primary {
+    grid-area: primary;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .attempt-header__run-control,
+  .attempt-header__run-button {
+    width: 100%;
+  }
+
+  .attempt-header__run-button {
+    max-width: 100% !important;
+    gap: 6px !important;
+    padding: 2px 4px !important;
+    border-radius: 8px !important;
+  }
+
+  .attempt-header__game-logo {
+    width: 52px !important;
+    height: 36px !important;
+  }
+
+  .attempt-header__run-copy {
+    overflow: hidden;
+  }
+
+  .attempt-header__run-name {
+    max-width: min(94px, 24vw) !important;
+    font-size: 0.8em;
+  }
+
+  .attempt-header__party {
+    grid-area: party;
+    width: 100%;
+    gap: 4px !important;
+    justify-content: center !important;
+  }
+
+  .attempt-header__party-slot {
+    width: clamp(36px, 10vw, 44px) !important;
+    border-radius: 8px !important;
+  }
+
+  .attempt-header__nav {
+    grid-area: nav;
+    gap: 4px !important;
+  }
+
+  .attempt-header__nav-button {
+    padding: 4px 7px !important;
+    font-size: 0.68em !important;
+  }
+
+  .attempt-header .site-header__user-button {
+    padding: 2px !important;
+    border-radius: 8px;
+  }
+
+  .attempt-header .site-header__user-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .attempt-header .site-header__user-label {
+    display: none;
+  }
+
+  .attempt-header .site-header__auth-button.is-primary {
+    display: none;
+  }
+
+  .attempt-header .site-header__auth-menu {
+    right: 0;
+    left: auto;
+    min-width: min(230px, calc(100vw - 16px));
+  }
+
+  .attempt-header__run-control {
+    position: static !important;
+  }
+
+  .attempt-header__run-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 8px !important;
+    right: 8px;
+    min-width: 0 !important;
+    max-height: 60dvh;
+    overflow-y: auto !important;
+  }
+
+  .attempt-header__attempt-flyout {
+    position: static !important;
+    min-width: 0 !important;
+    max-height: 190px;
+    overflow-y: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .attempt-session-stats {
+    margin-top: 0 !important;
+    padding: 8px !important;
+  }
+
+  .attempt-session-stats__item--badges {
+    grid-column: 1 / -1;
+  }
+
+  .attempt-footer {
+    min-height: 54px;
+    padding: 6px 10px max(6px, env(safe-area-inset-bottom));
+  }
+
+  .attempt-footer__button {
+    flex: 1 1 0;
+    max-width: 180px;
+    padding: 6px 8px;
+    font-size: 0.72em;
+  }
+
+  .location-row {
+    min-width: 0;
+    margin-bottom: 18px !important;
+  }
+
+  .location-row + .location-row {
+    padding-top: 14px;
+  }
+
+  .location-row__summary {
+    display: grid !important;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-block: 4px !important;
+  }
+
+  .location-row__name {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .location-row__menu {
+    grid-column: 3;
+    grid-row: 1;
+    margin-left: 0 !important;
+  }
+
+  .location-row__encounter-sprite {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .location-row__encounter-button {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    width: 100% !important;
+    max-width: none;
+  }
+
+  .location-row__trainer-button {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+  }
+
+  .location-row__summary:not(.has-encounter-view) .location-row__trainer-button {
+    grid-row: 2;
+  }
+
+  .encounter-actions--summary {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .encounter-actions--summary > * {
+    min-width: 0;
+    padding-inline: 5px !important;
+  }
+
+  .location-row__panel {
+    min-width: 0;
+    margin-top: 8px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .encounter-editor {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .encounter-editor__column {
+    min-height: 0 !important;
+    gap: 10px !important;
+    padding: 4px !important;
+  }
+
+  .encounter-editor__sprite-card {
+    width: 100%;
+    max-height: 280px;
+    aspect-ratio: 4 / 3 !important;
+  }
+
+  .encounter-editor__actions,
+  .encounter-actions--panel {
+    width: 100% !important;
+  }
+
+  .encounter-actions--panel > * {
+    min-width: 0;
+  }
+
+  .location-row__panel--trainers {
+    padding: 8px !important;
+  }
+
+  .trainer-card {
+    padding: 6px !important;
+    border-radius: 8px !important;
+  }
+
+  .trainer-card-summary {
+    grid-template-columns: 52px minmax(0, 1fr) auto !important;
+    column-gap: 8px !important;
+    row-gap: 8px !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__sprite {
+    width: auto !important;
+    height: 56px !important;
+    max-width: 52px !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__party {
+    grid-column: 1 / 3 !important;
+    grid-row: 2 !important;
+    padding-block: 8px !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__cap {
+    min-width: 0;
+    gap: 5px !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__battle {
+    grid-column: 3 !important;
+    grid-row: 2 !important;
+    padding-inline: 8px !important;
+  }
+
+  .trainer-card__party-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .trainer-card__pokemon {
+    border-radius: 8px !important;
+  }
+
+  .trainer-card__pokemon-header {
+    align-items: flex-start !important;
+  }
+
+  .trainer-card__pokemon-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .battle-compare__backdrop {
+    align-items: flex-start !important;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+
+  .battle-compare {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    padding: 12px 10px !important;
+    box-sizing: border-box;
+  }
+
+  .battle-compare__header {
+    align-items: flex-start !important;
+    flex-direction: column;
+    margin-bottom: 10px !important;
+  }
+
+  .battle-compare__grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "player"
+      "opponent"
+      "comparison";
+    gap: 8px !important;
+  }
+
+  .battle-compare__player {
+    grid-area: player;
+  }
+
+  .battle-compare__opponent {
+    grid-area: opponent;
+  }
+
+  .battle-compare__comparison {
+    grid-area: comparison;
+    padding: 10px !important;
+  }
+
+  .battle-compare__party-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px !important;
+  }
+
+  .battle-compare__bst-row {
+    grid-template-columns: minmax(0, 1fr) 34px 52px 34px minmax(0, 1fr) !important;
+    column-gap: 4px !important;
+  }
+
+  .battle-compare__footer {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .battle-compare__footer > div {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .battle-compare__footer button {
+    flex: 1 1 0;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .home-main-panel {
     background: rgba(13, 16, 24, 0.765);
@@ -2127,5 +2834,706 @@ code {
     background: rgba(13, 16, 24, 0.765);
     border-color: rgba(76, 85, 104, 0.8);
     box-shadow: 0 28px 72px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Touch targets.
+
+   Deliberately keyed on (pointer: coarse) rather than a width, because the
+   two are not the same question: an iPhone in landscape is 844px wide and
+   would miss any phone-width query, while a 390px-wide desktop window has a
+   mouse and needs nothing here. This is the only place tap sizing is set.
+
+   !important throughout because every height below is spread onto the
+   element from an inline JSX style object (SUMMARY_BUTTON_STYLE,
+   MODAL_ACTION_BUTTON_STYLE, CARD_ACTION_BUTTON_STYLE and friends), and an
+   inline declaration outranks any normal class rule. Lifting those objects
+   into classes would let the !important go.
+--------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  /* Attempt page: the controls actually used to log a run. */
+  .attempt-filter__button,
+  .location-row__encounter-button,
+  .location-row__trainer-button,
+  .location-row__menu > button,
+  .encounter-actions--summary > *,
+  .encounter-actions--panel > * {
+    min-height: var(--tap-min) !important;
+  }
+
+  /* The overflow trigger is square-ish, so it needs the width too; its
+     inline minWidth: 0 would otherwise let it collapse to the glyph. */
+  .location-row__menu > button {
+    min-width: var(--tap-min) !important;
+  }
+
+  /* Header. The party slot is a div sized by width with aspect-ratio 1/1,
+     so height follows width. Six slots plus gaps at 44px is 284px, which
+     still fits a 320px viewport. */
+  .attempt-header__nav-button,
+  .attempt-header .site-header__user-button,
+  .attempt-header__run-menu button,
+  .attempt-header__attempt-flyout button {
+    min-height: var(--tap-min) !important;
+  }
+
+  .attempt-header__party-slot {
+    width: clamp(var(--tap-min), 11vw, 48px) !important;
+  }
+
+  /* Footer. Raising the buttons grows the bar, so the bar's floor and the
+     page's bottom reserve have to move with them or the last row is
+     covered again. */
+  .attempt-footer__button {
+    min-height: var(--tap-min) !important;
+  }
+
+  .attempt-footer {
+    min-height: 58px;
+  }
+
+  .attempt-page {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Cards and modals. */
+  .pokemon-summary__action,
+  .pokemon-summary__close,
+  .trainer-card-summary__battle,
+  .battle-compare__footer button,
+  .battle-compare__party-list button,
+  .attempt-session-stats__toggle,
+  .attempt-session-stats__starter {
+    min-height: var(--tap-min) !important;
+  }
+
+  /* The encounter editor's species search and nickname set
+     fontSize: '0.9em' inline, which computes to 14.4px and so still
+     triggers the zoom. An author !important is what outranks an inline
+     declaration; scoping it to coarse pointers leaves the smaller type
+     alone on desktop. max() so a control that is already larger keeps
+     its size. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+
+  /* The rest of the app: menu, run list, new run, auth. */
+  .site-header__nav-button,
+  .site-header__auth-button,
+  .site-header__user-button,
+  .page-action-button,
+  .load-run-filter-btn,
+  .new-run-generation-pill,
+  .home-action-button,
+  .contact-panel__close,
+  .auth-dialog__close,
+  .auth-dialog__field input,
+  .auth-dialog__submit,
+  .new-run-field select,
+  .new-run-field input {
+    min-height: var(--tap-min) !important;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   Run Stats panel placement.
+
+   The panel is meant to sit in the gutter to the left of the content column.
+   But #root is 1126px wide, so a 250px panel plus a 12px gap only has room
+   once the viewport reaches ~1666px. Below that the inline
+   `left: max(8px, ...)` pinned it at 8px directly on top of the rows.
+   Measured: 100px of every row covered at 1400px, 25px still at 1550px,
+   clear at 1600px. That is a laptop bug, not a phone one.
+
+   Below the threshold the panel returns to the document flow above the
+   content, which is what the phone layout already did.
+--------------------------------------------------------------------------- */
+@media (max-width: 1679.98px) {
+  .attempt-side-panel {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    z-index: auto !important;
+  }
+
+  /* In flow the panel is as wide as the content, so lay the stats out
+     across it rather than in the narrow single column the compact prop
+     asks for. At a phone width this still resolves to two columns. */
+  .attempt-session-stats__grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px !important;
+  }
+}
+
+@media (min-width: 1680px) {
+  .attempt-side-panel {
+    /* Against the real container width. The inline style still says 1380px,
+       which left the panel floating 133px clear of the content at 1900px. */
+    left: calc((100vw - 1126px) / 2 - 262px) !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Box page: a PC-style tile grid (alive on top, fallen below) beside a
+   sticky summary panel. Below 900px the summary becomes a full-screen
+   sheet so a phone still gets the whole grid width.
+--------------------------------------------------------------------------- */
+.box-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 20px;
+  align-items: start;
+}
+
+.box-section + .box-section {
+  margin-top: 24px;
+}
+
+.box-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.box-section__count {
+  font-size: 0.75em;
+  font-weight: normal;
+  color: var(--text-secondary);
+}
+
+.box-section--fallen .box-section__title {
+  color: #e55;
+}
+
+.box-section__empty {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.box-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-deep);
+}
+
+.box-section--fallen .box-grid {
+  background: color-mix(in srgb, var(--surface-deep) 88%, #e55 12%);
+}
+
+.box-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 132px;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  box-sizing: border-box;
+  transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.box-tile:hover,
+.box-tile:focus-visible {
+  border-color: var(--accent-border);
+  outline: none;
+}
+
+.box-tile--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg), 0 4px 12px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.box-tile--party {
+  border-color: #5ba85b;
+}
+
+.box-tile--fallen {
+  opacity: 0.6;
+  filter: saturate(0.4);
+}
+
+.box-tile--fallen.box-tile--selected {
+  opacity: 1;
+}
+
+.box-tile__flags {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.box-tile__flag {
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 0.58em;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.box-tile__flag--party {
+  color: #5ba85b;
+  background: rgba(91, 168, 91, 0.16);
+}
+
+.box-tile__flag--fallen {
+  margin-left: auto;
+  color: #e55;
+  background: rgba(224, 82, 82, 0.16);
+}
+
+.box-tile__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.8em;
+  font-weight: bold;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.box-tile__shiny {
+  margin-left: 3px;
+  font-size: 0.85em;
+  color: #f2b46b;
+}
+
+.box-tile__species {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.box-tile__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.box-tile__level {
+  font-size: 0.62em;
+  color: var(--text-secondary);
+}
+
+.box-page__summary {
+  position: sticky;
+  top: 132px;
+  max-height: calc(100vh - 152px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.box-page__summary-placeholder {
+  padding: 40px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  text-align: center;
+}
+
+/* --- Summary panel ------------------------------------------------------ */
+.pokemon-summary {
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.pokemon-summary__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-mid);
+}
+
+.pokemon-summary[data-status="Dead"] .pokemon-summary__header img {
+  filter: saturate(0.3);
+  opacity: 0.8;
+}
+
+.pokemon-summary__identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.pokemon-summary__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15em;
+  font-weight: bold;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pokemon-summary__shiny {
+  color: #f2b46b;
+  font-size: 0.85em;
+}
+
+.pokemon-summary__species {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__status {
+  margin-top: 4px;
+  font-size: 0.72em;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8em;
+  line-height: 1;
+}
+
+.pokemon-summary__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pokemon-summary__facts > div {
+  min-width: 0;
+}
+
+.pokemon-summary__facts dt {
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__facts dd {
+  margin: 1px 0 0;
+  font-size: 0.86em;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pokemon-summary__section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pokemon-summary__section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.7em;
+  font-weight: bold;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__bst {
+  font-weight: normal;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.1em;
+}
+
+.pokemon-summary__empty {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__ivs {
+  display: grid;
+  grid-template-columns: auto repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.pokemon-summary__ivs-label {
+  padding-right: 6px;
+  font-size: 0.66em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__iv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__iv span {
+  font-size: 0.6em;
+  color: var(--text-secondary);
+}
+
+.pokemon-summary__iv strong {
+  font-size: 0.8em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pokemon-summary__abilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pokemon-summary__ability {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  font-size: 0.78em;
+}
+
+.pokemon-summary__ability--chosen {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+}
+
+.pokemon-summary__ability-tag {
+  font-size: 0.78em;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.pokemon-summary__moves-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__moves {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76em;
+}
+
+.pokemon-summary__moves th {
+  position: sticky;
+  top: 0;
+  padding: 5px 6px;
+  background: var(--surface-mid);
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  font-weight: normal;
+  text-align: left;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__moves td {
+  padding: 4px 6px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.pokemon-summary__moves td img {
+  display: block;
+}
+
+.pokemon-summary__move-level {
+  width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pokemon-summary__move-name {
+  color: var(--text-primary);
+  font-weight: bold;
+  white-space: normal !important;
+}
+
+.pokemon-summary__move--known .pokemon-summary__move-level {
+  color: #5ba85b;
+}
+
+.pokemon-summary__record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pokemon-summary__record > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-deep);
+}
+
+.pokemon-summary__record span {
+  font-size: 0.64em;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pokemon-summary__record strong {
+  font-size: 1.05em;
+  color: var(--text-primary);
+}
+
+.pokemon-summary__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pokemon-summary__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-primary);
+  font-size: 0.74em;
+}
+
+.pokemon-summary__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface-mid);
+}
+
+.pokemon-summary__action {
+  flex: 1 1 100px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82em;
+  white-space: nowrap;
+}
+
+.pokemon-summary__action--add { color: #5ba85b; border-color: #5ba85b; background: rgba(91, 168, 91, 0.12); }
+.pokemon-summary__action--remove,
+.pokemon-summary__action--dead { color: #e55; border-color: #e55; background: rgba(224, 82, 82, 0.12); }
+.pokemon-summary__action--evolve { color: var(--accent); border-color: var(--accent-border); background: var(--accent-bg); }
+.pokemon-summary__action--revive { color: #7ec8e3; border-color: #7ec8e3; background: rgba(126, 200, 227, 0.12); }
+
+@media (max-width: 1149.98px) {
+  /* The header is sticky and in flow here, so there is no fixed bar to
+     clear; pin the summary just under the viewport top instead. */
+  .box-page__summary {
+    top: 12px;
+    max-height: calc(100vh - 24px);
+  }
+}
+
+@media (max-width: 899.98px) {
+  .box-page__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .box-page__summary {
+    display: none;
+  }
+
+  /* Selected: a full-screen sheet over the grid, tap outside to close. */
+  .box-page__summary--open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    max-height: none;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .box-page__summary--open > div {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .box-grid {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+    padding: 8px;
   }
 }

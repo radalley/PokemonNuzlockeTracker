@@ -1,0 +1,19 @@
+{
+    "key":  "crystal",
+    "label":  "Pokemon Crystal",
+    "generation":  2,
+    "version_group_id":  4,
+    "load_build":  4,
+    "game_ids":  {
+                     "crystal":  6
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokecrystal"
+               },
+    "preview_dir":  "crystal_build4_preview",
+    "expected":  {
+                     "trainers":  541,
+                     "trainer_pokemon":  1254
+                 }
+}

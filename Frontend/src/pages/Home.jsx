@@ -106,6 +106,9 @@ function Home() {
             {user?.account_type === 'admin' && (
               <button className="home-action-button" onClick={() => navigate('/admin/reports')}>Reports</button>
             )}
+            {user?.account_type === 'admin' && (
+              <button className="home-action-button" onClick={() => navigate('/admin/placement')}>Placement</button>
+            )}
           </div>
         </div>
       </main>

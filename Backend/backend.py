@@ -109,6 +109,16 @@ BADGE_DEFINITIONS = (
     (30, 'Mine Badge', 'Sinnoh'),
     (31, 'Icicle Badge', 'Sinnoh'),
     (32, 'Beacon Badge', 'Sinnoh'),
+    (33, 'Trio Badge', 'Unova'),
+    (34, 'Basic Badge', 'Unova'),
+    (35, 'Insect Badge', 'Unova'),
+    (36, 'Bolt Badge', 'Unova'),
+    (37, 'Quake Badge', 'Unova'),
+    (38, 'Jet Badge', 'Unova'),
+    (39, 'Freeze Badge', 'Unova'),
+    (40, 'Legend Badge', 'Unova'),
+    (41, 'Toxic Badge', 'Unova'),
+    (42, 'Wave Badge', 'Unova'),
 )
 
 EVENT_BADGE_MAPPINGS = (
@@ -147,11 +157,27 @@ EVENT_BADGE_MAPPINGS = (
     ((8, 9), 'canalave city gym', 30),
     ((8, 9), 'snowpoint city gym', 31),
     ((8, 9), 'sunyshore city gym', 32),
+    ((11,), 'striaton city gym', 33),
+    ((11,), 'nacrene city gym', 34),
+    ((11, 14), 'castelia city gym', 35),
+    ((11, 14), 'nimbasa city gym', 36),
+    ((11, 14), 'driftveil city gym', 37),
+    ((11, 14), 'mistralton city gym', 38),
+    ((11,), 'icirrus city gym', 39),
+    ((11, 14), 'opelucid city gym', 40),
+    ((14,), 'aspertia city gym', 34),
+    ((14,), 'virbank city gym', 41),
+    ((14,), 'humilau city gym', 42),
 )
 
 def get_games(conn):
     cur = _cursor(conn)
-    cur.execute("SELECT game_id, name, game_tag, generation, version_group_id from games where valid_game = 'valid'")
+    cur.execute(
+        "SELECT g.game_id, g.name, g.game_tag, g.generation, g.version_group_id, "
+        "g.base_game_id, g.is_rom_hack, base.name as base_game_name "
+        "FROM games g LEFT JOIN games base ON base.game_id = g.base_game_id "
+        "WHERE g.valid_game = 'valid'"
+    )
     return cur.fetchall()
 
 def _get_game_generation(conn, game_id=None, run_id=None):
@@ -171,13 +197,34 @@ def _get_game_generation(conn, game_id=None, run_id=None):
         return row['generation'] if row else None
     return None
 
-def _build_generation_patch_join(table_name, join_alias, species_expr, generation_expr):
+def _build_generation_patch_join(table_name, join_alias, species_expr, generation_expr, version_group_expr=None):
+    """Pick the species row for a game context.
+
+    Rows tagged with a version_group_id are exact overrides for that version
+    group (a ROM hack's rewrites) and win outright when the caller supplies
+    one; untagged rows keep the generation-based semantics. Callers without
+    game context never see override rows.
+    """
+    if version_group_expr is None:
+        vg_filter = 'x.version_group_id is null'
+    else:
+        vg_filter = (
+            f'(x.version_group_id = {version_group_expr} '
+            f'or (x.version_group_id is null '
+            f'and (coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))))'
+        )
+    generation_filter = (
+        f'(coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))'
+        if version_group_expr is None else 'true'
+    )
     return (
         f'left join lateral (\n'
         f'  select * from {table_name} x\n'
         f'  where x.species_id = {species_expr}\n'
-        f'    and (coalesce(x.generation, 0) = 0 or x.generation >= coalesce({generation_expr}, 9999))\n'
-        f'  order by case when coalesce(x.generation, 0) = 0 then 1 else 0 end, x.generation asc\n'
+        f'    and {vg_filter}\n'
+        f'    and {generation_filter}\n'
+        f'  order by case when x.version_group_id is not null then 0 else 1 end,\n'
+        f'           case when coalesce(x.generation, 0) = 0 then 1 else 0 end, x.generation asc\n'
         f'  limit 1\n'
         f') {join_alias} on true\n'
     )
@@ -186,12 +233,14 @@ def set_active_game(conn, game):
     state['active_game_id'] = game
     state['version_group_id'] = conn.execute('select version_group_id from games where game_id = (%s)', (game,)).fetchone()['version_group_id']
 
-def create_run(conn, name, user_id=None):
+def create_run(conn, name, game_id, user_id=None):
     _ensure_auth_schema(conn)
+    if game_id is None:
+        raise ValueError('game_id is required to create a run')
     row = conn.execute(
         "insert into runs (game_id, name, user_id, last_opened_at, last_opened_attempt_number) "
         "values (%s,%s,%s,current_timestamp,1) returning run_id",
-        (state['active_game_id'], name, user_id)
+        (game_id, name, user_id)
     ).fetchone()
     conn.commit()
     set_active_run(row['run_id'])
@@ -226,9 +275,9 @@ def get_party_for_attempts_bulk(conn, attempt_ids):
         'join attempts patt on p.attempt_id = patt.attempt_id '
         'join runs prun on patt.run_id = prun.run_id '
         'left join games pgame on nullif(prun.game_id::text, \'\')::integer = nullif(pgame.game_id::text, \'\')::integer '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'pgame.generation')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'pgame.generation')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'pgame.generation')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'pgame.generation', 'pgame.version_group_id')
         + f'where p.attempt_id in ({placeholders}) '
         + 'order by p.attempt_id, p.party_slot',
         tuple(attempt_ids)
@@ -444,9 +493,10 @@ def get_run_by_id(conn, run_id, attempt_number, user_id=None):
     # return conn.execute('select run_id, runs.name, runs.game_id, games.name as game_name from runs left join games on runs.game_id = games.game_id where runs.run_id = (%s)',(run_id,)).fetchone()
     _ensure_auth_schema(conn)
     query = (
-        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, run.s_ref, run.b_ref, run.pdb_ref, attempts.starter '
+        'select run.run_id, run.name, run.game_id, run.game_name, run.version_group_id, run.generation, run.base_game_id, run.base_game_name, run.s_ref, run.b_ref, run.pdb_ref, attempts.starter '
         'from ('
-        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id, games.s_ref, games.b_ref, games.pdb_ref '
+        '  select run_id, runs.name, runs.game_id, runs.user_id, games.name as game_name, games.version_group_id, games.generation, games.base_game_id, '
+        '  (select b.name from games b where b.game_id = games.base_game_id) as base_game_name, games.s_ref, games.b_ref, games.pdb_ref '
         '  from runs left join games on nullif(runs.game_id::text, \'\')::integer = nullif(games.game_id::text, \'\')::integer where nullif(runs.run_id::text, \'\')::integer = %s'
         ') as run '
         'left join attempts on run.run_id = attempts.run_id '
@@ -457,6 +507,20 @@ def get_run_by_id(conn, run_id, attempt_number, user_id=None):
         query += ' and run.user_id = %s'
         params.append(user_id)
     return conn.execute(query, params).fetchone()
+
+def rename_run(conn, run_id, name):
+    """Update a run's display name. Returns the cleaned name, or None if the run does not exist."""
+    cleaned = str(name or '').strip()[:100]
+    if not cleaned:
+        raise ValueError('Run name is required')
+    row = conn.execute(
+        'update runs set name = %s where run_id = %s returning run_id',
+        (cleaned, run_id),
+    ).fetchone()
+    conn.commit()
+    if row is None:
+        return None
+    return cleaned
 
 def delete_run(conn, run_id):
     attempts = [x['attempt_id'] for x in conn.execute('select attempt_id from attempts where run_id = (%s)',(run_id,)).fetchall()]
@@ -493,7 +557,8 @@ def get_attempts(conn):
 
 def get_attempts_for_run(conn, run_id):
     return conn.execute(
-        'select attempt_number from attempts where run_id = %s order by attempt_number asc',
+        'select attempt_number, outcome, ended_at from attempts '
+        'where run_id = %s order by attempt_number asc',
         (run_id,)
     ).fetchall()
 
@@ -516,6 +581,163 @@ def create_attempt_for_run(conn, run_id):
     )
     conn.commit()
     return new_num
+
+def end_attempt(conn, run_id, attempt_number, outcome='dead', trainer_id=None, note=None):
+    """End an attempt, recording how it died.
+
+    trainer_id names the killer when defeat was declared from a trainer
+    battle; note carries free text for wild/other deaths. Raises ValueError
+    on a missing attempt, an already-ended attempt, or an unknown trainer.
+    """
+    if outcome not in ('dead', 'won'):
+        raise ValueError(f'Unknown outcome {outcome!r}')
+    if note is not None and not isinstance(note, str):
+        note = str(note)
+    attempt = conn.execute(
+        'select attempt_id, outcome from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        raise ValueError(f'Attempt {attempt_number} not found for run {run_id}')
+    if attempt['outcome']:
+        raise ValueError(f'Attempt {attempt_number} already ended ({attempt["outcome"]})')
+    if trainer_id is not None:
+        # The killer must belong to the run's game world, not merely exist.
+        trainer = conn.execute(
+            'select tp.trainer_id from trainer_pool tp '
+            'join runs r on nullif(r.run_id::text, \'\')::integer = %s '
+            'join games g on nullif(r.game_id::text, \'\')::integer = g.game_id '
+            'where tp.trainer_id = %s and tp.version_group_id = g.version_group_id',
+            (run_id, trainer_id)
+        ).fetchone()
+        if not trainer:
+            raise ValueError(f'Trainer {trainer_id} does not belong to this run\'s game')
+    # The outcome guard in the WHERE clause makes concurrent declarations
+    # first-writer-wins instead of last-writer-overwrites.
+    updated = conn.execute(
+        'update attempts set outcome = %s, ended_at = current_timestamp, '
+        'ended_by_trainer_id = %s, death_note = %s '
+        'where run_id = %s and attempt_number = %s and outcome is null',
+        (outcome, trainer_id, (note or '').strip()[:500] or None, run_id, attempt_number)
+    )
+    if updated.rowcount != 1:
+        conn.rollback()
+        raise ValueError(f'Attempt {attempt_number} already ended')
+    # A wipe is the party dying: the mons in the party fall, and leave the
+    # party the same way the Box's "Confirm fallen" does. Boxed mons are
+    # untouched, and Reopen does not revive (the Box's Revive covers a
+    # mistaken declaration).
+    party_fallen = 0
+    if outcome == 'dead':
+        attempt_id = attempt['attempt_id']
+        fallen = conn.execute(
+            "update pokebank set status = 'Dead' "
+            "where attempt_id = %s and status = 'Captured' "
+            "and pokemon_id in (select pokemon_id from party where attempt_id = %s)",
+            (attempt_id, attempt_id)
+        )
+        party_fallen = fallen.rowcount
+        conn.execute('delete from party where attempt_id = %s', (attempt_id,))
+    conn.commit()
+    return {'success': True, 'outcome': outcome, 'party_fallen': party_fallen}
+
+def reopen_attempt(conn, run_id, attempt_number):
+    """Undo an accidental end-of-attempt declaration."""
+    attempt = conn.execute(
+        'select 1 from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        raise ValueError(f'Attempt {attempt_number} not found for run {run_id}')
+    updated = conn.execute(
+        'update attempts set outcome = null, ended_at = null, '
+        'ended_by_trainer_id = null, death_note = null '
+        'where run_id = %s and attempt_number = %s and outcome is not null',
+        (run_id, attempt_number)
+    )
+    conn.commit()
+    return updated.rowcount == 1
+
+def get_attempt_summary(conn, run_id, attempt_number):
+    """Everything the post-mortem screen shows for one attempt."""
+    _ensure_badge_schema(conn)
+    run = get_run_by_id(conn, run_id, attempt_number)
+    if not run:
+        return None
+    attempt = conn.execute(
+        'select attempt_id, attempt_number, starter, started_at, outcome, '
+        'ended_at, ended_by_trainer_id, death_note '
+        'from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+    if not attempt:
+        return None
+    attempt_dict = dict(attempt)
+    attempt_id = attempt_dict.pop('attempt_id')
+
+    killer = None
+    if attempt_dict.get('ended_by_trainer_id') is not None:
+        killer_row = conn.execute(
+            'select tp.trainer_id, tp.trainer_name, tp.trainer_class, tp.trainer_pic, '
+            'cl.canonical_location_name as location_name '
+            'from trainer_pool tp '
+            'left join canon_locations cl on cl.canonical_location_id = tp.canonical_location_id '
+            'where tp.trainer_id = %s',
+            (attempt_dict['ended_by_trainer_id'],)
+        ).fetchone()
+        killer = dict(killer_row) if killer_row else None
+
+    badges = [dict(r) for r in conn.execute(
+        'select ab.badge_id, b.badge_name, ab.earned_at '
+        'from attempt_badges ab join badges b on b.badge_id = ab.badge_id '
+        'where ab.attempt_id = %s order by ab.earned_at asc',
+        (attempt_id,)
+    ).fetchall()]
+
+    deaths = [dict(r) for r in conn.execute(
+        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, '
+        'pb.level_met, cl.canonical_location_name as location_name '
+        'from pokebank pb '
+        'left join species s on s.species_id = pb.species_id '
+        'left join canon_locations cl on cl.canonical_location_id = pb.canonical_location_id '
+        "where pb.run_id = %s and pb.attempt_id = %s and pb.status = 'Dead' "
+        'order by pb.pokemon_id asc',
+        (run_id, attempt_id)
+    ).fetchall()]
+
+    survivors = [dict(r) for r in conn.execute(
+        'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, '
+        'p.party_slot '
+        'from pokebank pb '
+        'left join species s on s.species_id = pb.species_id '
+        'left join party p on p.pokemon_id = pb.pokemon_id and p.attempt_id = %s '
+        "where pb.run_id = %s and pb.attempt_id = %s and pb.status = 'Captured' "
+        'order by p.party_slot asc nulls last, pb.pokemon_id asc',
+        (attempt_id, run_id, attempt_id)
+    ).fetchall()]
+
+    # 'obtained' is every Pokemon the attempt actually caught, alive or
+    # fallen; 'captured' stays the survivor count the survivors list shows.
+    counts = dict(conn.execute(
+        'select '
+        "count(*) filter (where status = 'Captured') as captured, "
+        "count(*) filter (where status in ('Captured', 'Dead')) as obtained, "
+        "count(*) filter (where status = 'Missed') as missed, "
+        "count(*) filter (where status = 'Dead') as dead, "
+        '(select count(distinct td.trainer_id) from trainers_defeated td where td.run_id = %s and td.attempt_id = %s) as trainers_defeated '
+        'from pokebank where run_id = %s and attempt_id = %s',
+        (run_id, attempt_id, run_id, attempt_id)
+    ).fetchone())
+
+    return {
+        'run': {k: run[k] for k in ('run_id', 'name', 'game_id', 'game_name', 'generation') if k in run.keys()},
+        'attempt': attempt_dict,
+        'killer': killer,
+        'badges': badges,
+        'deaths': deaths,
+        'survivors': survivors,
+        'counts': counts,
+    }
 
 def get_latest_attempt(conn):
     return conn.execute(f'select attempt_id from attempts where run_id = {state["active_run_id"]} order by attempt_id desc limit 1').fetchone()
@@ -808,22 +1030,35 @@ def get_party_for_attempt(conn, run_id, attempt_number):
         return []
     attempt_id = row['attempt_id']
     game_generation = _get_game_generation(conn, run_id=run_id)
+    run_vg_row = conn.execute(
+        'select g.version_group_id from runs r '
+        'join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
+        'where nullif(r.run_id::text, \'\')::integer = %s', (run_id,)
+    ).fetchone()
+    run_vg = run_vg_row['version_group_id'] if run_vg_row else None
 
     badges_select = ', ' + _pokemon_badges_text_expr('pb')
-    return conn.execute(
+    # The chosen pokebank facts ride along for the damage-calc export
+    # (nature always exists; gender/ability/IVs are column-probed like the
+    # pokebank read paths so an unmigrated database still serves the party).
+    gender_select = ', pb.gender' if _has_column(conn, 'pokebank', 'gender') else ", null as gender"
+    ability_select = ', pb.ability as chosen_ability' if _has_column(conn, 'pokebank', 'ability') else ', null as chosen_ability'
+    ivs_select = _ivs_select(conn)
+    rows = conn.execute(
         'select p.party_slot, p.pokemon_id, pb.species_id, s.name as species_name, pb.nickname, pb.shiny, '
-        'pb.level_met, st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
-        + badges_select + ' '
+        'pb.level_met, pb.nature, st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
+        + badges_select + gender_select + ability_select + ivs_select + ' '
         'from party p '
         'join pokebank pb on p.pokemon_id = pb.pokemon_id '
         'join species s on pb.species_id = s.species_id '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', '%s')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', '%s')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', '%s')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', '%s', '%s')
         + 'where p.attempt_id = %s '
         + 'order by p.party_slot',
-        (game_generation, game_generation, game_generation, attempt_id)
+        (run_vg, game_generation, run_vg, game_generation, run_vg, game_generation, attempt_id)
     ).fetchall()
+    return [_fold_ivs(dict(r)) for r in rows]
 
 def add_to_party_for_attempt(conn, run_id, attempt_number, pokemon_id):
     row = conn.execute(
@@ -1547,21 +1782,26 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     available_trainers_by_location = {}
     if attempt_row and location_ids and version_group_id is not None:
         placeholders = ','.join(['%s'] * len(location_ids))
-        # Count all regular trainers (not rematch, not event) for the location, for the correct version_group_id
+        # Regular trainers (not rematch, not event) drive the progress counts;
+        # rematch/event trainers count separately so venue rows (stadiums,
+        # cruise, League rematches) still surface in the trainer filter.
         game_id_clause = "and (tp.game_id is null or tp.game_id = %s) " if game_id is not None else "and tp.game_id is null "
         game_id_param = [game_id] if game_id is not None else []
+        special_case = (
+            "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') "
+            "  or lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end"
+        )
         trainer_rows = conn.execute(
             f'select tp.canonical_location_id as location_id, '
-            f"count(*) as trainer_count, "
-            f"count(case when td.trainer_id is null then 1 end) as available_trainer_count "
+            f"count(case when {special_case} = 0 then 1 end) as trainer_count, "
+            f"count(case when {special_case} = 0 and td.trainer_id is null then 1 end) as available_trainer_count, "
+            f"count(case when {special_case} = 1 then 1 end) as special_trainer_count "
             f'from trainer_pool tp '
             f'left join trainers_defeated td '
             f'on td.trainer_id = tp.trainer_id and td.run_id = %s and td.attempt_id = %s '
             f"where tp.canonical_location_id in ({placeholders}) "
             f"and tp.version_group_id = %s "
             f"{game_id_clause}"
-            f"and case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
-            f"and case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0 "
             f"and not exists ("
             f"  select 1 from event_bosses eb "
             f"  where eb.trainer_id = tp.trainer_id "
@@ -1574,6 +1814,7 @@ def get_attempt_page_data(conn, run_id, attempt_number):
             int(row['location_id']): {
                 'trainer_count': int(row['trainer_count'] or 0),
                 'available_trainer_count': int(row['available_trainer_count'] or 0),
+                'special_trainer_count': int(row['special_trainer_count'] or 0),
             }
             for row in trainer_rows
         }
@@ -1581,9 +1822,12 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     for row in script_list:
         if row['event_type'] != 'Location':
             continue
-        trainer_meta = available_trainers_by_location.get(int(row['event_id']), None)
+        # Bonus locations are extra encounter slots; they share the canonical
+        # location id but must not inherit its trainer roster.
+        trainer_meta = None if row['is_bonus_location'] else available_trainers_by_location.get(int(row['event_id']), None)
         row['trainer_count'] = trainer_meta['trainer_count'] if trainer_meta else 0
         row['available_trainer_count'] = trainer_meta['available_trainer_count'] if trainer_meta else 0
+        row['special_trainer_count'] = trainer_meta['special_trainer_count'] if trainer_meta else 0
         row['has_available_trainers'] = bool(row['available_trainer_count'])
 
     pools = {}
@@ -1610,11 +1854,18 @@ def get_attempt_page_data(conn, run_id, attempt_number):
     pokebank = get_pokebank_for_attempt(conn, run_id, attempt_number)
     encounters = {p['encounter_key']: p for p in pokebank}
 
+    attempt_info = conn.execute(
+        'select attempt_number, outcome, ended_at, ended_by_trainer_id, death_note '
+        'from attempts where run_id = %s and attempt_number = %s',
+        (run_id, attempt_number)
+    ).fetchone()
+
     return {
         'run': run_dict,
         'script': script_list,
         'pools': pools,
         'encounters': encounters,
+        'attempt': dict(attempt_info) if attempt_info else None,
     }
 
 def get_attempt_session_stats(conn, run_id, attempt_number):
@@ -1679,15 +1930,74 @@ def drop_pokemon(conn, pokemon_id):
 def get_pokemon_name_from_id(conn, species_id):
     return conn.execute('select name from species where species_id = (%s)',(species_id,)).fetchone()[0]
 
-def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None):
+IV_STAT_KEYS = ('hp', 'atk', 'def', 'spa', 'spd', 'spe')
+IV_COLUMNS = tuple(f'iv_{key}' for key in IV_STAT_KEYS)
+# The full physical IV range; the table's check constraint matches.
+IV_MIN = 0
+IV_MAX = 31
+
+
+def normalize_ivs(value):
+    """Coerce a client IV payload into {stat: int|None} for every stat.
+
+    Accepts a dict keyed by stat (hp, atk, ...) or by column (iv_hp, ...).
+    Blank / non-numeric / out-of-range values become None rather than
+    failing the whole save, so a half-filled panel still persists.
+    """
+    ivs = {key: None for key in IV_STAT_KEYS}
+    if not isinstance(value, dict):
+        return ivs
+    for key in IV_STAT_KEYS:
+        raw = value.get(key, value.get(f'iv_{key}'))
+        if raw is None or raw == '':
+            continue
+        try:
+            number = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if IV_MIN <= number <= IV_MAX:
+            ivs[key] = number
+    return ivs
+
+
+def _has_iv_columns(conn):
+    return _has_column(conn, 'pokebank', 'iv_hp')
+
+
+def _ivs_select(conn, alias='pb'):
+    """Column list for the IV slots, or NULLs on a not-yet-migrated database."""
+    if _has_iv_columns(conn):
+        return ', ' + ', '.join(f'{alias}.{col}' for col in IV_COLUMNS)
+    return ', ' + ', '.join(f'null as {col}' for col in IV_COLUMNS)
+
+
+def _fold_ivs(row):
+    """Move the flat iv_* columns of a row dict into a nested ivs object."""
+    row['ivs'] = {key: row.pop(f'iv_{key}', None) for key in IV_STAT_KEYS}
+    return row
+
+
+def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nickname, nature, status, shiny, pokemon_id=None, bonus_location=0, gender=None, ability=None, ivs=None):
     attempt_id = conn.execute(
         'select attempt_id from attempts where run_id = %s and attempt_number = %s',
         (run_id, attempt_number)
     ).fetchone()['attempt_id']
+    # Column-probe like the read paths, so a not-yet-migrated database keeps
+    # saving (dropping the ability) instead of hard-failing every save.
+    has_ability = _has_column(conn, 'pokebank', 'ability')
+    ability_set = ', ability=%s' if has_ability else ''
+    ability_params = (ability,) if has_ability else ()
+    # IVs follow the same explicit-save semantics: every save writes all six
+    # slots, so an omitted payload clears them.
+    has_ivs = _has_iv_columns(conn)
+    iv_values = normalize_ivs(ivs)
+    if has_ivs:
+        ability_set += ''.join(f', {col}=%s' for col in IV_COLUMNS)
+        ability_params += tuple(iv_values[key] for key in IV_STAT_KEYS)
     if pokemon_id:
         conn.execute(
-            'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
-            (species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, pokemon_id)
+            f'update pokebank set species_id=%s, canonical_location_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s{ability_set} where pokemon_id=%s',
+            (species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params, pokemon_id)
         )
         conn.commit()
         return pokemon_id
@@ -1700,14 +2010,19 @@ def upsert_encounter(conn, run_id, attempt_number, location_id, species_id, nick
         if existing:
             existing_id = existing['pokemon_id']
             conn.execute(
-                'update pokebank set species_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s where pokemon_id=%s',
-                (species_id, nickname, nature, status, shiny, bonus_location, gender, existing_id)
+                f'update pokebank set species_id=%s, nickname=%s, nature=%s, status=%s, shiny=%s, bonus_location=%s, gender=%s{ability_set} where pokemon_id=%s',
+                (species_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params, existing_id)
             )
             conn.commit()
             return existing_id
+        ability_col = ', ability' if has_ability else ''
+        ability_ph = ',%s' if has_ability else ''
+        if has_ivs:
+            ability_col += ''.join(f', {col}' for col in IV_COLUMNS)
+            ability_ph += ',%s' * len(IV_COLUMNS)
         conn.execute(
-            'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender)
+            f'insert into pokebank (run_id, attempt_id, species_id, canonical_location_id, nickname, nature, status, shiny, bonus_location, gender{ability_col}) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s{ability_ph})',
+            (run_id, attempt_id, species_id, location_id, nickname, nature, status, shiny, bonus_location, gender, *ability_params)
         )
         conn.commit()
         return conn.execute(
@@ -1749,7 +2064,8 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
                 'select nullif(bl.canonical_location_id::text, \'\')::integer as event_id, bl.canonical_name as display_name, '
                 'nullif(bl.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(bl.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, '
                 'bl.event_type, null, null, null, null, null, null::integer as version_group_id, 1 as is_bonus_location, '
-                'null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
+                'null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap, '
+                'null::boolean as is_level_cap, null::text as battle_type '
                 'from bonus_locations bl '
                 'where bl.run_id = %s and bl.attempt_id = %s and bl.is_active = 1 '
             )
@@ -1758,18 +2074,23 @@ def get_script(conn, starter, version_group_id=None, run_id=None, attempt_number
 
     return conn.execute(
         'select nullif(eb.trainer_id::text, \'\')::integer as event_id, eb.encounter_title as display_name, nullif(eb.sort_order::text, \'\')::double precision as sort_order, 0::double precision as secondary_sort_order, eb.event_type, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, eb.version_group_id, 0::integer as is_bonus_location, eb.event_id as boss_event_id, eb.badge_id, eb.type_focus, '
-        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id)) as level_cap '
+        '(select max(nullif(t.lvl::text, \'\')::integer) from trainer_pokemon t where t.trainer_id = eb.trainer_id or (t.trainer_id is null and t.encounter_name = tp.encounter_name and (t.version_group_id is null or t.version_group_id = eb.version_group_id))) as level_cap, '
+        'eb.is_level_cap, eb.battle_type '
         'from event_bosses eb left join trainer_pool tp on eb.trainer_id = tp.trainer_id '
         "where (eb.starter = (%s) or eb.starter is null or eb.starter = '') "
         f'{boss_filter}'
         f'{game_filter}'
         'union all '
-        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap '
+        'select nullif(el.canonical_location_id::text, \'\')::integer as event_id, cl.canonical_location_name as display_name, nullif(el.sort_order::text, \'\')::double precision as sort_order, coalesce(nullif(el.secondary_sort_order::text, \'\')::double precision, 0) as secondary_sort_order, el.event_type, null, null, null, null, null, el.version_group_id, 0::integer as is_bonus_location, null::integer as boss_event_id, null::integer as badge_id, null::text as type_focus, null::integer as level_cap, '
+        'null::boolean as is_level_cap, null::text as battle_type '
         'from event_locations el '
         'join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(el.canonical_location_id::text, \'\')::integer '
         f'{loc_filter}'
         f'{bonus_sql}'
-        'order by sort_order asc, secondary_sort_order asc',
+        # display_name breaks sort ties deterministically; without it,
+        # same-sort rows (e.g. Route 12 / Giant Chasm, both 35) come back in
+        # whatever order the planner chose that day.
+        'order by sort_order asc, secondary_sort_order asc, display_name asc',
         tuple(params)).fetchall()
 
 def get_location_by_id(conn, location_id):
@@ -1809,26 +2130,28 @@ def get_pokebank_with_stats(conn, run_id, attempt_number):
     trainers_defeated_select = ', pb.trainers_defeated' if has_trainers_defeated else ", '' as trainers_defeated"
     has_gender = _has_column(conn, 'pokebank', 'gender')
     gender_select = ', pb.gender' if has_gender else ", 'male' as gender"
+    ability_select = ', pb.ability, pb.bonus_location' if _has_column(conn, 'pokebank', 'ability') else ', null as ability, pb.bonus_location'
+    ivs_select = _ivs_select(conn)
 
     rows = conn.execute(
         f'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         f'cl.canonical_location_name as location_name, '
         f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, '
         f'st.type1, st.type2, sa.ability1, sa.ability2, sa.ability3, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, ss.bst'
-        f'{badges_select}{trainers_defeated_select}{gender_select} '
+        f'{badges_select}{trainers_defeated_select}{gender_select}{ability_select}{ivs_select} '
         f'from pokebank pb '
         f'join attempts a on nullif(pb.attempt_id::text, \'\')::integer = nullif(a.attempt_id::text, \'\')::integer '
         f'join runs r on nullif(pb.run_id::text, \'\')::integer = nullif(r.run_id::text, \'\')::integer '
         f'join games g on nullif(r.game_id::text, \'\')::integer = nullif(g.game_id::text, \'\')::integer '
         f'left join species s on pb.species_id = s.species_id '
         f'left join canon_locations cl on nullif(cl.canonical_location_id::text, \'\')::integer = nullif(pb.canonical_location_id::text, \'\')::integer '
-        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'g.generation')
-        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'g.generation')
-        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'g.generation')
+        + _build_generation_patch_join('species_stats', 'ss', 'pb.species_id', 'g.generation', 'g.version_group_id')
+        + _build_generation_patch_join('species_types', 'st', 'pb.species_id', 'g.generation', 'g.version_group_id')
+        + _build_generation_patch_join('species_abilities', 'sa', 'pb.species_id', 'g.generation', 'g.version_group_id')
         + f'where nullif(pb.run_id::text, \'\')::integer = %s and nullif(a.attempt_number::text, \'\')::integer = %s',
         (run_id, attempt_number)
     ).fetchall()
-    return [dict(r) for r in rows]
+    return [_fold_ivs(dict(r)) for r in rows]
 
 def get_pokebank_for_attempt(conn, run_id, attempt_number):
     _ensure_badge_schema(conn)
@@ -1836,13 +2159,15 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
     badges_col = _pokemon_badges_text_expr('pb')
     has_gender_col = _has_column(conn, 'pokebank', 'gender')
     gender_col = 'pb.gender' if has_gender_col else "'male' as gender"
+    ability_col = 'pb.ability' if _has_column(conn, 'pokebank', 'ability') else 'null as ability'
+    ivs_select = _ivs_select(conn)
     rows = conn.execute(
         'select pb.pokemon_id, pb.species_id, s.name as species_name, pb.canonical_location_id as location_id, '
         'case '
         '  when coalesce(pb.bonus_location, 0) > 0 then pb.bonus_location '
         '  else coalesce(el.secondary_sort_order, 0) '
         'end as secondary_sort_order, '
-        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col} '
+        f'pb.level_met, pb.nickname, pb.nature, pb.status, pb.shiny, {badges_col}, {gender_col}, {ability_col}{ivs_select} '
         'from pokebank pb '
         'join attempts a on pb.attempt_id = a.attempt_id '
         'left join species s on pb.species_id = s.species_id '
@@ -1852,13 +2177,13 @@ def get_pokebank_for_attempt(conn, run_id, attempt_number):
     ).fetchall()
     result = []
     for row in rows:
-        item = dict(row)
+        item = _fold_ivs(dict(row))
         item['secondary_sort_order'] = int(item.get('secondary_sort_order') or 0)
         item['encounter_key'] = f"{item['location_id']}:{item['secondary_sort_order']}"
         result.append(item)
     return result
 
-def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None, game_id=None):
+def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None, version_group_id=None, game_id=None, include_rematches=False, include_events=False):
     attempt_id = None
     if run_id is not None and attempt_number is not None:
         attempt_row = conn.execute(
@@ -1878,6 +2203,13 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
                 version_group_id = run_info['version_group_id']
             if game_id is None:
                 game_id = run_info['game_id']
+
+    if version_group_id is None and game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
 
     if version_group_id is None:
         raise ValueError('version_group_id is required to fetch trainers for a location')
@@ -1904,8 +2236,13 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         params.append(game_id)
     else:
         where_clauses.append("tp.game_id is null")
-    # Only regular trainers
-    where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+    # Regular trainers by default; rematches and one-off event battles are
+    # opt-in extras. Scripted bosses always stay out -- they render as their
+    # own script rows.
+    if not include_rematches:
+        where_clauses.append("case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
+    if not include_events:
+        where_clauses.append("case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end = 0")
     where_clauses.append(
         "not exists ("
         "select 1 from event_bosses eb "
@@ -1916,25 +2253,204 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
 
     query = (
         'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, tp.version_group_id, '
+        'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
+        "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_rematch, "
+        "case when lower(coalesce(tp.trainer_double::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_double, "
         + defeated_select +
         'from trainer_pool tp '
         + defeated_join +
+        'left join location_areas la on la.area_id = tp.area_id '
         'where ' + ' and '.join(where_clauses) + ' '
-        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, tp.trainer_id asc"
+        # Trainers standing in the location itself sort before its sub-areas.
+        "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, "
+        'case when tp.area_id is null then 0 else 1 end asc, '
+        'la.sort_order asc nulls last, la.area_name asc nulls last, tp.trainer_id asc'
     )
     return conn.execute(query, params).fetchall()
+
+def get_placement_summary(conn):
+    """Per-version-group placement progress for the admin surface.
+
+    An unplaced trainer is only a real gap when it is neither excluded by
+    curation (unused ROM data) nor attached to a scripted boss event
+    (those display through the boss skeleton, never a location panel).
+    """
+    # No join against trainer_placement_suggestions: its grain is one row per
+    # (trainer, candidate location, source), which would fan out every count.
+    return conn.execute(
+        'select tp.version_group_id, '
+        'count(*) as total_trainers, '
+        'count(*) filter (where tp.canonical_location_id is not null) as placed, '
+        'count(*) filter (where tp.canonical_location_id is null) as unplaced, '
+        "count(*) filter (where tp.canonical_location_id is null and c.status = 'excluded') as excluded, "
+        'count(*) filter (where tp.canonical_location_id is null '
+        "  and coalesce(c.status, '') <> 'excluded' "
+        '  and exists (select 1 from event_bosses eb where eb.trainer_id = tp.trainer_id)'
+        ') as boss_linked, '
+        'count(*) filter (where tp.canonical_location_id is null '
+        "  and coalesce(c.status, '') <> 'excluded' "
+        '  and not exists (select 1 from event_bosses eb where eb.trainer_id = tp.trainer_id)'
+        ') as actionable_gaps, '
+        'count(*) filter (where tp.canonical_location_id is null '
+        '  and exists (select 1 from trainer_placement_suggestions s '
+        '    where s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name)'
+        ') as unplaced_with_suggestions, '
+        'count(c.trainer_key) as curated '
+        'from trainer_pool tp '
+        'left join curated_trainer_placements c '
+        '  on c.version_group_id = tp.version_group_id and c.trainer_key = tp.encounter_name '
+        'where tp.version_group_id is not null '
+        'group by tp.version_group_id order by tp.version_group_id'
+    ).fetchall()
+
+def get_unplaced_trainers(conn, version_group_id, limit=100, offset=0, only_suggested=False):
+    """Unplaced trainers for one version group, with their suggestions."""
+    suggested_filter = (
+        'and exists (select 1 from trainer_placement_suggestions s '
+        'where s.version_group_id = tp.version_group_id and s.trainer_key = tp.encounter_name) '
+    ) if only_suggested else ''
+    trainers = conn.execute(
+        'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.details, '
+        "case when lower(coalesce(tp.is_rematch::text, '')) in ('1','true','t','yes') then 1 else 0 end as is_rematch "
+        'from trainer_pool tp '
+        'where tp.version_group_id = %s and tp.canonical_location_id is null '
+        + suggested_filter +
+        'order by tp.encounter_name asc limit %s offset %s',
+        (version_group_id, limit, offset)
+    ).fetchall()
+    trainer_list = [dict(t) for t in trainers]
+    if not trainer_list:
+        return trainer_list
+
+    keys = [t['encounter_name'] for t in trainer_list]
+    placeholders = ','.join(['%s'] * len(keys))
+    suggestion_rows = conn.execute(
+        'select s.trainer_key, s.canonical_location_id, cl.canonical_location_name, '
+        's.area_name, s.source, s.detail, '
+        'exists (select 1 from event_locations el '
+        '  where el.canonical_location_id = s.canonical_location_id '
+        '  and el.version_group_id = s.version_group_id) as in_script '
+        'from trainer_placement_suggestions s '
+        'join canon_locations cl on cl.canonical_location_id = s.canonical_location_id '
+        f'where s.version_group_id = %s and s.trainer_key in ({placeholders}) '
+        'order by s.trainer_key, s.source, cl.canonical_location_name',
+        (version_group_id, *keys)
+    ).fetchall()
+    by_key = {}
+    for row in suggestion_rows:
+        by_key.setdefault(row['trainer_key'], []).append({
+            'canonical_location_id': row['canonical_location_id'],
+            'location_name': row['canonical_location_name'],
+            'area_name': row['area_name'],
+            'source': row['source'],
+            'detail': row['detail'],
+            'in_script': bool(row['in_script']),
+        })
+    for trainer in trainer_list:
+        trainer['suggestions'] = by_key.get(trainer['encounter_name'], [])
+    return trainer_list
+
+def apply_trainer_placements(conn, version_group_id, placements):
+    """Apply admin placement decisions.
+
+    Each placement: {trainer_key, canonical_location_id, area_id | area_name}.
+    Writes trainer_pool AND curated_trainer_placements, so re-extraction
+    re-applies the decision. Returns per-placement results.
+    """
+    results = []
+    for placement in placements:
+        trainer_key = placement.get('trainer_key')
+        location_id = placement.get('canonical_location_id')
+        if not trainer_key or location_id is None:
+            raise ValueError('Each placement needs trainer_key and canonical_location_id')
+        location = conn.execute(
+            'select canonical_location_id from canon_locations where canonical_location_id = %s',
+            (location_id,)
+        ).fetchone()
+        if not location:
+            raise ValueError(f'Unknown canonical_location_id {location_id}')
+
+        area_id = placement.get('area_id')
+        area_name = (placement.get('area_name') or '').strip()
+        if area_id is None and area_name:
+            existing = conn.execute(
+                'select area_id from location_areas '
+                'where canonical_location_id = %s and coalesce(version_group_id, -1) = %s and area_name = %s',
+                (location_id, version_group_id, area_name)
+            ).fetchone()
+            if existing:
+                area_id = existing['area_id']
+            else:
+                area_kind = 'gym' if 'gym' in area_name.lower() else 'interior'
+                area_id = conn.execute(
+                    'insert into location_areas (canonical_location_id, version_group_id, area_name, area_kind) '
+                    'values (%s, %s, %s, %s) returning area_id',
+                    (location_id, version_group_id, area_name, area_kind)
+                ).fetchone()['area_id']
+
+        updated = conn.execute(
+            'update trainer_pool set canonical_location_id = %s, area_id = %s '
+            'where version_group_id = %s and encounter_name = %s '
+            'returning trainer_id',
+            (location_id, area_id, version_group_id, trainer_key)
+        ).fetchall()
+        if not updated:
+            raise ValueError(f'No trainer matches {trainer_key} in version group {version_group_id}')
+        conn.execute(
+            'insert into curated_trainer_placements '
+            '(version_group_id, trainer_key, canonical_location_id, area_id, decided_at) '
+            'values (%s, %s, %s, %s, current_timestamp) '
+            'on conflict (version_group_id, trainer_key) do update set '
+            'canonical_location_id = excluded.canonical_location_id, '
+            'area_id = excluded.area_id, decided_at = excluded.decided_at',
+            (version_group_id, trainer_key, location_id, area_id)
+        )
+        results.append({
+            'trainer_key': trainer_key,
+            'canonical_location_id': location_id,
+            'area_id': area_id,
+            'trainers_updated': len(updated),
+        })
+    conn.commit()
+    return results
 
 def _normalize_move_constant(move_token):
     token = (move_token or '').strip()
     if token.startswith('MOVE_'):
         token = token[5:]
-    return token.lower().replace('_', '-')
+    # Handles decomp constants (MOVE_QUICK_ATTACK) and display names
+    # (Quick Attack) alike; the lookup compares hyphenated slugs.
+    return token.lower().replace('_', '-').replace(' ', '-')
 
 def _format_label(value):
     if value is None:
         return None
     return str(value).replace('_', ' ').replace('-', ' ').title()
+
+def _moveset_version_group_for(conn, version_group_id):
+    """The version group to resolve movesets and move data against.
+
+    ROM hacks live in the reserved 1000+ range, and the move resolvers assume
+    chronologically ordered vanilla ids -- a raw hack id would select the
+    newest vanilla learnset and modern move stats instead of the base game's.
+    Hacks therefore resolve against their base game's version group.
+    """
+    if version_group_id is None:
+        return None
+    try:
+        vg = int(version_group_id)
+    except (TypeError, ValueError):
+        return version_group_id
+    if vg < 1000:
+        return vg
+    row = conn.execute(
+        'select base.version_group_id from games g '
+        'join games base on base.game_id = g.base_game_id '
+        'where g.version_group_id = %s and base.version_group_id is not null limit 1',
+        (vg,)
+    ).fetchone()
+    return row['version_group_id'] if row else vg
 
 def _resolve_move_details(conn, move_id, version_group_id):
     if move_id is None:
@@ -1942,6 +2458,7 @@ def _resolve_move_details(conn, move_id, version_group_id):
 
     default = None
     future_candidates = []
+    exact_override = None
 
     rows = conn.execute(
         'select move_id, move_name, type, damage_class, power, accuracy, version_group_id '
@@ -1949,17 +2466,37 @@ def _resolve_move_details(conn, move_id, version_group_id):
         (move_id,)
     ).fetchall()
 
+    # A hack's rebalanced move row (stored at its reserved 1000+ version
+    # group) wins outright; otherwise hacks resolve past-values against
+    # their base game's chronology. Vanilla targets never treat a same-vg
+    # past-value row as an override -- a row keyed at vg X records the
+    # change AT X, which games at or after X do not use.
+    try:
+        raw_target = int(version_group_id) if version_group_id is not None else None
+    except (TypeError, ValueError):
+        raw_target = None
+    hack_target = raw_target if raw_target is not None and raw_target >= 1000 else None
+    version_group_id = _moveset_version_group_for(conn, version_group_id)
+
     for row in rows:
         r = dict(row)
         vg = r.get('version_group_id')
+        if hack_target is not None and vg == hack_target:
+            exact_override = r
         if not vg:  # NULL or 0 both treated as the default/fallback row
             default = r
-        elif version_group_id is not None and vg > version_group_id:
+        elif vg < 1000 and version_group_id is not None and vg > version_group_id:
+            # Reserved-range (hack) rows never act as vanilla past-values.
             future_candidates.append(r)
 
     # moves.past_values are stored keyed by the version group where the change happened;
     # for an older game, pick the nearest change row above the target version group.
-    selected = min(future_candidates, key=lambda x: x['version_group_id']) if future_candidates else default
+    if exact_override is not None:
+        selected = exact_override
+    elif future_candidates:
+        selected = min(future_candidates, key=lambda x: x['version_group_id'])
+    else:
+        selected = default
     if not selected:
         return None
 
@@ -2009,9 +2546,21 @@ def _pick_moveset_version_group(conn, species_id, target_version_group_id):
     if not values:
         return None
     if target_version_group_id is None:
-        return max(values)
+        # No game context means vanilla: reserved-range (hack) learnsets
+        # must never win the "newest available" pick.
+        vanilla_values = [v for v in values if v < 1000]
+        return max(vanilla_values) if vanilla_values else max(values)
 
-    eligible = [v for v in values if v <= target_version_group_id]
+    # A hack's own learnset rows (loaded at its reserved version group) win
+    # outright; species the hack left unchanged fall back to the BASE game's
+    # chronology -- raw hack ids (1000+) would otherwise select the newest
+    # vanilla learnset instead of the base game's.
+    target = int(target_version_group_id)
+    if target in values:
+        return target
+    target = _moveset_version_group_for(conn, target)
+
+    eligible = [v for v in values if v <= target]
     if eligible:
         return max(eligible)
     return min(values)
@@ -2059,23 +2608,29 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
 
     if version_group_id is not None:
         tp_vg_filter = 'and (t.version_group_id is null or t.version_group_id = %s) '
-        tp_params = (game_generation, game_generation, game_generation, trainer_name, version_group_id)
+        tp_params = (version_group_id, game_generation, version_group_id, game_generation,
+                     version_group_id, game_generation, trainer_name, version_group_id)
     else:
         tp_vg_filter = 'and t.version_group_id is null '
-        tp_params = (game_generation, game_generation, game_generation, trainer_name)
+        tp_params = (None, game_generation, None, game_generation,
+                     None, game_generation, trainer_name)
 
     rows = conn.execute(
-        'select sp.species_id, t.species_name, st.type1, st.type2, sa.ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        'select sp.species_id, t.species_name, st.type1, st.type2, '
+        'coalesce(t.ability, sa.ability1) as ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
         't.iv, t.lvl, t.moves, t.held_item '
         'from trainer_pokemon t '
         'left join species sp on t.species_name = sp.name '
-        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s')
-        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s')
+        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
         + f'where encounter_name = (%s) {tp_vg_filter}',
         tp_params
     ).fetchall()
 
+    return _assemble_trainer_party(conn, rows, version_group_id)
+
+def _assemble_trainer_party(conn, rows, version_group_id):
     party = []
     for row in rows:
         pokemon = dict(row)
@@ -2099,6 +2654,305 @@ def get_trainer_parties_by_encounter(conn, trainer_name, game_id=None):
             pokemon['debug_moves_source'] = 'moveset_generated'
         party.append(pokemon)
     return party
+
+def get_species_abilities(conn, species_id, game_id=None):
+    """The ability choices for a species in a game's context.
+
+    Resolves through the same version-group-aware patch join the party
+    queries use, so a hack's override layer (Blaze Black's Regular-mode
+    abilities) wins over the generation pick. Returns [{name, hidden}] in
+    slot order (ability3 is the hidden slot), deduplicated; display
+    formatting is client-side.
+    """
+    game_generation = _get_game_generation(conn, game_id=game_id)
+    version_group_id = None
+    if game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
+    sql = (
+        'select sa.ability1, sa.ability2, sa.ability3 from species sp '
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
+        + 'where sp.species_id = %s'
+    )
+    row = conn.execute(sql, (version_group_id, game_generation, species_id)).fetchone()
+    if not row:
+        return []
+    abilities = []
+    seen = set()
+    for slot, hidden in (('ability1', False), ('ability2', False), ('ability3', True)):
+        value = (row[slot] or '').strip()
+        if value and value not in seen:
+            seen.add(value)
+            abilities.append({'name': value, 'hidden': hidden})
+    return abilities
+
+def get_species_learnset(conn, species_id, game_id=None):
+    """The full level-up learnset for a species in a game's context.
+
+    Picks the moveset version group the same way trainer parties do (a
+    hack's own rows win, otherwise the base game's chronology) and resolves
+    each move's stats against that game, so the Box summary shows what a
+    caught Pokemon learns, and when, for the run's actual game. Returns
+    {version_group_id, moves} with moves in learn order; a level of 0 is
+    the "learned on evolution" convention.
+    """
+    version_group_id = None
+    if game_id is not None:
+        game_row = conn.execute(
+            'select version_group_id from games where game_id = %s', (game_id,)
+        ).fetchone()
+        if game_row:
+            version_group_id = game_row['version_group_id']
+
+    selected_vg = _pick_moveset_version_group(conn, species_id, version_group_id)
+    if selected_vg is None:
+        return {'version_group_id': None, 'moves': []}
+
+    rows = conn.execute(
+        'select move_id, learn_level from movesets '
+        "where species_id = %s and learn_method = 'level-up' and version_group_id = %s "
+        'order by learn_level asc, move_id asc',
+        (species_id, selected_vg)
+    ).fetchall()
+
+    seen = set()
+    moves = []
+    for row in rows:
+        key = (row['learn_level'], row['move_id'])
+        if key in seen:
+            continue
+        seen.add(key)
+        details = _resolve_move_details(conn, row['move_id'], version_group_id)
+        if not details:
+            continue
+        moves.append({
+            'learn_level': row['learn_level'],
+            'move_id': details['move_id'],
+            'move_name': details['move_name'],
+            'type': details['type'],
+            'damage_class': details['damage_class'],
+            'power': details['power'],
+            'accuracy': details['accuracy'],
+        })
+    return {'version_group_id': selected_vg, 'moves': moves}
+
+
+def get_calc_dex_patch(conn, game_id):
+    """A hack's dex modifications for the damage calculator.
+
+    Returns the override rows the hack's ETL loaded under its reserved
+    version group — exactly the diff against the base game. Vanilla games
+    get an empty patch, so the calculator's stock data stands.
+    Shape: {generation, species: {NAME: {stats?, types?, ability?}},
+    moves: {NAME: {power, type, damage_class}}}.
+    """
+    game = conn.execute(
+        'select version_group_id, generation, coalesce(is_rom_hack, false) as is_rom_hack '
+        'from games where game_id = %s', (game_id,)
+    ).fetchone()
+    if not game:
+        return None
+    patch = {'generation': game['generation'], 'species': {}, 'moves': {}}
+    if not game['is_rom_hack']:
+        return patch
+    vg = game['version_group_id']
+
+    def species_entry(name):
+        return patch['species'].setdefault(name, {})
+
+    for row in conn.execute(
+        'select s.name, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe '
+        'from species_stats ss join species s on s.species_id = ss.species_id '
+        'where ss.version_group_id = %s', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['stats'] = {
+            'hp': row['hp'], 'atk': row['atk'], 'def': row['def'],
+            'spa': row['spa'], 'spd': row['spd'], 'spe': row['spe'],
+        }
+    for row in conn.execute(
+        'select s.name, st.type1, st.type2 '
+        'from species_types st join species s on s.species_id = st.species_id '
+        'where st.version_group_id = %s', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['types'] = [t for t in (row['type1'], row['type2']) if t]
+    for row in conn.execute(
+        'select s.name, sa.ability1 '
+        'from species_abilities sa join species s on s.species_id = sa.species_id '
+        'where sa.version_group_id = %s and sa.ability1 is not null', (vg,)
+    ).fetchall():
+        species_entry(row['name'])['ability'] = row['ability1']
+    for row in conn.execute(
+        'select move_name, power, type, damage_class from moves '
+        'where version_group_id = %s', (vg,)
+    ).fetchall():
+        patch['moves'][row['move_name']] = {
+            'power': row['power'], 'type': row['type'], 'damage_class': row['damage_class'],
+        }
+    return patch
+
+
+def _attach_observed_moves(conn, party, trainer_version_group_id, trainer_key, display_version_group_id):
+    """Attach admin-observed moves to party members.
+
+    curated_trainer_moves is keyed by the stable ETL identity (trainer's own
+    version group + encounter name + slot); a row only attaches when its
+    recorded species still occupies the slot, so a re-extraction that
+    reshuffles a party silently drops stale observations instead of
+    mislabeling the new occupant. Details resolve through the same machinery
+    as explicit trainer moves, in the display game's context.
+    """
+    for pokemon in party:
+        pokemon['observed_moves'] = []
+    if trainer_version_group_id is None or not trainer_key:
+        return party
+    rows = conn.execute(
+        'select slot, species_name, move_name from curated_trainer_moves '
+        'where version_group_id = %s and trainer_key = %s '
+        'order by slot asc, noted_at asc',
+        (trainer_version_group_id, trainer_key)
+    ).fetchall()
+    if not rows:
+        return party
+    by_slot = {}
+    for row in rows:
+        by_slot.setdefault(row['slot'], []).append(row)
+    for pokemon in party:
+        matches = [
+            r for r in by_slot.get(pokemon.get('slot'), [])
+            if (r['species_name'] or '').upper() == (pokemon.get('species_name') or '').upper()
+        ]
+        for match in matches:
+            details = _resolve_explicit_moves(conn, match['move_name'], display_version_group_id)
+            if details:
+                pokemon['observed_moves'].append(details[0])
+            else:
+                pokemon['observed_moves'].append({'move_name': match['move_name']})
+    return party
+
+def add_observed_move(conn, trainer_id, slot, move_name):
+    """Record a move an opponent was seen using. Returns the attached
+    move details, or raises ValueError on bad identity or unknown move."""
+    move_name = (move_name or '').strip()
+    if not move_name:
+        raise ValueError('move_name is required')
+    if ',' in move_name:
+        raise ValueError('One move at a time')
+    trainer = conn.execute(
+        'select encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer or trainer['version_group_id'] is None:
+        raise ValueError(f'Unknown trainer {trainer_id}')
+    slot_row = conn.execute(
+        'select species_name from trainer_pokemon where trainer_id = %s and slot = %s',
+        (trainer_id, slot)
+    ).fetchone()
+    if not slot_row:
+        raise ValueError(f'Trainer {trainer_id} has no party slot {slot}')
+    resolved = _resolve_explicit_moves(conn, move_name, trainer['version_group_id'])
+    if not resolved:
+        raise ValueError(f'Unknown move {move_name!r}')
+    canonical_name = resolved[0]['move_name']
+    # Re-observing after a re-extraction changed the slot's species must
+    # revive the row, not silently no-op against the stale one.
+    conn.execute(
+        'insert into curated_trainer_moves '
+        '(version_group_id, trainer_key, slot, species_name, move_name) '
+        'values (%s, %s, %s, %s, %s) '
+        'on conflict (version_group_id, trainer_key, slot, move_name) do update '
+        'set species_name = excluded.species_name, noted_at = current_timestamp',
+        (trainer['version_group_id'], trainer['encounter_name'], slot,
+         slot_row['species_name'], canonical_name)
+    )
+    conn.commit()
+    return resolved[0]
+
+def delete_observed_move(conn, trainer_id, slot, move_name):
+    """Remove an observed-move record. Returns the number of rows removed."""
+    trainer = conn.execute(
+        'select encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer:
+        raise ValueError(f'Unknown trainer {trainer_id}')
+    # Compare by the same slug the add path canonicalizes through, so a
+    # caller can delete with any accepted spelling of the name.
+    result = conn.execute(
+        'delete from curated_trainer_moves '
+        'where version_group_id = %s and trainer_key = %s and slot = %s '
+        "and lower(replace(replace(move_name, '_', '-'), ' ', '-')) = %s",
+        (trainer['version_group_id'], trainer['encounter_name'], slot,
+         _normalize_move_constant(move_name))
+    )
+    conn.commit()
+    return result.rowcount
+
+def search_move_names(conn, query, limit=15):
+    """Distinct move names for the admin autocomplete."""
+    q = (query or '').strip()[:80]
+    if not q:
+        return []
+    escaped = q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    rows = conn.execute(
+        'select distinct move_name from moves where move_name ilike %s '
+        'order by move_name asc limit %s',
+        (f'%{escaped}%', limit)
+    ).fetchall()
+    return [r['move_name'] for r in rows]
+
+def get_trainer_party_by_id(conn, trainer_id, game_id=None):
+    """Party for one trainer_pool row, keyed by trainer_id.
+
+    Returns None when the trainer does not exist. Falls back to the legacy
+    encounter-name match (scoped to the trainer's own version group) for party
+    rows whose trainer_id could not be backfilled.
+    """
+    trainer = conn.execute(
+        'select trainer_id, encounter_name, version_group_id from trainer_pool where trainer_id = %s',
+        (trainer_id,)
+    ).fetchone()
+    if not trainer:
+        return None
+
+    game_generation = _get_game_generation(conn, game_id=game_id)
+    version_group_id = trainer['version_group_id']
+    if game_id is not None:
+        game_row = conn.execute('select version_group_id from games where game_id = %s', (game_id,)).fetchone()
+        if game_row and game_row['version_group_id'] is not None:
+            version_group_id = game_row['version_group_id']
+
+    select_sql = (
+        'select sp.species_id, t.species_name, st.type1, st.type2, '
+        'coalesce(t.ability, sa.ability1) as ability1, ss.bst, ss.hp, ss.atk, ss.def, ss.spa, ss.spd, ss.spe, '
+        't.iv, t.lvl, t.moves, t.held_item, t.slot, t.ability as trainer_ability, t.nature as trainer_nature '
+        'from trainer_pokemon t '
+        'left join species sp on t.species_name = sp.name '
+        + _build_generation_patch_join('species_stats', 'ss', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_types', 'st', 'sp.species_id', '%s', '%s')
+        + _build_generation_patch_join('species_abilities', 'sa', 'sp.species_id', '%s', '%s')
+    )
+    join_params = (version_group_id, game_generation, version_group_id, game_generation,
+                   version_group_id, game_generation)
+    rows = conn.execute(
+        select_sql + 'where t.trainer_id = %s order by t.slot asc nulls last, t.pk_id asc',
+        (*join_params, trainer_id)
+    ).fetchall()
+
+    if not rows:
+        rows = conn.execute(
+            select_sql +
+            'where t.trainer_id is null and t.encounter_name = %s '
+            'and (t.version_group_id is null or t.version_group_id = %s) '
+            'order by t.slot asc nulls last, t.pk_id asc',
+            (*join_params, trainer['encounter_name'], trainer['version_group_id'])
+        ).fetchall()
+
+    party = _assemble_trainer_party(conn, rows, version_group_id)
+    return _attach_observed_moves(
+        conn, party, trainer['version_group_id'], trainer['encounter_name'], version_group_id)
 
 def get_pokemon_trainers_and_badges(conn, run_id, attempt_number, pokemon_id):
     """Get trainers defeated and badges earned for a specific pokemon in a run/attempt."""

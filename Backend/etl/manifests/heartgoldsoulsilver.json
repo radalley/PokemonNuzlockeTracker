@@ -1,0 +1,20 @@
+{
+    "key":  "heartgoldsoulsilver",
+    "label":  "Pokemon HeartGold / SoulSilver",
+    "generation":  4,
+    "version_group_id":  10,
+    "load_build":  5,
+    "game_ids":  {
+                     "soulsilver":  16,
+                     "heartgold":  15
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokeheartgold"
+               },
+    "preview_dir":  "heartgoldsoulsilver_build5_preview",
+    "expected":  {
+                     "trainers":  737,
+                     "trainer_pokemon":  1776
+                 }
+}

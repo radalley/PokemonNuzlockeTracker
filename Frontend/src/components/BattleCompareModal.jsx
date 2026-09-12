@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
 import { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
+import { getDamageCalc, openCalcWithTeams, prefetchDexPatch } from '../utils/damageCalc'
 
 function formatType(t) {
   if (!t) return null
@@ -61,9 +63,52 @@ function BattleCompareModal({
   battleResult = null,
   onClose,
   onMarkVictory,
+  onDeclareDefeat = null,
+  defeatSaving = false,
+  defeatError = '',
+  battleType = null,
+  gameId = null,
+  levelCap = null,
 }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null)
   const [selectedOpponent, setSelectedOpponent] = useState(null)
+  const [confirmingDefeat, setConfirmingDefeat] = useState(false)
+  const [calcNote, setCalcNote] = useState('')
+
+  const damageCalc = getDamageCalc(gameId)
+
+  useEffect(() => {
+    if (damageCalc) prefetchDexPatch(gameId)
+  }, [damageCalc, gameId])
+
+  const openDamageCalc = async () => {
+    if (!damageCalc || playerParty.length === 0) return
+    // Lockley does not track current levels; the battle's cap is the
+    // Nuzlocke default, falling back to the opponent's highest level.
+    const opponentMax = opponentParty.reduce((max, m) => Math.max(max, Number(m?.lvl) || 0), 0)
+    const level = Number(levelCap) > 0 ? Number(levelCap) : (opponentMax || null)
+    const ok = await openCalcWithTeams(playerParty, opponentParty, trainerName, level, damageCalc.gen, gameId, subtitle)
+    setCalcNote(!ok
+      ? 'Could not store the teams — browser storage is blocked.'
+      : ok.patched
+        ? 'Both teams loaded, with this game’s modified Pokémon applied.'
+        : 'Both teams are loaded in the calc’s set lists.')
+  }
+
+  // The modal renders inside the trainer card, whose root click handler
+  // toggles the card open/shut. Without a scroll lock the page behind
+  // also scrolls under a touch drag once the modal's own list hits its end.
+  useEffect(() => {
+    const { body } = document
+    const previousOverflow = body.style.overflow
+    const previousOverscroll = body.style.overscrollBehavior
+    body.style.overflow = 'hidden'
+    body.style.overscrollBehavior = 'contain'
+    return () => {
+      body.style.overflow = previousOverflow
+      body.style.overscrollBehavior = previousOverscroll
+    }
+  }, [])
 
   const togglePlayer = (idx) => setSelectedPlayer(prev => prev === idx ? null : idx)
   const toggleOpponent = (idx) => setSelectedOpponent(prev => prev === idx ? null : idx)
@@ -77,7 +122,14 @@ function BattleCompareModal({
 
   return (
     <div
-      onClick={onClose}
+      className="battle-compare__backdrop"
+      onClick={event => {
+        // This modal is a descendant of the trainer card in the React
+        // tree, so a backdrop tap would bubble up and collapse the card
+        // as well as closing the modal, throwing away the loaded party.
+        event.stopPropagation()
+        onClose()
+      }}
       style={{
         position: 'fixed', inset: 0,
         backgroundColor: 'rgba(0,0,0,0.75)',
@@ -86,6 +138,7 @@ function BattleCompareModal({
       }}
     >
       <div
+        className="battle-compare"
         onClick={e => e.stopPropagation()}
         style={{
           width: 'min(1200px, 95vw)', maxHeight: '88vh', overflowY: 'auto',
@@ -94,23 +147,26 @@ function BattleCompareModal({
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
+        <div className="battle-compare__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            <div style={{ fontSize: '1.05em', fontWeight: 'bold' }}>Battle: {trainerName}</div>
+            <BattleFormatPill format={battleType} fontSize="0.72em" />
+          </div>
           <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>{subtitle}</div>
         </div>
 
         {/* Three columns */}
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr 200px', gap: '12px', flex: 1 }}>
+        <div className="battle-compare__grid" style={{ display: 'grid', gridTemplateColumns: '200px 1fr 200px', gap: '12px', flex: 1 }}>
 
           {/* Left — Player party */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+          <div className="battle-compare__party battle-compare__player" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Your Party</div>
             {battleLoading ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>Loading...</div>
             ) : playerParty.length === 0 ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party Pokémon.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div className="battle-compare__party-list" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {playerParty.map((mon, idx) => (
                   <button
                     type="button"
@@ -138,7 +194,7 @@ function BattleCompareModal({
           </div>
 
           {/* Center — Stats / Comparison */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '14px' }}>
+          <div className="battle-compare__comparison" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '14px' }}>
             {!hasOne ? (
               <div style={{ height: '100%', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '0.82em', textAlign: 'center' }}>
                 Select a Pokémon from either party to view stats
@@ -162,7 +218,7 @@ function BattleCompareModal({
                   </div>
                 </div>
                 <div style={{ display: 'grid', gap: '10px', alignItems: 'start' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid var(--border)', fontSize: '0.78em' }}>
+                  <div className="battle-compare__bst-row" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 44px 92px 44px minmax(0, 1fr)', columnGap: '8px', alignItems: 'center', paddingBottom: '6px', marginBottom: '2px', borderBottom: '1px solid var(--border)', fontSize: '0.78em' }}>
                     <span />
                     <span style={{ color: 'var(--text-primary)', textAlign: 'right' }}>{playerMon.bst ?? '—'}</span>
                     <span style={{ color: 'var(--text-secondary)', textAlign: 'center' }}>BST</span>
@@ -227,12 +283,12 @@ function BattleCompareModal({
           </div>
 
           {/* Right — Opponent party */}
-          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
+          <div className="battle-compare__party battle-compare__opponent" style={{ border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '0.88em', color: 'var(--text-primary)' }}>Opponent Team</div>
             {opponentParty.length === 0 ? (
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.82em' }}>No party data.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div className="battle-compare__party-list" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {opponentParty.map((mon, idx) => (
                   <button
                     type="button"
@@ -276,8 +332,63 @@ function BattleCompareModal({
           </div>
         )}
 
+        {defeatError && (
+          <div style={{ marginTop: '10px', fontSize: '0.8em', color: '#e05252', textAlign: 'right' }}>{defeatError}</div>
+        )}
+
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '14px' }}>
+        <div className="battle-compare__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={openDamageCalc}
+              disabled={!damageCalc || battleLoading || playerParty.length === 0}
+              title={damageCalc
+                ? 'Open the damage calculator with both teams already loaded'
+                : 'Damage calc is set up for Blaze Black first — other games are coming'}
+              style={{
+                ...MODAL_ACTION_BUTTON_STYLE,
+                ...(damageCalc
+                  ? { borderColor: '#7ec8e3', color: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }
+                  : { opacity: 0.45, cursor: 'not-allowed' }),
+              }}
+            >
+              Damage Calc
+            </button>
+            {calcNote && (
+              <span style={{ fontSize: '0.75em', color: '#7ec8e3', maxWidth: '340px' }}>{calcNote}</span>
+            )}
+            {onDeclareDefeat && !battleResult?.success && (
+              confirmingDefeat ? (
+                <>
+                  <span style={{ fontSize: '0.78em', color: '#e05252' }}>
+                    End this attempt? {trainerName} is recorded as the killer and your party is marked fallen.
+                  </span>
+                  <button type="button" onClick={() => setConfirmingDefeat(false)} disabled={defeatSaving} style={MODAL_ACTION_BUTTON_STYLE}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onDeclareDefeat}
+                    disabled={defeatSaving}
+                    style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#e05252', color: '#e05252', background: 'rgba(224,82,82,0.12)', cursor: defeatSaving ? 'wait' : 'pointer' }}
+                  >
+                    {defeatSaving ? 'Ending...' : '☠ Confirm Defeat'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDefeat(true)}
+                  style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#5a2d2d', color: '#e05252' }}
+                  title="Lost this battle? End the attempt and record the killer."
+                >
+                  Declare Defeat
+                </button>
+              )
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" onClick={onClose} style={MODAL_ACTION_BUTTON_STYLE}>Back</button>
           <button
             type="button"
@@ -294,6 +405,7 @@ function BattleCompareModal({
           >
             {defeated || battleResult?.success ? '✓ Victory' : battleSaving ? 'Saving...' : 'Mark Victory'}
           </button>
+          </div>
         </div>
       </div>
     </div>

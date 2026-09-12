@@ -1,0 +1,62 @@
+trainer_id,trainer_index,encounter_name,trainer_name,sort_order,encounter_title,starter,type_focus,version_group_id,event_type,game_id,badge_id,battle_type,is_level_cap
+,,TRAINER_BB_BIANCA_1_FIRE,BIANCA,0.1,Nuvema Town,Fire,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_1_GRASS,BIANCA,0.1,Nuvema Town,Grass,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_1_WATER,BIANCA,0.1,Nuvema Town,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_1_WATER,CHEREN,0.2,Nuvema Town,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_1_FIRE,CHEREN,0.2,Nuvema Town,Fire,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_1_GRASS,CHEREN,0.2,Nuvema Town,Grass,,1001,,,,single,false
+,,TRAINER_BB_N_1,N,1.1,Accumula Town,,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_2_FIRE,BIANCA,2.1,Route 2,Fire,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_2_GRASS,BIANCA,2.1,Route 2,Grass,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_2_WATER,BIANCA,2.1,Route 2,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_2_WATER,CHEREN,3.1,Trainer's School,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_2_FIRE,CHEREN,3.1,Trainer's School,Fire,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_2_GRASS,CHEREN,3.1,Trainer's School,Grass,,1001,,,,single,false
+,,TRAINER_BB_CILAN_1,CILAN,3.2,Striaton City Gym,Water,Grass,1001,,,33,rotation,true
+,,TRAINER_BB_CRESS_1,CRESS,3.2,Striaton City Gym,Fire,Water,1001,,,33,rotation,true
+,,TRAINER_BB_CHILI_1,CHILI,3.2,Striaton City Gym,Grass,Fire,1001,,,33,rotation,true
+,,TRAINER_BB_CHEREN_3_WATER,CHEREN,5.1,Preschool,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_3_FIRE,CHEREN,5.1,Preschool,Fire,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_3_GRASS,CHEREN,5.1,Preschool,Grass,,1001,,,,single,false
+,,TRAINER_BB_N_2,N,6.1,Nacrene City,,,1001,,,,double,false
+,,TRAINER_BB_LENORA_1,LENORA,7.1,Nacrene City Gym,,Normal,1001,,,34,double,true
+,,TRAINER_BB_BURGH_1,BURGH,9.1,Castelia City Gym,,Bug,1001,,,35,double,true
+,,TRAINER_BB_BIANCA_3_FIRE,BIANCA,9.2,Castelia City,Fire,,1001,,,,double,false
+,,TRAINER_BB_BIANCA_3_GRASS,BIANCA,9.2,Castelia City,Grass,,1001,,,,double,false
+,,TRAINER_BB_BIANCA_3_WATER,BIANCA,9.2,Castelia City,Water,,1001,,,,double,false
+,,TRAINER_BB_CHEREN_4_WATER,CHEREN,10.2,Route 4,Water,,1001,,,,rotation,false
+,,TRAINER_BB_CHEREN_4_FIRE,CHEREN,10.2,Route 4,Fire,,1001,,,,rotation,false
+,,TRAINER_BB_CHEREN_4_GRASS,CHEREN,10.2,Route 4,Grass,,1001,,,,rotation,false
+,,TRAINER_BB_N_3,N,12.1,Nimbasa City,,,1001,,,,double,false
+,,TRAINER_BB_ELESA_1,ELESA,12.2,Nimbasa City Gym,,Electric,1001,,,36,single,true
+,,TRAINER_BB_CHEREN_5_WATER,CHEREN,13.1,Route 5,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_5_FIRE,CHEREN,13.1,Route 5,Fire,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_5_GRASS,CHEREN,13.1,Route 5,Grass,,1001,,,,single,false
+,,TRAINER_BB_CLAY_1,CLAY,16.1,Driftveil City Gym,,Ground,1001,,,37,single,true
+,,TRAINER_BB_BIANCA_4_FIRE,BIANCA,16.2,Driftveil City,Fire,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_4_GRASS,BIANCA,16.2,Driftveil City,Grass,,1001,,,,single,false
+,,TRAINER_BB_BIANCA_4_WATER,BIANCA,16.2,Driftveil City,Water,,1001,,,,single,false
+,,TRAINER_BB_N_4,N,19.1,Chargestone Cave,,,1001,,,,single,false
+,,TRAINER_BB_SKYLA_1,SKYLA,20.1,Mistralton City Gym,,Flying,1001,,,38,triple,true
+,,TRAINER_BB_CHEREN_6_WATER,CHEREN,20.2,Route 7,Water,,1001,,,,rotation,false
+,,TRAINER_BB_CHEREN_6_FIRE,CHEREN,20.2,Route 7,Fire,,1001,,,,rotation,false
+,,TRAINER_BB_CHEREN_6_GRASS,CHEREN,20.2,Route 7,Grass,,1001,,,,rotation,false
+,,TRAINER_BB_BRYCEN_1,BRYCEN,26.1,Icirrus City Gym,,iIce,1001,,,39,double,true
+,,TRAINER_BB_BIANCA_5_FIRE,BIANCA,28.1,Route 8,Fire,,1001,,,,triple,false
+,,TRAINER_BB_BIANCA_5_GRASS,BIANCA,28.1,Route 8,Grass,,1001,,,,triple,false
+,,TRAINER_BB_BIANCA_5_WATER,BIANCA,28.1,Route 8,Water,,1001,,,,triple,false
+,,TRAINER_BB_DRAYDEN_1,DRAYDEN,30.1,Opelucid City Gym,,Dragon,1001,,1001,40,rotation,true
+,,TRAINER_BB_IRIS_1,IRIS,30.1,Opelucid City Gym,,Dragon,1001,,1002,40,triple,true
+,,TRAINER_BB_CHEREN_7_WATER,CHEREN,31.1,Route 10,Water,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_7_FIRE,CHEREN,31.1,Route 10,Fire,,1001,,,,single,false
+,,TRAINER_BB_CHEREN_7_GRASS,CHEREN,31.1,Route 10,Grass,,1001,,,,single,false
+,,TRAINER_BB_SHAUNTAL_1,SHAUNTAL,32.1,Elite Four - W,,,1001,,,,double,true
+,,TRAINER_BB_GRIMSLEY_1,GRIMSLEY,32.3,Elite Four - NW,,,1001,,,,double,true
+,,TRAINER_BB_MARSHAL_1,MARSHAL,32.2,Elite Four - E,,,1001,,,,double,true
+,,TRAINER_BB_CAITLIN_1,CAITLIN,32.4,Elite Four - NE,,,1001,,,,double,true
+,,TRAINER_BB_N_5_G17,N,32.5,N's Castle,,,1001,,1001,,single,false
+,,TRAINER_BB_N_5_G18,N,32.5,N's Castle,,,1001,,1002,,single,false
+,,TRAINER_BB_GHETSIS_1,GHETSIS,32.6,N's Castle,,,1001,,,,single,false
+,,TRAINER_BB_CYNTHIA_1,CYNTHIA,37.1,Undella Town,,,1001,,,,single,false
+,,TRAINER_BB_ALDER_1,ALDER,46.1,Champion,,,1001,,,,single,true
+,,TRAINER_BB_MORIMOTO_1,MORIMOTO,46.2,Castelia City - Morimoto,,,1001,,,,triple,false

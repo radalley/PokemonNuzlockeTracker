@@ -41,6 +41,18 @@ export async function createRun(isAuthenticated, gameId, runName, gameData = {})
   return res.json()
 }
 
+export async function renameRun(runId, runName) {
+  if (isLocalRun(runId)) {
+    const ok = guest.renameRun(runId, runName)
+    return ok ? { success: true, run_name: String(runName).trim().slice(0, 100) } : { success: false, error: 'Run name is required' }
+  }
+  const res = await apiFetch(`/api/runs/${runId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ run_name: runName }),
+  })
+  return res.json()
+}
+
 export async function deleteRun(runId) {
   if (isLocalRun(runId)) {
     guest.deleteRun(runId)
@@ -65,6 +77,10 @@ export async function createAttempt(runId) {
     return { attempt_number }
   }
   const res = await apiFetch(`/api/runs/${runId}/attempts`, { method: 'POST' })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || `create-attempt failed ${res.status}`)
+  }
   return res.json()
 }
 
@@ -115,6 +131,7 @@ export async function getAttemptPageData(runId, attemptNumber) {
       encounter_key: `${row.event_id}:${Number(row.secondary_sort_order || 0)}`,
       trainer_count: Number(row.trainer_count || 0),
       available_trainer_count: Number(row.available_trainer_count || 0),
+      special_trainer_count: Number(row.special_trainer_count || 0),
     }))
 
     const injectedBonus = bonusRows
@@ -123,10 +140,17 @@ export async function getAttemptPageData(runId, attemptNumber) {
         if (!canonical) return null
         return {
           ...canonical,
-          display_name: b.canonical_name || canonical.display_name,
+          // Server-mode bonus rows are named "<base> - Bonus" at creation;
+          // guest rows store null until renamed, so default the same way.
+          display_name: b.canonical_name || `${canonical.display_name} - Bonus`,
           secondary_sort_order: Number(b.secondary_sort_order || 0),
           is_bonus_location: true,
           encounter_key: `${b.canonical_location_id}:${Number(b.secondary_sort_order || 0)}`,
+          // Bonus locations are extra encounter slots; they must not inherit
+          // the canonical location's trainer roster.
+          trainer_count: 0,
+          available_trainer_count: 0,
+          special_trainer_count: 0,
         }
       })
       .filter(Boolean)
@@ -142,11 +166,49 @@ export async function getAttemptPageData(runId, attemptNumber) {
       script: fullScript,
       pools: scriptData.pools || {},
       encounters,
+      attempt: guest.getAttemptOutcome(runId, attemptNumber),
     }
   }
 
   const res = await apiFetch(`/api/attempt-page/${runId}/${attemptNumber}`)
   if (!res.ok) throw new Error(`attempt-page failed ${res.status}`)
+  return res.json()
+}
+
+export async function endAttempt(runId, attemptNumber, payload = {}) {
+  if (isLocalRun(runId)) {
+    const result = guest.endAttempt(runId, attemptNumber, payload)
+    if (!result.success) throw new Error(result.error || 'end-attempt failed')
+    return result
+  }
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/end`, {
+    method: 'POST',
+    body: JSON.stringify({
+      trainer_id: payload.trainerId ?? null,
+      note: payload.note ?? null,
+    }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `end-attempt failed ${res.status}`)
+  return data
+}
+
+export async function reopenAttempt(runId, attemptNumber) {
+  if (isLocalRun(runId)) {
+    const result = guest.reopenAttempt(runId, attemptNumber)
+    if (!result.success) throw new Error(result.error || 'reopen failed')
+    return result
+  }
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/reopen`, { method: 'POST' })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || `reopen failed ${res.status}`)
+  return data
+}
+
+export async function getAttemptSummary(runId, attemptNumber) {
+  if (isLocalRun(runId)) return guest.getAttemptSummary(runId, attemptNumber)
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/summary`)
+  if (!res.ok) throw new Error(`attempt-summary failed ${res.status}`)
   return res.json()
 }
 
@@ -156,7 +218,7 @@ export async function getPokebank(runId, attemptNumber) {
   return res.json()
 }
 
-export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender) {
+export async function saveEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, pokemonId, gender, ability, ivs = null) {
   if (isLocalRun(runId)) {
     const localId = guest.upsertEncounter(
       runId,
@@ -171,6 +233,8 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       shiny,
       pokemonId,
       gender,
+      ability,
+      ivs,
     )
     return { success: true, pokemon_id: localId }
   }
@@ -189,6 +253,8 @@ export async function saveEncounter(runId, attemptNumber, locationId, bonusLocat
       shiny: shiny ? 'True' : null,
       pokemon_id: pokemonId || null,
       gender: gender || null,
+      ability: ability || null,
+      ivs: ivs || null,
     }),
   })
   return res.json()
@@ -253,9 +319,21 @@ export async function markTrainerVictory(runId, attemptNumber, trainerId, eventI
   return res.json()
 }
 
-export async function getTrainerList(locationId, runId, attemptNumber, signal) {
-  const params = isLocalRun(runId) ? '' : `?run_id=${runId}&attempt_number=${attemptNumber}`
-  const res = await apiFetch(`/api/trainer-list/${locationId}${params}`, { signal })
+export async function getTrainerList(locationId, runId, attemptNumber, signal, { gameId = null, versionGroupId = null, includeRematches = false, includeEvents = false } = {}) {
+  const query = new URLSearchParams()
+  if (isLocalRun(runId)) {
+    // Guest runs have no server-side run row to derive game context from, so
+    // the caller must supply it explicitly.
+    if (gameId != null) query.set('game_id', gameId)
+    if (versionGroupId != null) query.set('version_group_id', versionGroupId)
+  } else {
+    query.set('run_id', runId)
+    query.set('attempt_number', attemptNumber)
+  }
+  if (includeRematches) query.set('include_rematches', '1')
+  if (includeEvents) query.set('include_events', '1')
+  const qs = query.toString()
+  const res = await apiFetch(`/api/trainer-list/${locationId}${qs ? `?${qs}` : ''}`, { signal })
   const trainers = await res.json()
 
   if (isLocalRun(runId)) {
@@ -275,8 +353,8 @@ export async function getSessionStats(runId, attemptNumber, signal) {
   return res.json()
 }
 
-export async function addBonusLocation(runId, attemptNumber, canonicalLocationId) {
-  if (isLocalRun(runId)) return guest.addBonusLocation(runId, attemptNumber, canonicalLocationId)
+export async function addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder = 0) {
+  if (isLocalRun(runId)) return guest.addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder)
   const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/bonus-locations`, {
     method: 'POST',
     body: JSON.stringify({ canonical_location_id: canonicalLocationId }),
@@ -350,7 +428,25 @@ export async function getBox(runId, attemptNumber) {
   return res.json()
 }
 
+// Species reference data is public and game-aware, so guest runs use the
+// same endpoints as signed-in ones.
+export async function getSpeciesSummary(speciesId, gameId = null) {
+  const query = gameId ? `?game_id=${gameId}` : ''
+  const res = await apiFetch(`/api/species/${speciesId}/summary${query}`)
+  if (!res.ok) return null
+  return res.json()
+}
+
+export async function getSpeciesLearnset(speciesId, gameId = null) {
+  const query = gameId ? `?game_id=${gameId}` : ''
+  const res = await apiFetch(`/api/species/${speciesId}/learnset${query}`)
+  if (!res.ok) return { version_group_id: null, moves: [] }
+  return res.json()
+}
+
 export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
+  // Pass gender, ability and IVs through: a Box status flip (dead / revive)
+  // re-saves the whole row, and omitting them would null what it has.
   return saveEncounter(
     runId,
     attemptNumber,
@@ -362,6 +458,9 @@ export async function updateEncounterStatus(runId, attemptNumber, pokemon) {
     pokemon.nature,
     pokemon.status,
     pokemon.shiny,
-    pokemon.pokemon_id
+    pokemon.pokemon_id,
+    pokemon.gender,
+    pokemon.ability,
+    pokemon.ivs || null,
   )
 }

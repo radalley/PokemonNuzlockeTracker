@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { apiFetch } from '../utils/api'
 import { useParams } from 'react-router-dom'
 import LocationRow from '../components/LocationRow'
@@ -11,6 +11,7 @@ import PaletteDebugPanel from '../components/PaletteDebugPanel'
 import ContactButton from '../components/ContactButton'
 import { getAttemptPageData, getParty, getPokebank, markRunOpened, updateStarter as saveStarter } from '../utils/dataLayer'
 import { useAuth } from '../contexts/AuthContext'
+import useHoverCapable from '../utils/useHoverCapable'
 
 const EMPTY_POOL = []
 
@@ -51,6 +52,7 @@ function Attempt() {
   const [script, setScript] = useState([])
   const [pools, setPools] = useState({})
   const [runDetails, setRunDetails] = useState(null)
+  const [attemptInfo, setAttemptInfo] = useState(null)
   const [attemptLoaded, setAttemptLoaded] = useState(false)
   const [attemptLoadError, setAttemptLoadError] = useState('')
   const [currentStarter, setCurrentStarter] = useState('')
@@ -62,7 +64,11 @@ function Attempt() {
   const [activeFilter, setActiveFilter] = useState('master')
   const [showDocsMenu, setShowDocsMenu] = useState(false)
   const [allSpecies, setAllSpecies] = useState([])
-  const [statsOpen, setStatsOpen] = useState(false)
+  // Session stats (with the starter-type picker) open by default on a
+  // desktop, where the side panel has its own column. On touch screens the
+  // mobile tier puts the panel in flow above the sheet, so it starts closed.
+  const hoverCapable = useHoverCapable()
+  const [statsOpen, setStatsOpen] = useState(hoverCapable)
   const [debugOpen, setDebugOpen] = useState(false)
 
   useEffect(() => {
@@ -82,29 +88,55 @@ function Attempt() {
     return () => controller.abort()
   }, [runId, attemptId, partyRefreshKey])
 
+  // Refetches for an already-displayed attempt (victories, starter changes,
+  // structure edits) reconcile in the background: unmounting into the
+  // loading screen would collapse the page and reset the scroll position.
+  const loadedIdentityRef = useRef(null)
+  const loadSeqRef = useRef(0)
+  const encountersVersionRef = useRef(0)
+
   useEffect(() => {
-    const controller = new AbortController()
-    setAttemptLoadError('')
-    setAttemptLoaded(false)
+    const identity = `${runId}:${attemptId}`
+    const seq = ++loadSeqRef.current
+    const encountersVersion = encountersVersionRef.current
+    const isBackgroundRefresh = loadedIdentityRef.current === identity
+    if (!isBackgroundRefresh) {
+      setAttemptLoadError('')
+      setAttemptLoaded(false)
+    }
     getAttemptPageData(runId, attemptId)
       .then(data => {
+        if (seq !== loadSeqRef.current) return
+        if (!data?.run && isBackgroundRefresh) {
+          // The run vanished mid-session (e.g. deleted in another tab):
+          // keep the current view rather than collapsing it under the user.
+          console.error('Background refresh returned no run data; keeping current view.')
+          return
+        }
         setRunDetails(data?.run || null)
+        setAttemptInfo(data?.attempt || null)
         setCurrentStarter(data?.run?.starter || '')
         setScript(data?.script || [])
         setPools(data?.pools || {})
-        setSavedEncounters(data?.encounters || {})
+        // A stale snapshot must not clobber encounter edits (saves, deletes,
+        // status changes) made while this request was in flight.
+        if (encountersVersion === encountersVersionRef.current) {
+          setSavedEncounters(data?.encounters || {})
+        }
         setAttemptLoaded(true)
         if (data?.run) {
+          loadedIdentityRef.current = identity
           markRunOpened(runId, attemptId).catch(err => console.error('Failed to record opened run:', err))
         }
       })
       .catch(err => {
-        if (err.name === 'AbortError') return
+        if (seq !== loadSeqRef.current) return
         console.error(err)
-        setAttemptLoadError('Failed to load attempt page data.')
-        setAttemptLoaded(true)
+        if (!isBackgroundRefresh) {
+          setAttemptLoadError('Failed to load attempt page data.')
+          setAttemptLoaded(true)
+        }
       })
-    return () => controller.abort()
   }, [runId, attemptId, refreshKey])
 
   const handleStarterChange = (newStarter) => {
@@ -154,6 +186,7 @@ function Attempt() {
   }, [capturedSpeciesIds.join(',')])
 
   const handleStatusChange = useCallback((locationId, speciesId, newStatus) => {
+    encountersVersionRef.current += 1
     setSavedEncounters(prev => ({
       ...prev,
       [locationId]: { ...(prev[locationId] || {}), species_id: speciesId, status: newStatus }
@@ -161,8 +194,10 @@ function Attempt() {
   }, [])
 
   const handleEncounterChange = useCallback(() => {
+    const version = ++encountersVersionRef.current
     getPokebank(runId, attemptId)
       .then(data => {
+        if (version !== encountersVersionRef.current) return
         const byLocation = {}
         ;(data || []).forEach(p => { byLocation[p.encounter_key] = p })
         setSavedEncounters(byLocation)
@@ -204,20 +239,23 @@ function Attempt() {
     if (activeFilter === 'encounters') {
       return script.filter(row => row.event_type === 'Location')
     }
-    return script.filter(row => row.event_type !== 'Location' || row.trainer_count > 0)
+    return script.filter(row => row.event_type !== 'Location'
+      || row.trainer_count > 0 || row.special_trainer_count > 0)
   }, [activeFilter, script])
 
   if (!attemptLoaded) return <p>Loading...</p>
   if (!runDetails) return <p>{attemptLoadError || 'Attempt not found.'}</p>
 
   function renderScriptRow(row) {
-    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}:${row.display_name}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} />
-    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
-    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} />
+    const generation = runDetails?.generation ?? null
+    const attemptEnded = attemptInfo?.outcome === 'dead'
+    if (row.event_type === 'Location') return <LocationRow key={`${row.event_id}:${row.secondary_sort_order}`} row={row} pool={pools[row.event_id] ?? EMPTY_POOL} allSpecies={allSpecies} savedEncounter={savedEncounters[row.encounter_key] ?? null} runId={runId} attemptNumber={parseInt(attemptId)} gameId={runDetails?.game_id || null} generation={generation} dupedFamilyIds={dupedFamilyIds} onEncounterChange={handleEncounterChange} onStatusChange={handleStatusChange} onPartyChange={handlePartyChange} onStructureChange={handleStructureChange} partyPokemonIds={partyPokemonIds} onVictoryRecorded={handleVictoryRecorded} viewMode={locationViewMode} attemptEnded={attemptEnded} />
+    if (row.event_type === 'Rival') return <RivalRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} attemptEnded={attemptEnded} />
+    return <BossRow key={row.sort_order} row={row} gameId={runDetails?.game_id || null} generation={generation} runId={runId} attemptId={parseInt(attemptId)} onVictoryRecorded={handleVictoryRecorded} attemptEnded={attemptEnded} />
   }
 
   return (
-    <div style={{ paddingTop: '120px', paddingBottom: '56px' }}>
+    <div className="attempt-page" style={{ paddingTop: '120px', paddingBottom: '56px' }}>
       {showDocsMenu && (
         <div
           onClick={() => setShowDocsMenu(false)}
@@ -289,21 +327,38 @@ function Attempt() {
         </div>
       )}
 
-      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={isAdmin && debugOpen} onToggleDebug={isAdmin ? () => setDebugOpen(v => !v) : null} />
+      <AttemptHeader runId={runId} attemptId={parseInt(attemptId)} runDetails={runDetails} partyRefreshKey={partyRefreshKey} onPartyChange={handlePartyChange} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} debugOpen={isAdmin && debugOpen} onToggleDebug={isAdmin ? () => setDebugOpen(v => !v) : null} attemptOutcome={attemptInfo} />
 
       {isAdmin && <PaletteDebugPanel isOpen={debugOpen} onToggle={() => setDebugOpen(v => !v)} />}
 
-      <div style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
+      <div className="attempt-page__content" style={{ maxWidth: '1380px', margin: '0 auto', padding: '0 28px', position: 'relative' }}>
         <AttemptSidePanel runId={runId} attemptId={parseInt(attemptId)} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} starter={currentStarter} onStarterChange={handleStarterChange} showStarterControls versionGroupId={runDetails?.version_group_id} />
 
-        <div style={{ textAlign: 'left' }}>
-          <div style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
-            <div style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
+        <div className="attempt-page__body" style={{ textAlign: 'left' }}>
+          {attemptInfo?.outcome === 'dead' && (
+            <div style={{ marginBottom: '18px', padding: '10px 14px', border: '1px solid #5a2d2d', borderRadius: '12px', background: 'rgba(224,82,82,0.08)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.88em', color: '#e05252', fontWeight: 'bold' }}>☠ This attempt has ended</span>
+              {attemptInfo.ended_at && (
+                <span style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>{new Date(attemptInfo.ended_at).toLocaleDateString()}</span>
+              )}
+              <span style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>You are reviewing it.</span>
+              <button
+                type="button"
+                onClick={() => { window.location.href = `/attempt/${runId}/${attemptId}/summary` }}
+                style={{ marginLeft: 'auto', padding: '6px 12px', borderRadius: '999px', border: '1px solid #f2b46b', background: 'rgba(242,180,107,0.1)', color: '#f2b46b', cursor: 'pointer', font: 'inherit', fontSize: '0.78em' }}
+              >
+                View Summary
+              </button>
+            </div>
+          )}
+          <div className="attempt-filter" style={{ marginBottom: '18px', padding: '12px', border: '1px solid var(--border-strong)', borderRadius: '12px', background: 'var(--surface)', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+            <div className="attempt-filter__label" style={{ fontSize: '0.82em', color: 'var(--text-secondary)', marginRight: '8px' }}>Filter View</div>
             {FILTER_OPTIONS.map(option => {
               const isActive = activeFilter === option.key
               return (
                 <button
                   key={option.key}
+                  className="attempt-filter__button"
                   type="button"
                   onClick={() => setActiveFilter(option.key)}
                   style={{

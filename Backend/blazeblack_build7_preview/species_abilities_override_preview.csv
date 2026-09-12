@@ -1,0 +1,650 @@
+species_id,generation,ability1,ability2,ability3,version_group_id
+1,,Overgrow,Chlorophyll,,1001
+2,,Overgrow,Chlorophyll,,1001
+3,,Overgrow,Chlorophyll,,1001
+4,,Blaze,Solar Power,,1001
+5,,Blaze,Solar Power,,1001
+6,,Blaze,Solar Power,,1001
+7,,Torrent,Sturdy,,1001
+8,,Torrent,Sturdy,,1001
+9,,Torrent,Sturdy,,1001
+10,,Shield Dust,Suction Cups,,1001
+11,,Shed Skin,Battle Armor,,1001
+12,,Compound Eyes,Tinted Lens,,1001
+13,,Shield Dust,Poison Touch,,1001
+14,,Shed Skin,Battle Armor,,1001
+15,,Sniper,Poison Touch,,1001
+16,,Big Pecks,Tangled Feet,,1001
+17,,Big Pecks,Tangled Feet,,1001
+18,,Big Pecks,Tangled Feet,,1001
+19,,Hustle,Guts,,1001
+20,,Hustle,Guts,,1001
+21,,Keen Eye,Sniper,,1001
+22,,Keen Eye,Sniper,,1001
+23,,Intimidate,Shed Skin,,1001
+24,,Intimidate,Shed Skin,,1001
+25,,Static,Lightning Rod,,1001
+26,,Static,Lightning Rod,,1001
+27,,Sand Veil,Sand Rush,,1001
+28,,Sand Veil,Sand Rush,,1001
+29,,Poison Point,Rivalry,,1001
+30,,Hustle,Rivalry,,1001
+31,,Sheer Force,Rivalry,,1001
+32,,Poison Point,Rivalry,,1001
+33,,Hustle,Rivalry,,1001
+34,,Sheer Force,Rivalry,,1001
+35,,Cute Charm,Magic Guard,,1001
+36,,Unaware,Magic Guard,,1001
+37,,Flash Fire,Drought,,1001
+38,,Flash Fire,Drought,,1001
+39,,Cute Charm,Friend Guard,,1001
+40,,Cute Charm,Frisk,,1001
+41,,Inner Focus,Infiltrator,,1001
+42,,Inner Focus,Infiltrator,,1001
+43,,Chlorophyll,Run Away,,1001
+44,,Chlorophyll,Stench,,1001
+45,,Chlorophyll,Effect Spore,,1001
+46,,Effect Spore,Dry Skin,,1001
+47,,Effect Spore,Dry Skin,,1001
+48,,Compound Eyes,Tinted Lens,,1001
+49,,Wonder Skin,Tinted Lens,,1001
+50,,Sand Force,Arena Trap,,1001
+51,,Sand Force,Arena Trap,,1001
+52,,Pickup,Technician,,1001
+53,,Limber,Technician,,1001
+54,,Swift Swim,Cloud Nine,,1001
+55,,Swift Swim,Cloud Nine,,1001
+56,,Defiant,Anger Point,,1001
+57,,Defiant,Anger Point,,1001
+58,,Intimidate,Justified,,1001
+59,,Intimidate,Justified,,1001
+60,,Water Absorb,Swift Swim,,1001
+61,,Water Absorb,Swift Swim,,1001
+62,,Water Absorb,Swift Swim,,1001
+63,,Synchronize,Magic Guard,,1001
+64,,Synchronize,Magic Guard,,1001
+65,,Synchronize,Magic Guard,,1001
+66,,Guts,No Guard,,1001
+67,,Guts,No Guard,,1001
+68,,Guts,No Guard,,1001
+69,,Chlorophyll,Limber,,1001
+70,,Chlorophyll,Gluttony,,1001
+71,,Chlorophyll,Intimidate,,1001
+72,,Clear Body,Liquid Ooze,,1001
+73,,Clear Body,Liquid Ooze,,1001
+74,,Rock Head,Sturdy,,1001
+75,,Rock Head,Sturdy,,1001
+76,,Rock Head,Sturdy,,1001
+77,,Flame Body,Flash Fire,,1001
+78,,Flame Body,Flash Fire,,1001
+79,,Regenerator,Drizzle,,1001
+80,,Regenerator,Drizzle,,1001
+81,,Magnet Pull,Analytic,,1001
+82,,Magnet Pull,Analytic,,1001
+83,,Defiant,Super Luck,,1001
+84,,Tangled Feet,Early Bird,,1001
+85,,Anger Point,Early Bird,,1001
+86,,Thick Fat,Hydration,,1001
+87,,Thick Fat,Hydration,,1001
+88,,Stench,Poison Touch,,1001
+89,,Stench,Poison Touch,,1001
+90,,Overcoat,Skill Link,,1001
+91,,Overcoat,Skill Link,,1001
+92,,Levitate,Levitate,,1001
+93,,Levitate,Levitate,,1001
+94,,Levitate,Levitate,,1001
+95,,Weak Armor,Sturdy,,1001
+96,,Insomnia,Forewarn,,1001
+97,,Insomnia,Forewarn,,1001
+98,,Hyper Cutter,Sheer Force,,1001
+99,,Hyper Cutter,Sheer Force,,1001
+100,,Aftermath,Static,,1001
+101,,Aftermath,Static,,1001
+102,,Chlorophyll,Harvest,,1001
+103,,Chlorophyll,Harvest,,1001
+104,,Rock Head,Mold Breaker,,1001
+105,,Rock Head,Mold Breaker,,1001
+106,,Unburden,Reckless,,1001
+107,,Inner Focus,Iron Fist,,1001
+108,,Cloud Nine,Gluttony,,1001
+109,,Levitate,Levitate,,1001
+110,,Levitate,Levitate,,1001
+111,,Reckless,Rock Head,,1001
+112,,Reckless,Rock Head,,1001
+113,,Natural Cure,Serene Grace,,1001
+114,,Chlorophyll,Regenerator,,1001
+115,,Early Bird,Scrappy,,1001
+116,,Swift Swim,Sniper,,1001
+117,,Poison Point,Poison Touch,,1001
+118,,Swift Swim,Lightning Rod,,1001
+119,,Swift Swim,Lightning Rod,,1001
+120,,Regenerator,Natural Cure,,1001
+121,,Regenerator,Natural Cure,,1001
+122,,Technician,Filter,,1001
+123,,Swarm,Technician,,1001
+124,,Trace,Dry Skin,,1001
+125,,Static,Vital Spirit,,1001
+126,,Flame Body,Vital Spirit,,1001
+127,,Moxie,Mold Breaker,,1001
+128,,Intimidate,Sheer Force,,1001
+129,,Swift Swim,Rattled,,1001
+130,,Intimidate,Moxie,,1001
+131,,Water Absorb,Shell Armor,,1001
+132,,Imposter,Imposter,,1001
+133,,Anticipation,Adaptability,,1001
+134,,Water Absorb,Hydration,,1001
+135,,Volt Absorb,Lightning Rod,,1001
+136,,Flash Fire,Sheer Force,,1001
+137,,Trace,Download,,1001
+138,,Swift Swim,Shell Armor,,1001
+139,,Swift Swim,Iron Barbs,,1001
+140,,Swift Swim,Battle Armor,,1001
+141,,Swift Swim,Hyper Cutter,,1001
+142,,Rock Head,Pressure,,1001
+143,,Gluttony,Thick Fat,,1001
+144,,Pressure,Snow Cloak,,1001
+145,,Pressure,Lightning Rod,,1001
+146,,Pressure,Flame Body,,1001
+147,,Shed Skin,Marvel Scale,,1001
+148,,Shed Skin,Marvel Scale,,1001
+149,,Multiscale,Marvel Scale,,1001
+150,,Pressure,Unnerve,,1001
+151,,Synchronize,Magic Guard,,1001
+152,,Overgrow,Natural Cure,,1001
+153,,Overgrow,Natural Cure,,1001
+154,,Overgrow,Natural Cure,,1001
+155,,Blaze,Flash Fire,,1001
+156,,Blaze,Flash Fire,,1001
+157,,Blaze,Flash Fire,,1001
+158,,Torrent,Sheer Force,,1001
+159,,Torrent,Sheer Force,,1001
+160,,Torrent,Sheer Force,,1001
+161,,Frisk,Keen Eye,,1001
+162,,Frisk,Keen Eye,,1001
+163,,Insomnia,Tinted Lens,,1001
+164,,Insomnia,Tinted Lens,,1001
+165,,Rattled,Early Bird,,1001
+166,,Iron Fist,Early Bird,,1001
+167,,Sniper,Insomnia,,1001
+168,,Sniper,Insomnia,,1001
+169,,Inner Focus,Infiltrator,,1001
+170,,Volt Absorb,Water Absorb,,1001
+171,,Volt Absorb,Water Absorb,,1001
+172,,Static,Lightning Rod,,1001
+173,,Friend Guard,Magic Guard,,1001
+174,,Cute Charm,Friend Guard,,1001
+175,,Super Luck,Serene Grace,,1001
+176,,Super Luck,Serene Grace,,1001
+177,,Synchronize,Magic Bounce,,1001
+178,,Synchronize,Magic Bounce,,1001
+179,,Static,Overcoat,,1001
+180,,Static,Overcoat,,1001
+181,,Static,Overcoat,,1001
+182,,Chlorophyll,Own Tempo,,1001
+183,,Sap Sipper,Huge Power,,1001
+184,,Sap Sipper,Huge Power,,1001
+185,,Sturdy,Rattled,,1001
+186,,Water Absorb,Drizzle,,1001
+187,,Chlorophyll,Prankster,,1001
+188,,Chlorophyll,Prankster,,1001
+189,,Chlorophyll,Prankster,,1001
+190,,Skill Link,Pickup,,1001
+191,,Chlorophyll,Simple,,1001
+192,,Chlorophyll,Simple,,1001
+193,,Speed Boost,Compound Eyes,,1001
+194,,Unaware,Water Absorb,,1001
+195,,Unaware,Water Absorb,,1001
+196,,Synchronize,Magic Bounce,,1001
+197,,Synchronize,Prankster,,1001
+198,,Prankster,Super Luck,,1001
+199,,Regenerator,Drizzle,,1001
+200,,Levitate,Levitate,,1001
+201,,Levitate,Levitate,,1001
+202,,Shadow Tag,Telepathy,,1001
+203,,Sap Sipper,Early Bird,,1001
+204,,Sturdy,Overcoat,,1001
+205,,Sturdy,Overcoat,,1001
+206,,Serene Grace,Rattled,,1001
+207,,Hyper Cutter,Immunity,,1001
+208,,Sheer Force,Sturdy,,1001
+209,,Intimidate,Rattled,,1001
+210,,Intimidate,Rattled,,1001
+211,,Poison Touch,Intimidate,,1001
+212,,Swarm,Technician,,1001
+213,,Sturdy,Solid Rock,,1001
+214,,Moxie,Guts,,1001
+215,,Pickpocket,Technician,,1001
+216,,Pickup,Honey Gather,,1001
+217,,Guts,Sheer Force,,1001
+218,,Magma Armor,Flame Body,,1001
+219,,Solid Rock,Flame Body,,1001
+220,,Thick Fat,Snow Cloak,,1001
+221,,Thick Fat,Snow Cloak,,1001
+222,,Regenerator,Natural Cure,,1001
+223,,Moody,Sniper,,1001
+224,,Moody,Sniper,,1001
+225,,Vital Spirit,Technician,,1001
+226,,Swift Swim,Water Absorb,,1001
+227,,Light Metal,Sturdy,,1001
+228,,Intimidate,Flash Fire,,1001
+229,,Intimidate,Flash Fire,,1001
+230,,Swift Swim,Sniper,,1001
+231,,Pickup,Sand Veil,,1001
+232,,Sturdy,Sand Force,,1001
+233,,Trace,Download,,1001
+234,,Intimidate,Sap Sipper,,1001
+235,,Moody,Technician,,1001
+236,,Guts,Vital Spirit,,1001
+237,,Intimidate,Technician,,1001
+238,,Trace,Hydration,,1001
+239,,Static,Vital Spirit,,1001
+240,,Flame Body,Vital Spirit,,1001
+241,,Thick Fat,Scrappy,,1001
+242,,Natural Cure,Serene Grace,,1001
+243,,Pressure,Volt Absorb,,1001
+244,,Pressure,Flash Fire,,1001
+245,,Pressure,Water Absorb,,1001
+246,,Guts,Hustle,,1001
+247,,Shed Skin,Battle Armor,,1001
+248,,Sand Stream,Battle Armor,,1001
+249,,Pressure,Multiscale,,1001
+250,,Pressure,Regenerator,,1001
+251,,Natural Cure,Magic Guard,,1001
+252,,Overgrow,Adaptability,,1001
+253,,Overgrow,Adaptability,,1001
+254,,Overgrow,Adaptability,,1001
+255,,Blaze,Speed Boost,,1001
+256,,Blaze,Speed Boost,,1001
+257,,Blaze,Speed Boost,,1001
+258,,Torrent,Mold Breaker,,1001
+259,,Torrent,Mold Breaker,,1001
+260,,Torrent,Mold Breaker,,1001
+261,,Rattled,Quick Feet,,1001
+262,,Intimidate,Moxie,,1001
+263,,Pickup,Gluttony,,1001
+264,,Pickup,Quick Feet,,1001
+265,,Shield Dust,Run Away,,1001
+266,,Shed Skin,Battle Armor,,1001
+267,,Swarm,Shield Dust,,1001
+268,,Shed Skin,Battle Armor,,1001
+269,,Shield Dust,Compound Eyes,,1001
+270,,Swift Swim,Rain Dish,,1001
+271,,Swift Swim,Rain Dish,,1001
+272,,Swift Swim,Rain Dish,,1001
+273,,Pickpocket,Early Bird,,1001
+274,,Pickpocket,Early Bird,,1001
+275,,Pickpocket,Early Bird,,1001
+276,,Unburden,Scrappy,,1001
+277,,Unburden,Scrappy,,1001
+278,,Keen Eye,Infiltrator,,1001
+279,,Keen Eye,Rain Dish,,1001
+280,,Synchronize,Trace,,1001
+281,,Synchronize,Trace,,1001
+282,,Synchronize,Trace,,1001
+283,,Swift Swim,Rain Dish,,1001
+284,,Levitate,Levitate,,1001
+285,,Effect Spore,Poison Heal,,1001
+286,,Technician,Poison Heal,,1001
+287,,Truant,Slow Start,,1001
+288,,Vital Spirit,Sheer Force,,1001
+289,,Truant,Slow Start,,1001
+290,,Compound Eyes,Anticipation,,1001
+291,,Speed Boost,Infiltrator,,1001
+292,,Wonder Guard,Wonder Guard,,1001
+293,,Soundproof,Rattled,,1001
+294,,Soundproof,Scrappy,,1001
+295,,Soundproof,Scrappy,,1001
+296,,Thick Fat,Sheer Force,,1001
+297,,Thick Fat,Sheer Force,,1001
+298,,Sap Sipper,Huge Power,,1001
+299,,Sturdy,Magnet Pull,,1001
+300,,Normalize,Wonder Skin,,1001
+301,,Normalize,Wonder Skin,,1001
+302,,Prankster,Analytic,,1001
+303,,Sheer Force,Intimidate,,1001
+304,,Sturdy,Rock Head,,1001
+305,,Sturdy,Rock Head,,1001
+306,,Sturdy,Rock Head,,1001
+307,,Pure Power,Telepathy,,1001
+308,,Pure Power,Telepathy,,1001
+309,,Static,Lightning Rod,,1001
+310,,Static,Lightning Rod,,1001
+311,,Plus,Plus,,1001
+312,,Minus,Minus,,1001
+313,,Prankster,Swarm,,1001
+314,,Prankster,Tinted Lens,,1001
+315,,Natural Cure,Poison Point,,1001
+316,,Liquid Ooze,Gluttony,,1001
+317,,Liquid Ooze,Gluttony,,1001
+318,,Rough Skin,Speed Boost,,1001
+319,,Rough Skin,Speed Boost,,1001
+320,,Thick Fat,Drizzle,,1001
+321,,Thick Fat,Drizzle,,1001
+322,,Own Tempo,Simple,,1001
+323,,Drought,Solid Rock,,1001
+324,,White Smoke,Sturdy,,1001
+325,,Thick Fat,Own Tempo,,1001
+326,,Thick Fat,Own Tempo,,1001
+327,,Own Tempo,Contrary,,1001
+328,,Hyper Cutter,Sheer Force,,1001
+329,,Levitate,Levitate,,1001
+330,,Levitate,Levitate,,1001
+331,,Sand Veil,Water Absorb,,1001
+332,,Sand Veil,Water Absorb,,1001
+333,,Natural Cure,Cloud Nine,,1001
+334,,Natural Cure,Cloud Nine,,1001
+335,,Immunity,Toxic Boost,,1001
+336,,Shed Skin,Infiltrator,,1001
+337,,Levitate,Levitate,,1001
+338,,Levitate,Levitate,,1001
+339,,Forewarn,Simple,,1001
+340,,Forewarn,Simple,,1001
+341,,Hyper Cutter,Adaptability,,1001
+342,,Hyper Cutter,Adaptability,,1001
+343,,Levitate,Levitate,,1001
+344,,Levitate,Levitate,,1001
+345,,Suction Cups,Storm Drain,,1001
+346,,Suction Cups,Storm Drain,,1001
+347,,Battle Armor,Swift Swim,,1001
+348,,Battle Armor,Swift Swim,,1001
+349,,Swift Swim,Adaptability,,1001
+350,,Marvel Scale,Multiscale,,1001
+351,,Forecast,Forecast,,1001
+352,,Color Change,Color Change,,1001
+353,,Insomnia,Cursed Body,,1001
+354,,Insomnia,Cursed Body,,1001
+355,,Levitate,Levitate,,1001
+356,,Pressure,Cursed Body,,1001
+357,,Chlorophyll,Harvest,,1001
+358,,Levitate,Levitate,,1001
+359,,Justified,Super Luck,,1001
+360,,Shadow Tag,Telepathy,,1001
+361,,Ice Body,Moody,,1001
+362,,Solid Rock,Moody,,1001
+363,,Thick Fat,Ice Body,,1001
+364,,Thick Fat,Ice Body,,1001
+365,,Thick Fat,Ice Body,,1001
+366,,Shell Armor,Rattled,,1001
+367,,Swift Swim,Sheer Force,,1001
+368,,Swift Swim,Storm Drain,,1001
+369,,Sturdy,Rock Head,,1001
+370,,Swift Swim,Hydration,,1001
+371,,Rock Head,Sheer Force,,1001
+372,,Rock Head,Overcoat,,1001
+373,,Intimidate,Moxie,,1001
+374,,Levitate,Levitate,,1001
+375,,Levitate,Levitate,,1001
+376,,Iron Fist,Analytic,,1001
+377,,Clear Body,Solid Rock,,1001
+378,,Clear Body,Heatproof,,1001
+379,,Clear Body,Sturdy,,1001
+380,,Levitate,Levitate,,1001
+381,,Levitate,Levitate,,1001
+382,,Drizzle,Drizzle,,1001
+383,,Drought,Drought,,1001
+384,,Air Lock,Air Lock,,1001
+385,,Serene Grace,Magic Guard,,1001
+386,,Pressure,Pressure,,1001
+387,,Overgrow,Sturdy,,1001
+388,,Overgrow,Sturdy,,1001
+389,,Overgrow,Sturdy,,1001
+390,,Blaze,Iron Fist,,1001
+391,,Blaze,Iron Fist,,1001
+392,,Blaze,Iron Fist,,1001
+393,,Torrent,Defiant,,1001
+394,,Torrent,Defiant,,1001
+395,,Torrent,Defiant,,1001
+396,,Keen Eye,Keen Eye,,1001
+397,,Intimidate,Reckless,,1001
+398,,Intimidate,Reckless,,1001
+399,,Simple,Moody,,1001
+400,,Simple,Moody,,1001
+401,,Shed Skin,Run Away,,1001
+402,,Swarm,Technician,,1001
+403,,Guts,Intimidate,,1001
+404,,Guts,Intimidate,,1001
+405,,Guts,Intimidate,,1001
+406,,Natural Cure,Leaf Guard,,1001
+407,,Natural Cure,Technician,,1001
+408,,Mold Breaker,Sheer Force,,1001
+409,,Mold Breaker,Sheer Force,,1001
+410,,Sturdy,Soundproof,,1001
+411,,Sturdy,Soundproof,,1001
+412,,Shed Skin,Overcoat,,1001
+413,,Anticipation,Sturdy,,1001
+414,,Swarm,Tinted Lens,,1001
+415,,Honey Gather,Hustle,,1001
+416,,Pressure,Intimidate,,1001
+417,,Volt Absorb,Pickup,,1001
+418,,Swift Swim,Technician,,1001
+419,,Swift Swim,Technician,,1001
+420,,Chlorophyll,Healer,,1001
+421,,Flower Gift,Flower Gift,,1001
+422,,Sticky Hold,Storm Drain,,1001
+423,,Sticky Hold,Storm Drain,,1001
+424,,Technician,Pickup,,1001
+425,,Flare Boost,Unburden,,1001
+426,,Flare Boost,Unburden,,1001
+427,,Klutz,Limber,,1001
+428,,Cute Charm,Limber,,1001
+429,,Levitate,Levitate,,1001
+430,,Moxie,Super Luck,,1001
+431,,Limber,Own Tempo,,1001
+432,,Thick Fat,Defiant,,1001
+433,,Levitate,Levitate,,1001
+434,,Stench,Aftermath,,1001
+435,,Stench,Aftermath,,1001
+436,,Levitate,Heatproof,,1001
+437,,Levitate,Heatproof,,1001
+438,,Sturdy,Rattled,,1001
+439,,Technician,Filter,,1001
+440,,Natural Cure,Friend Guard,,1001
+441,,Moody,Tangled Feet,,1001
+442,,Pressure,Cursed Body,,1001
+443,,Sand Veil,Rough Skin,,1001
+444,,Sand Veil,Rough Skin,,1001
+445,,Sand Veil,Rough Skin,,1001
+446,,Gluttony,Thick Fat,,1001
+447,,Steadfast,Prankster,,1001
+448,,Steadfast,Justified,,1001
+449,,Sand Stream,Sand Force,,1001
+450,,Sand Stream,Sand Force,,1001
+451,,Battle Armor,Sniper,,1001
+452,,Battle Armor,Sniper,,1001
+453,,Poison Touch,Dry Skin,,1001
+454,,Poison Touch,Dry Skin,,1001
+455,,Levitate,Levitate,,1001
+456,,Swift Swim,Storm Drain,,1001
+457,,Swift Swim,Storm Drain,,1001
+458,,Swift Swim,Water Absorb,,1001
+459,,Snow Warning,Soundproof,,1001
+460,,Snow Warning,Soundproof,,1001
+461,,Pickpocket,Technician,,1001
+462,,Magnet Pull,Analytic,,1001
+463,,Thick Fat,Gluttony,,1001
+464,,Reckless,Solid Rock,,1001
+465,,Chlorophyll,Regenerator,,1001
+466,,Motor Drive,Vital Spirit,,1001
+467,,Flame Body,Vital Spirit,,1001
+468,,Super Luck,Serene Grace,,1001
+469,,Speed Boost,Tinted Lens,,1001
+470,,Leaf Guard,Natural Cure,,1001
+471,,Snow Cloak,Serene Grace,,1001
+472,,Hyper Cutter,Poison Heal,,1001
+473,,Thick Fat,Snow Cloak,,1001
+474,,Adaptability,Download,,1001
+475,,Justified,Trace,,1001
+476,,Sturdy,Magnet Pull,,1001
+477,,Pressure,Cursed Body,,1001
+478,,Levitate,Levitate,,1001
+479,,Speed Boost,Motor Drive,,1001
+480,,Levitate,Levitate,,1001
+481,,Levitate,Levitate,,1001
+482,,Levitate,Levitate,,1001
+483,,Pressure,Telepathy,,1001
+484,,Pressure,Telepathy,,1001
+485,,Flash Fire,Flame Body,,1001
+486,,Sheer Force,Sheer Force,,1001
+487,,Pressure,Telepathy,,1001
+488,,Levitate,Levitate,,1001
+489,,Hydration,Magic Guard,,1001
+490,,Hydration,Magic Guard,,1001
+491,,Bad Dreams,Bad Dreams,,1001
+492,,Natural Cure,Natural Cure,,1001
+493,,Multitype,Multitype,,1001
+494,,Victory Star,Victory Star,,1001
+495,,Overgrow,Contrary,,1001
+496,,Overgrow,Contrary,,1001
+497,,Overgrow,Contrary,,1001
+498,,Blaze,Adaptability,,1001
+499,,Blaze,Adaptability,,1001
+500,,Blaze,Adaptability,,1001
+501,,Torrent,Vital Spirit,,1001
+502,,Torrent,Vital Spirit,,1001
+503,,Torrent,Vital Spirit,,1001
+504,,Analytic,Keen Eye,,1001
+505,,Analytic,Keen Eye,,1001
+506,,Vital Spirit,Pickup,,1001
+507,,Intimidate,Scrappy,,1001
+508,,Intimidate,Scrappy,,1001
+509,,Limber,Prankster,,1001
+510,,Limber,Prankster,,1001
+511,,Gluttony,Overgrow,,1001
+512,,Unburden,Overgrow,,1001
+513,,Gluttony,Blaze,,1001
+514,,Unburden,Blaze,,1001
+515,,Gluttony,Torrent,,1001
+516,,Unburden,Torrent,,1001
+517,,Telepathy,Analytic,,1001
+518,,Telepathy,Analytic,,1001
+519,,Rivalry,Super Luck,,1001
+520,,Rivalry,Super Luck,,1001
+521,,Serene Grace,Super Luck,,1001
+522,,Lightning Rod,Sap Sipper,,1001
+523,,Lightning Rod,Sap Sipper,,1001
+524,,Sturdy,Sand Force,,1001
+525,,Sturdy,Sand Force,,1001
+526,,Sturdy,Sand Force,,1001
+527,,Unaware,Klutz,,1001
+528,,Unaware,Simple,,1001
+529,,Sand Rush,Mold Breaker,,1001
+530,,Sand Rush,Mold Breaker,,1001
+531,,Serene Grace,Regenerator,,1001
+532,,Guts,Iron Fist,,1001
+533,,Guts,Iron Fist,,1001
+534,,Guts,Iron Fist,,1001
+535,,Water Absorb,Hydration,,1001
+536,,Water Absorb,Hydration,,1001
+537,,Water Absorb,Poison Touch,,1001
+538,,Guts,Mold Breaker,,1001
+539,,Sturdy,Mold Breaker,,1001
+540,,Swarm,Chlorophyll,,1001
+541,,Leaf Guard,Overcoat,,1001
+542,,Swarm,Chlorophyll,,1001
+543,,Poison Point,Swarm,,1001
+544,,Battle Armor,Swarm,,1001
+545,,Poison Touch,Swarm,,1001
+546,,Prankster,Infiltrator,,1001
+547,,Prankster,Infiltrator,,1001
+548,,Chlorophyll,Leaf Guard,,1001
+549,,Chlorophyll,Own Tempo,,1001
+550,,Reckless,Adaptability,,1001
+551,,Anger Point,Moxie,,1001
+552,,Anger Point,Moxie,,1001
+553,,Intimidate,Moxie,,1001
+554,,Hustle,Rattled,,1001
+555,,Sheer Force,Iron Fist,,1001
+556,,Water Absorb,Storm Drain,,1001
+557,,Sturdy,Shell Armor,,1001
+558,,Sturdy,Shell Armor,,1001
+559,,Shed Skin,Moxie,,1001
+560,,Shed Skin,Moxie,,1001
+561,,Tinted Lens,Magic Guard,,1001
+562,,Mummy,Mummy,,1001
+563,,Mummy,Mummy,,1001
+564,,Solid Rock,Sturdy,,1001
+565,,Solid Rock,Sturdy,,1001
+566,,Defeatist,Defeatist,,1001
+567,,Defeatist,Defeatist,,1001
+568,,Stench,Sticky Hold,,1001
+569,,Stench,Aftermath,,1001
+570,,Illusion,Illusion,,1001
+571,,Illusion,Illusion,,1001
+572,,Skill Link,Technician,,1001
+573,,Skill Link,Technician,,1001
+574,,Frisk,Magic Bounce,,1001
+575,,Frisk,Magic Bounce,,1001
+576,,Shadow Tag,Magic Bounce,,1001
+577,,Regenerator,Magic Guard,,1001
+578,,Regenerator,Magic Guard,,1001
+579,,Regenerator,Magic Guard,,1001
+580,,Hydration,Big Pecks,,1001
+581,,Hydration,Big Pecks,,1001
+582,,Ice Body,Weak Armor,,1001
+583,,Ice Body,Weak Armor,,1001
+584,,Ice Body,Weak Armor,,1001
+585,,Chlorophyll,Serene Grace,,1001
+586,,Chlorophyll,Serene Grace,,1001
+587,,Static,Motor Drive,,1001
+588,,Swarm,No Guard,,1001
+589,,Swarm,No Guard,,1001
+590,,Effect Spore,Regenerator,,1001
+591,,Effect Spore,Regenerator,,1001
+592,,Water Absorb,Cursed Body,,1001
+593,,Water Absorb,Cursed Body,,1001
+594,,Regenerator,Hydration,,1001
+595,,Compound Eyes,Swarm,,1001
+596,,Compound Eyes,Swarm,,1001
+597,,Iron Barbs,Iron Barbs,,1001
+598,,Iron Barbs,Iron Barbs,,1001
+599,,Motor Drive,Clear Body,,1001
+600,,Motor Drive,Clear Body,,1001
+601,,Motor Drive,Clear Body,,1001
+602,,Levitate,Levitate,,1001
+603,,Levitate,Levitate,,1001
+604,,Levitate,Levitate,,1001
+605,,Analytic,Synchronize,,1001
+606,,Analytic,Synchronize,,1001
+607,,Flash Fire,Flame Body,,1001
+608,,Levitate,Levitate,,1001
+609,,Levitate,Levitate,,1001
+610,,Rivalry,Mold Breaker,,1001
+611,,Rivalry,Mold Breaker,,1001
+612,,Rivalry,Mold Breaker,,1001
+613,,Snow Cloak,Rattled,,1001
+614,,Sheer Force,Swift Swim,,1001
+615,,Levitate,Levitate,,1001
+616,,Hydration,Overcoat,,1001
+617,,Hydration,Unburden,,1001
+618,,Static,Limber,,1001
+619,,Reckless,Regenerator,,1001
+620,,Reckless,Regenerator,,1001
+621,,Rough Skin,Sheer Force,,1001
+622,,Iron Fist,Klutz,,1001
+623,,Iron Fist,No Guard,,1001
+624,,Defiant,Pressure,,1001
+625,,Defiant,Pressure,,1001
+626,,Reckless,Sap Sipper,,1001
+627,,Hustle,Sheer Force,,1001
+628,,Defiant,Sheer Force,,1001
+629,,Big Pecks,Overcoat,,1001
+630,,Big Pecks,Overcoat,,1001
+631,,White Smoke,Moody,,1001
+632,,Swarm,Hustle,,1001
+633,,Hustle,Intimidate,,1001
+634,,Hustle,Intimidate,,1001
+635,,Levitate,Levitate,,1001
+636,,Flame Body,Swarm,,1001
+637,,Drought,Drought,,1001
+638,,Justified,Justified,,1001
+639,,Justified,Justified,,1001
+640,,Justified,Justified,,1001
+641,,Prankster,Defiant,,1001
+642,,Prankster,Defiant,,1001
+643,,Turboblaze,Turboblaze,,1001
+644,,Teravolt,Teravolt,,1001
+645,,Sand Force,Sheer Force,,1001
+646,,Snow Warning,Snow Warning,,1001
+647,,Justified,Justified,,1001
+648,,Serene Grace,Magic Guard,,1001
+649,,Download,Download,,1001

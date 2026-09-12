@@ -231,3 +231,27 @@ def test_delete_bonus_location_also_clears_party_and_pokebank(db_conn):
     assert result["success"] is True
     assert db_conn.execute("select * from pokebank where pokemon_id = %s", (pokemon_id,)).fetchone() is None
     assert db_conn.execute("select * from party where pokemon_id = %s", (pokemon_id,)).fetchone() is None
+
+
+def test_bonus_location_does_not_inherit_trainers(db_conn):
+    run_id, attempt_id = seed_run_and_attempt(db_conn, version_group_id=10)
+    seed_canon_and_event_location(db_conn, canonical_location_id=7, version_group_id=10)
+    for name in ("Youngster Joey", "Lass Dana"):
+        db_conn.execute(
+            "insert into trainer_pool (encounter_name, trainer_name, canonical_location_id, version_group_id) "
+            "values (%s, %s, %s, %s)",
+            (name, name, 7, 10),
+        )
+    db_conn.commit()
+    backend_module.create_bonus_location(db_conn, run_id, 1, canonical_location_id=7)
+
+    page = backend_module.get_attempt_page_data(db_conn, run_id, 1)
+
+    rows = [r for r in page["script"] if r["event_type"] == "Location" and int(r["event_id"]) == 7]
+    canonical = next(r for r in rows if not r["is_bonus_location"])
+    bonus = next(r for r in rows if r["is_bonus_location"])
+    assert canonical["trainer_count"] == 2
+    assert bonus["trainer_count"] == 0
+    assert bonus["available_trainer_count"] == 0
+    assert bonus["special_trainer_count"] == 0
+    assert bonus["has_available_trainers"] is False

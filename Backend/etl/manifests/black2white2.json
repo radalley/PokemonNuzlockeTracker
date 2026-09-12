@@ -1,0 +1,36 @@
+{
+  "key": "black2white2",
+  "label": "Pokemon Black 2 / White 2",
+  "generation": 5,
+  "version_group_id": 14,
+  "load_build": 6,
+  "game_ids": {
+    "black2": 21,
+    "white2": 22
+  },
+  "source": {
+    "type": "nds_rom",
+    "roms": {
+      "black2": {
+        "path": "Pokemon - Black Version 2 (USA, Europe) (NDSi Enhanced)/Pokemon - Black Version 2 (USA, Europe) (NDSi Enhanced).nds",
+        "game_code": "IREO",
+        "sha256": "2e6b2415354aa41471bc7617068dce059a59931bf5c4348a264f8043f297683a"
+      },
+      "white2": {
+        "path": "Pokemon - White Version 2 (USA, Europe) (NDSi Enhanced)/Pokemon - White Version 2 (USA, Europe) (NDSi Enhanced).nds",
+        "game_code": "IRDO",
+        "sha256": "3e50aec3db401332175a5d2b5fe2a68ac1a05ec63995dba9d1506b1b51837446"
+      }
+    }
+  },
+  "preview_dir": "black2white2_build6_preview",
+  "expected": {
+    "trainers": 813,
+    "trainer_pokemon": 1808,
+    "event_bosses": 57,
+    "game_specific_bosses": 4,
+    "game_specific_trainers": 0,
+    "located_trainers": 205
+  },
+  "allowed_boss_game_ids": ["", "21", "22"]
+}
