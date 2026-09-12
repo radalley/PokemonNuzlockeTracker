@@ -53,6 +53,10 @@ function parseTrainerItems(value) {
     .filter(Boolean)
 }
 
+// How long a won battle stays on screen when a badge was awarded, so the
+// badge banner registers before the modal returns you to the sheet.
+const VICTORY_BADGE_LINGER_MS = 1600
+
 function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null }) {
   const { user } = useAuth()
   const isAdmin = user?.account_type === 'admin'
@@ -65,6 +69,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
   const [moveError, setMoveError] = useState({})
   const moveSuggestSeqRef = useRef(0)
   const suppressToggleRef = useRef(false)
+  const closeTimerRef = useRef(null)
   const [showBattleModal, setShowBattleModal] = useState(false)
   const [playerParty, setPlayerParty] = useState([])
   const [battleLoading, setBattleLoading] = useState(false)
@@ -77,6 +82,10 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
   useEffect(() => {
     setDefeated(Boolean(isDefeated))
   }, [isDefeated])
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+  }, [])
 
   useEffect(() => {
     setParty([])
@@ -153,6 +162,10 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
   const closeBattleModal = (event) => {
     if (event) event.stopPropagation()
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
     setShowBattleModal(false)
     setBattleResult(null)
     setDefeatError('')
@@ -261,6 +274,20 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           setDefeated(true)
           if (typeof onVictoryRecorded === 'function') {
             onVictoryRecorded()
+          }
+          // A win returns you to the sheet. Close at once, or after a beat
+          // when a badge banner is worth a glance. A gym win with no badge
+          // mapping is a data warning that has to be read, so it stays open.
+          const needsAttention = Boolean(data.is_gym_leader) && !data.badge_awarded
+          if (!needsAttention) {
+            if (data.badge_awarded) {
+              closeTimerRef.current = setTimeout(() => {
+                closeTimerRef.current = null
+                closeBattleModal()
+              }, VICTORY_BADGE_LINGER_MS)
+            } else {
+              closeBattleModal()
+            }
           }
         }
       })
