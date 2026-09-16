@@ -2232,6 +2232,24 @@ code {
   grid-column: 6;
 }
 
+/* Admin reorder: the slot a dragged card would land in. */
+.trainer-slot {
+  border-radius: 12px;
+  transition: box-shadow 0.1s;
+}
+
+.trainer-slot--drop-before {
+  box-shadow: 0 -4px 0 0 var(--accent);
+}
+
+.trainer-slot--drop-after {
+  box-shadow: 0 4px 0 0 var(--accent);
+}
+
+.trainer-slot--dragging {
+  opacity: 0.45;
+}
+
 .trainer-card-summary .trainer-card-summary__chevron {
   grid-column: 7;
   margin-left: 0 !important;
@@ -2309,6 +2327,14 @@ code {
   .trainer-card-summary .trainer-card-summary__battle {
     grid-column: 3;
     grid-row: 3;
+  }
+
+  /* An editing card's control cell (handle, arrows, Edit, Battle) gets a
+     row of its own rather than squeezing the level cap beside it. */
+  .trainer-card--editing .trainer-card-summary .trainer-card-summary__battle {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    justify-self: end;
   }
 
   .trainer-card-summary .trainer-card-summary__chevron {
@@ -2710,7 +2736,19 @@ code {
   .trainer-card-summary .trainer-card-summary__battle {
     grid-column: 3 !important;
     grid-row: 2 !important;
+    padding-inline: 0 !important;
+  }
+
+  .trainer-card-summary .trainer-card-summary__battle-button,
+  .trainer-card-summary .trainer-card-summary__edit {
     padding-inline: 8px !important;
+  }
+
+  /* An editing card is open, so row 2 has no party strip: the control
+     cell takes the whole row instead of squeezing the name column. */
+  .trainer-card--editing .trainer-card-summary .trainer-card-summary__battle {
+    grid-column: 1 / -1 !important;
+    justify-self: end;
   }
 
   .trainer-card__party-grid {
@@ -2906,11 +2944,18 @@ code {
   .pokemon-summary__action,
   .pokemon-summary__close,
   .trainer-card-summary__battle,
+  .trainer-card-summary__battle-button,
+  .trainer-card-summary__edit,
+  .trainer-card-summary__reorder button,
   .battle-compare__footer button,
   .battle-compare__party-list button,
   .attempt-session-stats__toggle,
   .attempt-session-stats__starter {
     min-height: var(--tap-min) !important;
+  }
+
+  .trainer-card-summary__reorder button {
+    min-width: var(--tap-min) !important;
   }
 
   /* The encounter editor's species search and nickname set

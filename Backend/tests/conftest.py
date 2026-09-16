@@ -134,6 +134,7 @@ create table curated_trainer_placements (
     is_event boolean,
     game_id integer,
     note text,
+    sort_order integer,
     primary key (version_group_id, trainer_key)
 );
 
@@ -247,7 +248,8 @@ create table trainer_pool (
     version_group_id integer,
     load_build integer,
     game_id integer,
-    area_id integer
+    area_id integer,
+    sort_order integer
 );
 
 create table trainer_pokemon (

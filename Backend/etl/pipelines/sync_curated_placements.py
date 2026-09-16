@@ -19,7 +19,7 @@ from .. import curation, db
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "curation_data"
 COLUMNS = ["version_group_id", "trainer_key", "canonical_location_id", "area_name",
-           "status", "is_rematch", "is_event", "game_id", "note"]
+           "status", "is_rematch", "is_event", "game_id", "note", "sort_order"]
 
 
 def csv_path(version_group_id):
@@ -29,7 +29,8 @@ def csv_path(version_group_id):
 def export(version_group_id):
     sql = f"""
 SELECT c.version_group_id, c.trainer_key, c.canonical_location_id,
-       la.area_name, c.status, c.is_rematch, c.is_event, c.game_id, c.note
+       la.area_name, c.status, c.is_rematch, c.is_event, c.game_id, c.note,
+       c.sort_order
 FROM curated_trainer_placements c
 LEFT JOIN location_areas la ON la.area_id = c.area_id
 WHERE c.version_group_id = {int(version_group_id)}
@@ -83,7 +84,7 @@ def load(version_group_id, apply_changes):
         raise SystemExit(1)
 
     values = ",\n".join(
-        "({vg}, {key}, {loc}, {area}, {status}, {rematch}, {event}, {game}, {note})".format(
+        "({vg}, {key}, {loc}, {area}, {status}, {rematch}, {event}, {game}, {note}, {sort})".format(
             vg=int(r["version_group_id"]),
             key=_text_literal(r["trainer_key"]),
             loc=_int_literal(r["canonical_location_id"]),
@@ -93,6 +94,8 @@ def load(version_group_id, apply_changes):
             event=_bool_literal(r.get("is_event")),
             game=_int_literal(r.get("game_id")),
             note=_text_literal(r.get("note")),
+            # CSVs exported before the column existed simply carry no order.
+            sort=_int_literal(r.get("sort_order")),
         )
         for r in rows
     )
@@ -104,7 +107,7 @@ BEGIN;
 CREATE TEMP TABLE curated_stage (
   version_group_id integer, trainer_key text, canonical_location_id integer,
   area_name text, status text, is_rematch boolean, is_event boolean,
-  game_id integer, note text
+  game_id integer, note text, sort_order integer
 ) ON COMMIT DROP;
 
 INSERT INTO curated_stage VALUES
@@ -147,9 +150,9 @@ WHERE s.area_name IS NOT NULL AND s.canonical_location_id IS NOT NULL
 
 INSERT INTO curated_trainer_placements
   (version_group_id, trainer_key, canonical_location_id, area_id,
-   status, is_rematch, is_event, game_id, note)
+   status, is_rematch, is_event, game_id, note, sort_order)
 SELECT s.version_group_id, s.trainer_key, s.canonical_location_id, la.area_id,
-       s.status, s.is_rematch, s.is_event, s.game_id, s.note
+       s.status, s.is_rematch, s.is_event, s.game_id, s.note, s.sort_order
 FROM curated_stage s
 LEFT JOIN location_areas la
   ON s.area_name IS NOT NULL
@@ -163,7 +166,8 @@ ON CONFLICT (version_group_id, trainer_key) DO UPDATE SET
   is_rematch = excluded.is_rematch,
   is_event = excluded.is_event,
   game_id = excluded.game_id,
-  note = excluded.note;
+  note = excluded.note,
+  sort_order = excluded.sort_order;
 
 {curation.apply_curated_placements_sql(vg)};
 

@@ -92,6 +92,12 @@ describe('TrainerCard moves panel', () => {
 
   const confirmButtons = () => [...container.querySelectorAll('button[title="Confirm this move was seen"]')]
   const removeButtons = () => [...container.querySelectorAll('button[title="Remove observed move"]')]
+  const editButton = () => [...container.querySelectorAll('button.trainer-card-summary__edit')][0] || null
+  const enterEditMode = async () => {
+    await act(async () => {
+      editButton().dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+  }
 
   it('caps displayed moves at four: observed first, estimates fill the rest', async () => {
     const card = await renderExpandedCard()
@@ -118,15 +124,68 @@ describe('TrainerCard moves panel', () => {
     expect(panel).not.toContain('*Estimated')
   })
 
-  it('hides all observed-move admin controls from non-admins', async () => {
-    await renderExpandedCard()
+  it('hides the Edit button and all observed-move controls from non-admins', async () => {
+    const card = await renderExpandedCard()
+    expect(editButton()).toBeNull()
     expect(confirmButtons()).toHaveLength(0)
     expect(removeButtons()).toHaveLength(0)
+    // the seen highlight is for everyone
+    expect(card.querySelector('.trainer-card__moves').textContent).toContain('seen')
+  })
+
+  it('offers Edit only once the card is open, and closing the card ends editing', async () => {
+    authState.user = { account_type: 'admin' }
+    await act(async () => {
+      root.render(<TrainerCard trainerName="JIMMY" trainerClass="Youngster" trainerId={7} gameId={1001} />)
+    })
+    expect(editButton()).toBeNull()
+
+    const card = container.querySelector('.trainer-card')
+    await act(async () => { card.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(editButton()).toBeTruthy()
+    await enterEditMode()
+    expect(card.classList.contains('trainer-card--editing')).toBe(true)
+
+    // collapse: the pill goes, edit mode with it
+    await act(async () => { card.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(editButton()).toBeNull()
+    expect(card.classList.contains('trainer-card--editing')).toBe(false)
+    expect(confirmButtons()).toHaveLength(0)
+
+    // reopening starts clean
+    await act(async () => { card.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
+    expect(editButton().textContent.trim()).toBe('Edit')
+    expect(confirmButtons()).toHaveLength(0)
+  })
+
+  it('keeps the admin controls behind Edit, and Done puts them away again', async () => {
+    authState.user = { account_type: 'admin' }
+    const card = await renderExpandedCard()
+    expect(editButton().textContent.trim()).toBe('Edit')
+    expect(confirmButtons()).toHaveLength(0)
+    expect(removeButtons()).toHaveLength(0)
+    expect(card.querySelector('input[placeholder="Add seen move"]')).toBeNull()
+
+    await enterEditMode()
+    expect(editButton().textContent.trim()).toBe('Done')
+    expect(card.classList.contains('trainer-card--editing')).toBe(true)
+    expect(confirmButtons()).toHaveLength(3)
+    expect(removeButtons()).toHaveLength(1)
+    expect(card.querySelector('input[placeholder="Add seen move"]')).toBeTruthy()
+    // a card outside a location list has no reorder handle to offer
+    expect(card.querySelector('[aria-label="Drag to reorder"]')).toBeNull()
+
+    await enterEditMode()
+    expect(editButton().textContent.trim()).toBe('Edit')
+    expect(confirmButtons()).toHaveLength(0)
+    expect(removeButtons()).toHaveLength(0)
+    expect(card.querySelector('.trainer-card__moves').textContent).toContain('seen')
   })
 
   it('lets an admin confirm an estimated move with one click', async () => {
     authState.user = { account_type: 'admin' }
     const card = await renderExpandedCard()
+    await enterEditMode()
 
     // one ✕ on the seen row, one ✓ per estimated row
     expect(removeButtons()).toHaveLength(1)
@@ -151,6 +210,7 @@ describe('TrainerCard moves panel', () => {
   it('confirming an estimate does not toggle the card closed', async () => {
     authState.user = { account_type: 'admin' }
     const card = await renderExpandedCard()
+    await enterEditMode()
     await act(async () => {
       confirmButtons()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })

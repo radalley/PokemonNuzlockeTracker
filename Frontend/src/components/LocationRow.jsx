@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '../utils/api'
+import { useAuth } from '../contexts/AuthContext'
+import { moveBy, moveRelative, reorderWithinGroup, sameOrder } from '../utils/trainerOrder'
 import Sprite from './Sprite'
 import { IV_MIN, IV_MAX, emptyIvs, normalizeIvs } from '../utils/pokemonFormat'
 import TrainerCard from './TrainerCard'
@@ -167,6 +169,18 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const [trainers, setTrainers] = useState([])
   const [trainersLoaded, setTrainersLoaded] = useState(false)
+  // Admin reorder: one card edits at a time, and a drag from its handle
+  // can only land on a sibling in the same group (area) of this location.
+  // The drag source lives in a ref so dragstart never re-renders the
+  // element being dragged, which would cancel the drag.
+  const { user } = useAuth()
+  const isAdmin = user?.account_type === 'admin'
+  const [editingTrainerId, setEditingTrainerId] = useState(null)
+  const draggingRef = useRef(null)
+  const [draggingId, setDraggingId] = useState(null)
+  const [dropTarget, setDropTarget] = useState(null)
+  const [reorderSaving, setReorderSaving] = useState(false)
+  const [reorderError, setReorderError] = useState('')
   // A venue whose whole roster is rematch/event trainers (stadiums, the
   // cruise, League rematches) opens straight onto its special groups
   // instead of an empty "No trainers" state.
@@ -479,8 +493,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     const rematches = specialTrainers.filter(t => t.is_rematch)
     const events = specialTrainers.filter(t => t.is_event && !t.is_rematch)
     const groups = []
-    if (rematches.length) groups.push({ key: 'rematches', name: 'Rematches', trainers: rematches })
-    if (events.length) groups.push({ key: 'events', name: 'Special Battles', trainers: events })
+    if (rematches.length) groups.push({ key: 'rematches', name: 'Rematches', trainers: rematches, special: true })
+    if (events.length) groups.push({ key: 'events', name: 'Special Battles', trainers: events, special: true })
     return groups
   }, [specialTrainers])
   // Use the loaded value if trainers are loaded, otherwise use the seed value from row
@@ -793,6 +807,107 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     setEncounter({ species_id: form.species_id, name: form.name })
     setAbility('')
     setSearchQuery(form.name)
+  }
+
+  const isGroupMember = (groupKey) => (trainer) => (
+    !trainer.is_event && !trainer.is_rematch && (trainer.area_id ?? null) === groupKey
+  )
+
+  // One save at a time: the controls stay off while a POST is pending, so
+  // two optimistic orders can never race each other or the server. A
+  // failed save reloads the list rather than guessing the server's state.
+  const commitTrainerOrder = (group, orderedIds) => {
+    if (reorderSaving) return
+    const currentIds = group.trainers.map(t => t.trainer_id)
+    if (sameOrder(currentIds, orderedIds)) return
+    setReorderError('')
+    setReorderSaving(true)
+    setTrainers(prev => reorderWithinGroup(prev, isGroupMember(group.key), orderedIds))
+    apiFetch('/api/admin/trainer-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trainer_ids: orderedIds }),
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error || `Reorder failed (${res.status})`)
+      })
+      .catch(err => {
+        console.error('Failed to save trainer order:', err)
+        setReorderError(err.message || 'Reorder failed')
+        setTrainersLoaded(false)
+      })
+      .finally(() => setReorderSaving(false))
+  }
+
+  // Edit mode lives with the cards: when they go away (panel closed, list
+  // reloading) it goes with them, so a reopened card starts clean.
+  useEffect(() => {
+    if (activePanel !== 'trainers' || !trainersLoaded) setEditingTrainerId(null)
+  }, [activePanel, trainersLoaded])
+
+  const reorderControlsFor = (group, index) => {
+    const ids = group.trainers.map(t => t.trainer_id)
+    const trainerId = ids[index]
+    return {
+      saving: reorderSaving,
+      canMoveUp: index > 0 && !reorderSaving,
+      canMoveDown: index < ids.length - 1 && !reorderSaving,
+      onMoveUp: () => commitTrainerOrder(group, moveBy(ids, trainerId, -1)),
+      onMoveDown: () => commitTrainerOrder(group, moveBy(ids, trainerId, 1)),
+      onDragStart: (event, cardElement) => {
+        if (reorderSaving) { event.preventDefault(); return }
+        event.dataTransfer.effectAllowed = 'move'
+        try { event.dataTransfer.setData('text/plain', String(trainerId)) } catch { /* not every engine allows this */ }
+        if (cardElement && typeof event.dataTransfer.setDragImage === 'function') {
+          const rect = cardElement.getBoundingClientRect()
+          event.dataTransfer.setDragImage(cardElement, event.clientX - rect.left, event.clientY - rect.top)
+        }
+        draggingRef.current = { trainerId, groupKey: group.key }
+        setTimeout(() => setDraggingId(trainerId), 0)
+      },
+      onDragEnd: () => {
+        draggingRef.current = null
+        setDraggingId(null)
+        setDropTarget(null)
+      },
+    }
+  }
+
+  const dropPosition = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    return event.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+  }
+
+  const slotDragHandlers = (group, trainer) => {
+    const trainerId = trainer.trainer_id
+    const activeDrag = () => {
+      const drag = draggingRef.current
+      return drag && drag.groupKey === group.key && drag.trainerId !== trainerId ? drag : null
+    }
+    return {
+      onDragOver: (event) => {
+        if (!activeDrag()) return
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'move'
+        const position = dropPosition(event)
+        setDropTarget(prev => (prev?.trainerId === trainerId && prev.position === position ? prev : { trainerId, position }))
+      },
+      onDragLeave: (event) => {
+        if (event.currentTarget.contains(event.relatedTarget)) return
+        setDropTarget(prev => (prev?.trainerId === trainerId ? null : prev))
+      },
+      onDrop: (event) => {
+        const drag = activeDrag()
+        if (!drag) return
+        event.preventDefault()
+        const ids = group.trainers.map(t => t.trainer_id)
+        commitTrainerOrder(group, moveRelative(ids, drag.trainerId, trainerId, dropPosition(event)))
+        draggingRef.current = null
+        setDraggingId(null)
+        setDropTarget(null)
+      },
+    }
   }
 
   const handleTrainerVictoryRecorded = (trainerId) => {
@@ -1521,6 +1636,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
             />
             Show rematches &amp; special battles
           </label>
+          {reorderError && (
+            <div className="location-row__reorder-error" style={{ fontSize: '0.78em', color: '#e05252', marginBottom: '8px' }}>{reorderError}</div>
+          )}
           {!trainersLoaded ? (
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>Loading trainers...</div>
           ) : availableTrainers.length === 0 && specialTrainers.length === 0 ? (
@@ -1546,27 +1664,45 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                       </span>
                     </div>
                   )}
-                  {group.trainers.map(trainer => (
-                    <TrainerCard
-                      key={trainer.trainer_id}
-                      encounterName={trainer.encounter_name}
-                      trainerName={trainer.trainer_name}
-                      trainerClass={trainer.trainer_class}
-                      trainerPic={trainer.trainer_pic}
-                      trainerItems={trainer.trainer_items}
-                      gameId={gameId}
-                      generation={generation}
-                      versionGroupId={trainer.version_group_id}
-                      runId={runId}
-                      attemptId={attemptNumber}
-                      trainerId={trainer.trainer_id}
-                      enableBattle
-                      isDefeated={Boolean(trainer.is_defeated)}
-                      onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
-                      attemptEnded={attemptEnded}
-                      battleType={Number(trainer.is_double) ? 'double' : null}
-                    />
-                  ))}
+                  {group.trainers.map((trainer, index) => {
+                    const reorderable = isAdmin && !group.special
+                    const slotClass = [
+                      'trainer-slot',
+                      dropTarget?.trainerId === trainer.trainer_id ? `trainer-slot--drop-${dropTarget.position}` : '',
+                      draggingId === trainer.trainer_id ? 'trainer-slot--dragging' : '',
+                    ].filter(Boolean).join(' ')
+                    return (
+                      <div
+                        key={trainer.trainer_id}
+                        className={slotClass}
+                        {...(reorderable ? slotDragHandlers(group, trainer) : {})}
+                      >
+                        <TrainerCard
+                          encounterName={trainer.encounter_name}
+                          trainerName={trainer.trainer_name}
+                          trainerClass={trainer.trainer_class}
+                          trainerPic={trainer.trainer_pic}
+                          trainerItems={trainer.trainer_items}
+                          gameId={gameId}
+                          generation={generation}
+                          versionGroupId={trainer.version_group_id}
+                          runId={runId}
+                          attemptId={attemptNumber}
+                          trainerId={trainer.trainer_id}
+                          enableBattle
+                          isDefeated={Boolean(trainer.is_defeated)}
+                          onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
+                          attemptEnded={attemptEnded}
+                          battleType={Number(trainer.is_double) ? 'double' : null}
+                          editing={isAdmin ? editingTrainerId === trainer.trainer_id : null}
+                          onToggleEdit={isAdmin
+                            ? () => setEditingTrainerId(prev => (prev === trainer.trainer_id ? null : trainer.trainer_id))
+                            : null}
+                          reorder={reorderable ? reorderControlsFor(group, index) : null}
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               ))}
             </div>

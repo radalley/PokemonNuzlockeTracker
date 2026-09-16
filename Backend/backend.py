@@ -2253,7 +2253,7 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
 
     query = (
         'select tp.trainer_id, tp.encounter_name, tp.trainer_name, tp.trainer_class, tp.trainer_items, tp.trainer_pic, tp.version_group_id, '
-        'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, '
+        'tp.area_id, la.area_name, la.area_kind, la.sort_order as area_sort_order, tp.sort_order, '
         "case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_event, "
         "case when lower(coalesce(tp.is_rematch::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_rematch, "
         "case when lower(coalesce(tp.trainer_double::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end as is_double, "
@@ -2262,10 +2262,13 @@ def get_trainers_by_location(conn, location_id, run_id=None, attempt_number=None
         + defeated_join +
         'left join location_areas la on la.area_id = tp.area_id '
         'where ' + ' and '.join(where_clauses) + ' '
-        # Trainers standing in the location itself sort before its sub-areas.
+        # Trainers standing in the location itself sort before its sub-areas;
+        # within an area the admin's curated order comes first, unordered
+        # rows after it.
         "order by case when lower(coalesce(tp.is_event::text, '')) in ('1', 'true', 't', 'yes') then 1 else 0 end asc, "
         'case when tp.area_id is null then 0 else 1 end asc, '
-        'la.sort_order asc nulls last, la.area_name asc nulls last, tp.trainer_id asc'
+        'la.sort_order asc nulls last, la.area_name asc nulls last, '
+        'tp.sort_order asc nulls last, tp.trainer_id asc'
     )
     return conn.execute(query, params).fetchall()
 
@@ -2389,11 +2392,16 @@ def apply_trainer_placements(conn, version_group_id, placements):
                     (location_id, version_group_id, area_name, area_kind)
                 ).fetchone()['area_id']
 
+        # A rank belongs to the group it was given in: moving the trainer to
+        # another location or area drops it, so it never outranks its new
+        # neighbours.
         updated = conn.execute(
-            'update trainer_pool set canonical_location_id = %s, area_id = %s '
+            'update trainer_pool set canonical_location_id = %s, area_id = %s, '
+            'sort_order = case when canonical_location_id is distinct from %s '
+            'or area_id is distinct from %s then null else sort_order end '
             'where version_group_id = %s and encounter_name = %s '
             'returning trainer_id',
-            (location_id, area_id, version_group_id, trainer_key)
+            (location_id, area_id, location_id, area_id, version_group_id, trainer_key)
         ).fetchall()
         if not updated:
             raise ValueError(f'No trainer matches {trainer_key} in version group {version_group_id}')
@@ -2402,6 +2410,9 @@ def apply_trainer_placements(conn, version_group_id, placements):
             '(version_group_id, trainer_key, canonical_location_id, area_id, decided_at) '
             'values (%s, %s, %s, %s, current_timestamp) '
             'on conflict (version_group_id, trainer_key) do update set '
+            'sort_order = case when curated_trainer_placements.canonical_location_id is distinct from excluded.canonical_location_id '
+            'or curated_trainer_placements.area_id is distinct from excluded.area_id '
+            'then null else curated_trainer_placements.sort_order end, '
             'canonical_location_id = excluded.canonical_location_id, '
             'area_id = excluded.area_id, decided_at = excluded.decided_at',
             (version_group_id, trainer_key, location_id, area_id)
@@ -2414,6 +2425,100 @@ def apply_trainer_placements(conn, version_group_id, placements):
         })
     conn.commit()
     return results
+
+def set_trainer_order(conn, trainer_ids):
+    """Admin: fix the display order of trainers within one location area.
+
+    trainer_ids is the full desired order for the group AS THE ADMIN SEES
+    IT. Every trainer must share one version group, canonical location and
+    area: reordering never moves a trainer anywhere, it only ranks it among
+    its neighbours. The rank lands on trainer_pool for reads and on
+    curated_trainer_placements so re-extraction keeps it (the curated row
+    records the trainer's current placement when one did not exist yet).
+
+    A location list is filtered by game, so a version-exclusive trainer of
+    the sibling game can share the group without being in the request.
+    Ranked members left out of the request keep their relative order but
+    move behind the new ranking, so two games' views never collide.
+    """
+    ids = []
+    for raw in trainer_ids or []:
+        if isinstance(raw, bool) or not isinstance(raw, (int, str)):
+            raise ValueError('trainer_ids must be integers')
+        try:
+            ids.append(int(raw))
+        except (TypeError, ValueError):
+            raise ValueError('trainer_ids must be integers')
+    if not ids:
+        raise ValueError('trainer_ids is required')
+    if len(ids) != len(set(ids)):
+        raise ValueError('trainer_ids repeats a trainer')
+    if len(ids) > 200:
+        raise ValueError('At most 200 trainers per request')
+
+    placeholders = ','.join(['%s'] * len(ids))
+    rows = conn.execute(
+        'select trainer_id, encounter_name, version_group_id, canonical_location_id, area_id '
+        f'from trainer_pool where trainer_id in ({placeholders})',
+        tuple(ids)
+    ).fetchall()
+    by_id = {row['trainer_id']: row for row in rows}
+    missing = [trainer_id for trainer_id in ids if trainer_id not in by_id]
+    if missing:
+        raise ValueError(f'Unknown trainer(s) {missing}')
+    scopes = {(row['version_group_id'], row['canonical_location_id'], row['area_id']) for row in rows}
+    if len(scopes) != 1:
+        raise ValueError('Trainers can only be reordered within one location area')
+    (version_group_id, location_id, area_id), = scopes
+    if version_group_id is None or location_id is None:
+        raise ValueError('Only placed trainers can be ordered')
+
+    order = []
+    for position, trainer_id in enumerate(ids, start=1):
+        trainer_key = by_id[trainer_id]['encounter_name']
+        conn.execute(
+            'update trainer_pool set sort_order = %s '
+            'where version_group_id = %s and encounter_name = %s',
+            (position, version_group_id, trainer_key)
+        )
+        conn.execute(
+            'insert into curated_trainer_placements '
+            '(version_group_id, trainer_key, canonical_location_id, area_id, sort_order, decided_at) '
+            'values (%s, %s, %s, %s, %s, current_timestamp) '
+            'on conflict (version_group_id, trainer_key) do update set '
+            'sort_order = excluded.sort_order, decided_at = excluded.decided_at',
+            (version_group_id, trainer_key, location_id, area_id, position)
+        )
+        order.append({'trainer_id': trainer_id, 'sort_order': position})
+
+    sent_keys = {by_id[trainer_id]['encounter_name'] for trainer_id in ids}
+    placeholders = ','.join(['%s'] * len(sent_keys))
+    trailing = conn.execute(
+        'select distinct encounter_name, sort_order from trainer_pool '
+        'where version_group_id = %s and canonical_location_id = %s '
+        'and coalesce(area_id, -1) = coalesce(%s, -1) and sort_order is not null '
+        f'and encounter_name not in ({placeholders}) '
+        'order by sort_order asc, encounter_name asc',
+        (version_group_id, location_id, area_id, *sent_keys)
+    ).fetchall()
+    for offset, row in enumerate(trailing, start=len(ids) + 1):
+        conn.execute(
+            'update trainer_pool set sort_order = %s '
+            'where version_group_id = %s and encounter_name = %s',
+            (offset, version_group_id, row['encounter_name'])
+        )
+        conn.execute(
+            'update curated_trainer_placements set sort_order = %s '
+            'where version_group_id = %s and trainer_key = %s',
+            (offset, version_group_id, row['encounter_name'])
+        )
+    conn.commit()
+    return {
+        'version_group_id': version_group_id,
+        'canonical_location_id': location_id,
+        'area_id': area_id,
+        'order': order,
+    }
 
 def _normalize_move_constant(move_token):
     token = (move_token or '').strip()

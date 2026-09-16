@@ -15,6 +15,7 @@ def apply_curated_placements_sql(version_group_id, load_build=None):
     area wins when present, otherwise any derived area assignment is kept.
     Curated is_rematch/is_event/game_id override the extractor the same way;
     trainer_pool's flag columns are text, so booleans land as '1'/'0'.
+    A curated sort_order (the admin's in-panel ordering) wins when present.
     Rows with status 'excluded' actively CLEAR any placement (the trainer
     must never surface in a location panel), so re-curating a placed
     trainer as excluded takes effect on the next apply.
@@ -28,7 +29,8 @@ SET canonical_location_id = case when c.status = 'excluded' then null
         else coalesce(c.area_id, tp.area_id) end,
     is_rematch = coalesce(case when c.is_rematch then '1' when not c.is_rematch then '0' end, tp.is_rematch),
     is_event = coalesce(case when c.is_event then '1' when not c.is_event then '0' end, tp.is_event),
-    game_id = coalesce(c.game_id, tp.game_id)
+    game_id = coalesce(c.game_id, tp.game_id),
+    sort_order = coalesce(c.sort_order, tp.sort_order)
 FROM curated_trainer_placements c
 WHERE tp.version_group_id = {int(version_group_id)}
   {build_filter}

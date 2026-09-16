@@ -58,10 +58,33 @@ function parseTrainerItems(value) {
 // badge banner registers before the modal returns you to the sheet.
 const VICTORY_BADGE_LINGER_MS = 1600
 
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null }) {
+const REORDER_BUTTON_STYLE = {
+  minWidth: '30px',
+  padding: '0 6px',
+  border: '1px solid var(--border-strong)',
+  borderRadius: '8px',
+  background: 'var(--surface-deep)',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer',
+  font: 'inherit',
+  fontSize: '0.72em',
+}
+
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null, editing = null, onToggleEdit = null, reorder = null }) {
   const { user } = useAuth()
   const isAdmin = user?.account_type === 'admin'
   const [open, setOpen] = useState(false)
+  // Admin edit mode, offered once the card is open on its party: the
+  // seen-move controls, and the reorder handle when the parent offers
+  // one, only show while editing. A parent may own the flag so that one
+  // card at a time edits within a location.
+  const [editingSelf, setEditingSelf] = useState(false)
+  const isEditing = isAdmin && trainerId != null && open && Boolean(editing ?? editingSelf)
+  const toggleEdit = () => {
+    if (onToggleEdit) onToggleEdit()
+    else setEditingSelf(value => !value)
+  }
+  const rootRef = useRef(null)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
   const [moveDraft, setMoveDraft] = useState({})
@@ -297,8 +320,9 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
   return (
     <div
-      className="trainer-card"
-      style={{ border: '1px solid var(--border-strong)', borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
+      ref={rootRef}
+      className={`trainer-card${isEditing ? ' trainer-card--editing' : ''}`}
+      style={{ border: `1px solid ${isEditing ? 'var(--accent)' : 'var(--border-strong)'}`, borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
       onMouseDown={(event) => {
         // A drag that starts in an interactive control (text selection in the
         // add-move input) composes its click on this root; remember the press
@@ -310,6 +334,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
         if (event.target.closest('input, button, select, textarea, a, label, datalist')) return
         const nextOpen = !open
         setOpen(nextOpen)
+        // Closing the card puts its edit mode away with it.
+        if (!nextOpen && isEditing) toggleEdit()
         if (nextOpen && party.length === 0) {
           // If a prior load failed, retry when the card is reopened.
           setPartyLoaded(false)
@@ -393,22 +419,79 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
-        {enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded) && (
-          defeated ? (
-            <div className="trainer-card-summary__battle" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
-              Defeated
+        {(() => {
+          const showBattle = Boolean(enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded))
+          const showEdit = isAdmin && trainerId != null && open
+          if (!showBattle && !showEdit) return null
+          // One grid cell holds the battle control and the admin controls,
+          // so the summary's three grid templates stay untouched.
+          return (
+            <div className="trainer-card-summary__battle" style={{ display: 'inline-flex', alignItems: 'stretch', flexWrap: 'wrap', gap: '6px', flexShrink: 0 }}>
+              {isEditing && reorder && (
+                <div className="trainer-card-summary__reorder" style={{ display: 'inline-flex', alignItems: 'stretch', gap: '3px' }}>
+                  <button
+                    type="button"
+                    draggable={!reorder.saving}
+                    disabled={Boolean(reorder.saving)}
+                    title="Drag to reorder"
+                    aria-label="Drag to reorder"
+                    onClick={event => event.preventDefault()}
+                    onDragStart={event => reorder.onDragStart(event, rootRef.current)}
+                    onDragEnd={reorder.onDragEnd}
+                    style={{ ...REORDER_BUTTON_STYLE, cursor: reorder.saving ? 'wait' : 'grab', fontSize: '1em', opacity: reorder.saving ? 0.5 : 1 }}
+                  >
+                    ⠿
+                  </button>
+                  <button
+                    type="button"
+                    title="Move up"
+                    aria-label="Move up"
+                    disabled={!reorder.canMoveUp}
+                    onClick={reorder.onMoveUp}
+                    style={{ ...REORDER_BUTTON_STYLE, opacity: reorder.canMoveUp ? 1 : 0.35, cursor: reorder.canMoveUp ? 'pointer' : 'default' }}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    title="Move down"
+                    aria-label="Move down"
+                    disabled={!reorder.canMoveDown}
+                    onClick={reorder.onMoveDown}
+                    style={{ ...REORDER_BUTTON_STYLE, opacity: reorder.canMoveDown ? 1 : 0.35, cursor: reorder.canMoveDown ? 'pointer' : 'default' }}
+                  >
+                    ▼
+                  </button>
+                </div>
+              )}
+              {showEdit && (
+                <button
+                  className="trainer-card-summary__edit"
+                  type="button"
+                  onClick={toggleEdit}
+                  title={isEditing ? 'Finish editing' : (reorder ? 'Edit seen moves and order' : 'Edit seen moves')}
+                  style={{ minHeight: '34px', padding: '6px 10px', border: `1px solid ${isEditing ? 'var(--accent)' : 'var(--border-strong)'}`, borderRadius: '999px', background: isEditing ? 'rgba(170,59,255,0.12)' : 'var(--surface-deep)', color: isEditing ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
+                >
+                  {isEditing ? 'Done' : 'Edit'}
+                </button>
+              )}
+              {showBattle && (defeated ? (
+                <div className="trainer-card-summary__battle-state" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
+                  Defeated
+                </div>
+              ) : (
+                <button
+                  className="trainer-card-summary__battle-button"
+                  type="button"
+                  onClick={openBattleModal}
+                  style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
+                >
+                  Battle
+                </button>
+              ))}
             </div>
-          ) : (
-            <button
-              className="trainer-card-summary__battle"
-              type="button"
-              onClick={openBattleModal}
-              style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
-            >
-              Battle
-            </button>
           )
-        )}
+        })()}
 
         <div className="trainer-card-summary__chevron" style={{ fontSize: '0.8em', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: '8px' }}>
           {open ? '▲' : '▼'}
@@ -500,7 +583,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                             <span>Pow {move.power ?? '—'}</span>
                             <span>Acc {move.accuracy ?? '—'}</span>
                           </div>
-                          {seen && isAdmin && (
+                          {seen && isEditing && (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); removeObservedMove(p.slot, move.move_name) }}
@@ -510,7 +593,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                               ✕
                             </button>
                           )}
-                          {!seen && isAdmin && trainerId != null && p.slot != null && (
+                          {!seen && isEditing && p.slot != null && (
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); addObservedMove(p.slot, move.move_name) }}
@@ -533,7 +616,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                         {slots.length === 0 && (
                           <div style={{ fontSize: '0.78em', color: 'var(--text-secondary)' }}>No moves</div>
                         )}
-                        {isAdmin && trainerId != null && p.slot != null && (
+                        {isEditing && p.slot != null && (
                           <div onClick={(e) => e.stopPropagation()} style={{ marginTop: '5px' }}>
                             <div style={{ display: 'flex', gap: '4px' }}>
                               <input

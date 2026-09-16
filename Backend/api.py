@@ -23,7 +23,7 @@ from backend import (get_games, create_run, get_runs, get_script,
                      create_contact_report, get_contact_reports, update_contact_report,
                      get_contact_report_stats, get_run_menu_summary, mark_run_opened,
                      get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
-                     add_observed_move, delete_observed_move, search_move_names,
+                     add_observed_move, delete_observed_move, search_move_names, set_trainer_order,
                      end_attempt, reopen_attempt, get_attempt_summary, get_species_abilities,
                      get_species_learnset, get_calc_dex_patch)
 
@@ -395,6 +395,25 @@ def admin_trainer_moves_route():
     except ValueError as exc:
         conn.rollback()
         return jsonify({'error': str(exc)}), 400
+
+@app.route('/api/admin/trainer-order', methods=['POST'])
+def admin_trainer_order_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'A JSON object body is required'}), 400
+    trainer_ids = data.get('trainer_ids')
+    if not isinstance(trainer_ids, list) or not trainer_ids:
+        return jsonify({'error': 'trainer_ids (a non-empty list) is required'}), 400
+    try:
+        result = set_trainer_order(conn, trainer_ids)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify({'success': True, **result})
 
 @app.route('/api/species/<int:species_id>/abilities', methods=['GET'])
 def species_abilities_route(species_id):
