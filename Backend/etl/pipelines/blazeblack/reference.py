@@ -24,6 +24,7 @@ LOCATION_ALIASES = {
     "challengers cave": "Challenger's Cave",
     "wellspring cave": "Wellspring Cave",
     "moor of icirrus": "Moor of Icirrus",
+    "moor of iccirus": "Moor of Icirrus",  # Keldeo's block in the wild doc
     "p2 laboratory": "P2 Laboratory",
     "cold storage": "Cold Storage",
     "driftveil drawbidge": "Driftveil Drawbridge",

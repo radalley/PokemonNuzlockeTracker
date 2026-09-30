@@ -5,10 +5,10 @@ import LocationRow from './LocationRow'
 import { apiFetch } from '../utils/api'
 import { getTrainerList } from '../utils/dataLayer'
 
-const authState = vi.hoisted(() => ({ user: null }))
+const editState = vi.hoisted(() => ({ editMode: false }))
 
-vi.mock('../contexts/AuthContext', () => ({
-  useAuth: () => ({ user: authState.user }),
+vi.mock('../contexts/EditModeContext', () => ({
+  useEditMode: () => ({ canEdit: editState.editMode, editMode: editState.editMode, toggleEditMode: () => {} }),
 }))
 
 vi.mock('../utils/api', () => ({
@@ -94,7 +94,7 @@ describe('LocationRow: admin trainer reorder', () => {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    authState.user = null
+    editState.editMode = false
     apiFetch.mockReset()
     apiFetch.mockImplementation((url) => {
       if (url === '/api/admin/trainer-order') {
@@ -112,13 +112,12 @@ describe('LocationRow: admin trainer reorder', () => {
   })
 
   const click = async (el) => act(async () => { el.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
-  // Edit is offered on an open card; a click on the card root opens it.
+  // A click on the card root opens it.
   const openCard = (card) => click(card)
   const buttons = (scope = container) => [...scope.querySelectorAll('button')]
   const cards = () => [...container.querySelectorAll('.trainer-card')]
   const cardNames = () => cards().map(c => c.querySelector('.trainer-card-summary__identity').textContent.replace(/Youngster.*$/, ''))
   const cardFor = (name) => cards().find(c => c.textContent.includes(name))
-  const buttonIn = (card, text) => buttons(card).find(b => b.textContent.trim() === text)
   const orderPosts = () => apiFetch.mock.calls.filter(([url]) => url === '/api/admin/trainer-order')
 
   const openPanel = async () => {
@@ -128,53 +127,38 @@ describe('LocationRow: admin trainer reorder', () => {
     expect(cardNames()).toEqual(['ALPHA', 'BRAVO', 'CHARLIE'])
   }
 
-  it('shows no edit or reorder controls to non-admins', async () => {
+  it('shows no reorder controls outside edit mode', async () => {
     await openPanel()
     await openCard(cardFor('BRAVO'))
     expect(buttons().some(b => b.textContent.trim() === 'Edit')).toBe(false)
     expect(container.querySelector('[aria-label="Drag to reorder"]')).toBeNull()
   })
 
-  it('lets an admin edit one card at a time and nudge it with the arrows', async () => {
-    authState.user = { account_type: 'admin' }
+  it('puts reorder controls on every card in edit mode and nudges with the arrows', async () => {
+    editState.editMode = true
     await openPanel()
-    expect(container.querySelector('[aria-label="Move down"]')).toBeNull()
-    // Edit only shows on an open card, to the left of Battle
-    expect(buttonIn(cardFor('BRAVO'), 'Edit')).toBeUndefined()
-    await openCard(cardFor('BRAVO'))
-    const cellButtons = [...cardFor('BRAVO').querySelectorAll('.trainer-card-summary__battle button')].map(b => b.textContent.trim())
-    expect(cellButtons).toEqual(['Edit', 'Battle'])
-
-    await click(buttonIn(cardFor('BRAVO'), 'Edit'))
+    // closed cards carry the controls too, left of Battle; no per-card Edit
     expect([...cardFor('BRAVO').querySelectorAll('.trainer-card-summary__battle button')].map(b => b.textContent.trim()))
-      .toEqual(['⠿', '▲', '▼', 'Done', 'Battle'])
-    expect(cardFor('BRAVO').querySelector('[aria-label="Move down"]')).toBeTruthy()
-    expect(cardFor('ALPHA').querySelector('[aria-label="Move down"]')).toBeNull()
-    expect(buttonIn(cardFor('BRAVO'), 'Done')).toBeTruthy()
+      .toEqual(['⠿', '▲', '▼', 'Battle'])
+    expect(cardFor('ALPHA').querySelector('[aria-label="Move down"]')).toBeTruthy()
+    expect(buttons().some(b => ['Edit', 'Done'].includes(b.textContent.trim()))).toBe(false)
 
     await click(cardFor('BRAVO').querySelector('[aria-label="Move down"]'))
     expect(cardNames()).toEqual(['ALPHA', 'CHARLIE', 'BRAVO'])
     expect(orderPosts()).toHaveLength(1)
     expect(JSON.parse(orderPosts()[0][1].body)).toEqual({ trainer_ids: [1, 3, 2] })
-    // still editing, and now last: no further move down
+    // now last: no further move down
     expect(cardFor('BRAVO').querySelector('[aria-label="Move down"]').disabled).toBe(true)
     expect(cardFor('BRAVO').querySelector('[aria-label="Move up"]').disabled).toBe(false)
 
-    // Edit on another card hands the mode over
-    await openCard(cardFor('ALPHA'))
-    await click(buttonIn(cardFor('ALPHA'), 'Edit'))
-    expect(cardFor('ALPHA').querySelector('[aria-label="Move up"]')).toBeTruthy()
-    expect(cardFor('BRAVO').querySelector('[aria-label="Move up"]')).toBeNull()
     // the first card cannot move up: no request is sent
     await click(cardFor('ALPHA').querySelector('[aria-label="Move up"]'))
     expect(orderPosts()).toHaveLength(1)
   })
 
   it('drops a dragged card before or after a sibling in the same group', async () => {
-    authState.user = { account_type: 'admin' }
+    editState.editMode = true
     await openPanel()
-    await openCard(cardFor('CHARLIE'))
-    await click(buttonIn(cardFor('CHARLIE'), 'Edit'))
 
     const handle = cardFor('CHARLIE').querySelector('[aria-label="Drag to reorder"]')
     const dataTransfer = { effectAllowed: '', dropEffect: '', setData: () => {}, setDragImage: () => {} }
@@ -198,15 +182,13 @@ describe('LocationRow: admin trainer reorder', () => {
   })
 
   it('ignores a drag over a card outside the dragged card’s group', async () => {
-    authState.user = { account_type: 'admin' }
+    editState.editMode = true
     getTrainerList.mockResolvedValue([
       trainer(1, 'ALPHA'), trainer(2, 'BRAVO'),
       trainer(3, 'GYMBO', { area_id: 9, area_name: 'Striaton Gym', area_kind: 'gym' }),
     ])
     await renderRow(root)
     await click(buttons().find(b => b.textContent.trim().startsWith('Trainers')))
-    await openCard(cardFor('ALPHA'))
-    await click(buttonIn(cardFor('ALPHA'), 'Edit'))
 
     const dataTransfer = { effectAllowed: '', dropEffect: '', setData: () => {}, setDragImage: () => {} }
     const dragEvent = (type) => {
@@ -223,8 +205,8 @@ describe('LocationRow: admin trainer reorder', () => {
     expect(cardNames()).toEqual(['ALPHA', 'BRAVO', 'GYMBO'])
   })
 
-  it('holds the controls while a save is pending, and hands edit mode back when the list reloads', async () => {
-    authState.user = { account_type: 'admin' }
+  it('holds the controls while a save is pending, and keeps them through a list reload', async () => {
+    editState.editMode = true
     let resolveSave
     apiFetch.mockImplementation((url) => {
       if (url === '/api/admin/trainer-order') {
@@ -233,8 +215,6 @@ describe('LocationRow: admin trainer reorder', () => {
       return Promise.resolve({ ok: true, json: async () => [] })
     })
     await openPanel()
-    await openCard(cardFor('ALPHA'))
-    await click(buttonIn(cardFor('ALPHA'), 'Edit'))
     await click(cardFor('ALPHA').querySelector('[aria-label="Move down"]'))
     expect(cardNames()).toEqual(['BRAVO', 'ALPHA', 'CHARLIE'])
     // pending: every reorder control is off, a second click sends nothing
@@ -247,16 +227,14 @@ describe('LocationRow: admin trainer reorder', () => {
     await act(async () => { resolveSave() })
     expect(cardFor('ALPHA').querySelector('[aria-label="Move down"]').disabled).toBe(false)
 
-    // reloading the list (special-trainers toggle) drops edit mode
+    // reloading the list (special-trainers toggle) leaves edit mode on
     const toggle = container.querySelector('input[type="checkbox"]')
     await act(async () => { toggle.click() })
-    expect(cardFor('ALPHA')).toBeTruthy()
-    expect(buttonIn(cardFor('ALPHA'), 'Done')).toBeUndefined()
-    expect(container.querySelector('[aria-label="Move down"]')).toBeNull()
+    expect(cardFor('ALPHA').querySelector('[aria-label="Move down"]')).toBeTruthy()
   })
 
   it('puts the order back and says so when the save fails', async () => {
-    authState.user = { account_type: 'admin' }
+    editState.editMode = true
     apiFetch.mockImplementation((url) => {
       if (url === '/api/admin/trainer-order') {
         return Promise.resolve({ ok: false, status: 400, json: async () => ({ error: 'Trainers can only be reordered within one location area' }) })
@@ -264,8 +242,6 @@ describe('LocationRow: admin trainer reorder', () => {
       return Promise.resolve({ ok: true, json: async () => [] })
     })
     await openPanel()
-    await openCard(cardFor('ALPHA'))
-    await click(buttonIn(cardFor('ALPHA'), 'Edit'))
     await click(cardFor('ALPHA').querySelector('[aria-label="Move down"]'))
 
     expect(cardNames()).toEqual(['ALPHA', 'BRAVO', 'CHARLIE'])

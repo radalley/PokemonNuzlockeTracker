@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Sprite from './Sprite'
 import HeaderAuthMenu from './HeaderAuthMenu'
+import { Button, MenuItem } from './Button'
+import { useEditMode } from '../contexts/EditModeContext'
 import { getAttempts, getParty, createAttempt, removeFromParty, endAttempt } from '../utils/dataLayer'
 import useHoverCapable from '../utils/useHoverCapable'
 
@@ -43,8 +45,10 @@ function PartySlot({ member, slot, onRemove, hoverCapable }) {
   const isShiny = member.shiny === 'True' || member.shiny === true
 
   return (
-    <div
+    <button
+      type="button"
       className="attempt-header__party-slot"
+      aria-label={armed ? 'Tap again to drop from party' : `Drop ${member.nickname || member.species_name || 'Pokémon'} from party`}
       onClick={() => {
         if (hoverCapable) { onRemove(member.pokemon_id); return }
         if (!armed) { setArmed(true); return }
@@ -68,6 +72,8 @@ function PartySlot({ member, slot, onRemove, hoverCapable }) {
         transition: 'border-color 0.15s, background-color 0.15s',
         boxSizing: 'border-box',
         boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+        padding: 0,
+        font: 'inherit',
       }}
     >
       <Sprite speciesId={member.species_id} size={52} shiny={isShiny} style={{ width: '82%', height: '82%' }} />
@@ -91,7 +97,7 @@ function PartySlot({ member, slot, onRemove, hoverCapable }) {
           Drop?
         </span>
       )}
-    </div>
+    </button>
   )
 }
 
@@ -103,6 +109,22 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
   const [showRunMenu, setShowRunMenu] = useState(false)
   const [showAttemptFlyout, setShowAttemptFlyout] = useState(false)
   const runMenuRef = useRef(null)
+  const headerRef = useRef(null)
+
+  // Publish the header's real height. It wraps to two or three rows on
+  // narrower screens, and the floating pieces below it (split strip, rail,
+  // side panels, jump targets) position from this instead of guessing.
+  useLayoutEffect(() => {
+    const header = headerRef.current
+    if (!header) return undefined
+    const root = document.documentElement
+    const publish = () => root.style.setProperty('--attempt-header-h', `${Math.ceil(header.getBoundingClientRect().height)}px`)
+    publish()
+    if (typeof ResizeObserver === 'undefined') return () => root.style.removeProperty('--attempt-header-h')
+    const observer = new ResizeObserver(publish)
+    observer.observe(header)
+    return () => { observer.disconnect(); root.style.removeProperty('--attempt-header-h') }
+  }, [])
   const [party, setParty] = useState([])
   const [logoLoadFailed, setLogoLoadFailed] = useState(false)
   const [showDeadDialog, setShowDeadDialog] = useState(false)
@@ -182,13 +204,12 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
       .catch(err => console.error('Failed to remove from party:', err))
   }
 
-  const btnStyle = { padding: '6px 14px', fontSize: '0.8em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit' }
-  const menuItemStyle = { display: 'block', width: '100%', padding: '8px 12px', border: 0, borderBottom: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '0.8em', textAlign: 'left', boxSizing: 'border-box' }
+  const { canEdit, editMode, toggleEditMode } = useEditMode()
   const isAttemptPage = location.pathname.startsWith('/attempt/')
   const isBoxPage = location.pathname.startsWith('/box/')
 
   return (
-    <header className="attempt-header" style={{
+    <header ref={headerRef} className="attempt-header" style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -198,7 +219,10 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
       top: 0,
       left: 0,
       right: 0,
-      zIndex: 1000,
+      // The header is its own stacking context, so the run menu can only
+      // rise as high as the header does. While the menu is open, lift the
+      // header above the floating Stats tab and side panels (1099 to 1102).
+      zIndex: showRunMenu ? 1200 : 1000,
       backgroundColor: 'var(--surface-deep)',
       gap: '12px',
     }}>
@@ -263,44 +287,32 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
               overflow: 'visible',
               boxShadow: '0 12px 28px rgba(0,0,0,0.32)',
             }}>
-              <button type="button" onClick={() => { setShowRunMenu(false); navigate('/') }} style={{ ...menuItemStyle, color: 'var(--text-primary)' }}>Main Menu</button>
+              <MenuItem onClick={() => { setShowRunMenu(false); navigate('/') }}>Main Menu</MenuItem>
               {onToggleStats && (
-                <button type="button" onClick={() => { setShowRunMenu(false); onToggleStats() }} style={menuItemStyle}>{statsOpen ? 'Hide Stats' : 'Stats'}</button>
+                <MenuItem onClick={() => { setShowRunMenu(false); onToggleStats() }}>{statsOpen ? 'Hide Stats' : 'Stats'}</MenuItem>
               )}
               {!debugOpen && onToggleDebug && (
-                <button type="button" onClick={() => { setShowRunMenu(false); onToggleDebug() }} style={menuItemStyle}>Debug</button>
+                <MenuItem onClick={() => { setShowRunMenu(false); onToggleDebug() }}>Game flags</MenuItem>
               )}
               {isAttemptPage && attemptOutcome && !attemptIsDead && (
-                <button
-                  type="button"
-                  onClick={() => { setShowRunMenu(false); setDeathNote(''); setEndError(''); setShowDeadDialog(true) }}
-                  style={{ ...menuItemStyle, color: '#e05252' }}
-                >
+                <MenuItem tone="danger" onClick={() => { setShowRunMenu(false); setDeathNote(''); setEndError(''); setShowDeadDialog(true) }}>
                   Declare Attempt Dead
-                </button>
+                </MenuItem>
               )}
               {attemptIsDead && (
-                <button
-                  type="button"
-                  onClick={() => { setShowRunMenu(false); navigate(`/attempt/${runId}/${attemptId}/summary`) }}
-                  style={{ ...menuItemStyle, color: '#f2b46b' }}
-                >
+                <MenuItem tone="warning" onClick={() => { setShowRunMenu(false); navigate(`/attempt/${runId}/${attemptId}/summary`) }}>
                   Attempt Summary
-                </button>
+                </MenuItem>
               )}
               {attempts.length > 0 && (
                 <div
                   onMouseEnter={hoverCapable ? () => setShowAttemptFlyout(true) : undefined}
                   style={{ position: 'relative' }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setShowAttemptFlyout(open => !open)}
-                    style={{ ...menuItemStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}
-                  >
+                  <MenuItem onClick={() => setShowAttemptFlyout(open => !open)} aria-expanded={showAttemptFlyout} style={{ justifyContent: 'space-between', gap: '16px' }}>
                     <span>Change Attempt</span>
                     <span style={{ color: 'var(--text-secondary)' }}>›</span>
-                  </button>
+                  </MenuItem>
                   {showAttemptFlyout && (
                     <div className="attempt-header__attempt-flyout" style={{
                       position: 'absolute',
@@ -314,23 +326,22 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
                       overflow: 'hidden',
                       boxShadow: '0 12px 28px rgba(0,0,0,0.32)',
                     }}>
-                      {attempts.map(attempt => (
-                        <button
-                          type="button"
-                          key={attempt.attempt_number}
-                          onClick={() => { setShowRunMenu(false); setShowAttemptFlyout(false); window.location.href = `/attempt/${runId}/${attempt.attempt_number}` }}
-                          style={{
-                            ...menuItemStyle,
-                            fontWeight: attempt.attempt_number === parseInt(attemptId) ? 'bold' : 'normal',
-                            color: attempt.attempt_number === parseInt(attemptId) ? 'var(--text-primary)' : 'var(--text-secondary)',
-                          }}
-                        >
-                          Attempt {attempt.attempt_number}{attempt.outcome === 'dead' ? ' ☠' : ''}
-                        </button>
-                      ))}
-                      <button type="button" onClick={handleNewAttempt} style={{ ...menuItemStyle, color: '#6cf', borderTop: '1px solid var(--border-strong)' }}>
+                      {attempts.map(attempt => {
+                        const current = attempt.attempt_number === parseInt(attemptId)
+                        return (
+                          <MenuItem
+                            key={attempt.attempt_number}
+                            aria-current={current ? 'page' : undefined}
+                            onClick={() => { setShowRunMenu(false); setShowAttemptFlyout(false); window.location.href = `/attempt/${runId}/${attempt.attempt_number}` }}
+                            style={{ fontWeight: current ? 700 : 400, color: current ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                          >
+                            Attempt {attempt.attempt_number}{attempt.outcome === 'dead' ? ' ☠' : ''}
+                          </MenuItem>
+                        )
+                      })}
+                      <MenuItem tone="info" onClick={handleNewAttempt} style={{ borderTop: '1px solid var(--border-strong)' }}>
                         + New Attempt
-                      </button>
+                      </MenuItem>
                     </div>
                   )}
                 </div>
@@ -358,21 +369,33 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
 
       <div className="attempt-header__nav" style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
         {attemptIsDead && (
-          <button
+          <Button
+            tone="warning"
             onClick={() => navigate(`/attempt/${runId}/${attemptId}/summary`)}
             className="attempt-header__nav-button"
-            style={{ ...btnStyle, borderColor: '#f2b46b', color: '#f2b46b' }}
             title="This attempt has ended — view its summary"
           >
             ☠ Summary
-          </button>
+          </Button>
         )}
         {backToAttempt && !isAttemptPage && (
-          <button className="attempt-header__nav-button" onClick={() => navigate(`/attempt/${runId}/${attemptId}`)} style={btnStyle}>
+          <Button className="attempt-header__nav-button" onClick={() => navigate(`/attempt/${runId}/${attemptId}`)}>
             Attempt
-          </button>
+          </Button>
         )}
-        {!isBoxPage && <button className="attempt-header__nav-button" onClick={() => navigate(`/box/${runId}/${attemptId}`)} style={btnStyle}>Box</button>}
+        {!isBoxPage && <Button className="attempt-header__nav-button" onClick={() => navigate(`/box/${runId}/${attemptId}`)}>Box</Button>}
+        {canEdit && (
+          <Button
+            tone={editMode ? 'accent' : 'neutral'}
+            selected={editMode}
+            className={`attempt-header__nav-button attempt-header__edit-toggle${editMode ? ' attempt-header__edit-toggle--on' : ''}`}
+            onClick={toggleEditMode}
+            aria-pressed={editMode}
+            title={editMode ? 'Leave admin edit mode' : 'Admin edit mode: reorder trainers, edit seen moves and split items'}
+          >
+            {editMode ? 'Editing' : 'Edit'}
+          </Button>
+        )}
         <HeaderAuthMenu />
       </div>
 
@@ -407,15 +430,10 @@ function AttemptHeader({ runId, attemptId, runDetails, backToAttempt = false, pa
             />
             {endError && <div style={{ fontSize: '0.78em', color: '#e05252', marginTop: '6px' }}>{endError}</div>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
-              <button type="button" onClick={() => setShowDeadDialog(false)} disabled={endingAttempt} style={btnStyle}>Cancel</button>
-              <button
-                type="button"
-                onClick={handleDeclareDead}
-                disabled={endingAttempt}
-                style={{ ...btnStyle, borderColor: '#e05252', color: '#e05252', background: 'rgba(224,82,82,0.1)', cursor: endingAttempt ? 'wait' : 'pointer' }}
-              >
+              <Button onClick={() => setShowDeadDialog(false)} disabled={endingAttempt}>Cancel</Button>
+              <Button tone="danger" onClick={handleDeclareDead} disabled={endingAttempt} style={endingAttempt ? { cursor: 'wait' } : undefined}>
                 {endingAttempt ? 'Ending...' : 'Declare Dead'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>,

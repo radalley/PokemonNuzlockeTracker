@@ -94,13 +94,16 @@ function formatItemName(raw) {
   return titleCase(token.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' '))
 }
 
-const IV_KEYS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe']
+// Lockley's stat keys -> the calculator's legacy short keys. Outside
+// randoms mode the calc reads set.ivs.at/df/sa/sd/sp, so long keys would
+// silently fall back to 31.
+const IV_KEYS = { hp: 'hp', atk: 'at', def: 'df', spa: 'sa', spd: 'sd', spe: 'sp' }
 
 function recordedIvs(ivs) {
   const out = {}
-  for (const key of IV_KEYS) {
+  for (const [key, calcKey] of Object.entries(IV_KEYS)) {
     const value = Number(ivs?.[key])
-    if (ivs?.[key] !== null && ivs?.[key] !== undefined && Number.isFinite(value)) out[key] = value
+    if (ivs?.[key] !== null && ivs?.[key] !== undefined && Number.isFinite(value)) out[calcKey] = value
   }
   return out
 }

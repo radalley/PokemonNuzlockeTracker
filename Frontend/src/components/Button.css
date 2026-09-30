@@ -1,0 +1,127 @@
+/* The app's one button: tone (what it means) x appearance (how loud) x
+   size, plus shape and a selected state. Colours come from the tone
+   tokens in index.css (--info, --success, --danger, --warning, --accent),
+   so light and dark themes follow automatically. Class selectors only:
+   layout (width, flex, grid placement) stays with the caller. */
+.btn {
+  --tone: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.btn--sm { min-height: 30px; padding: 0 10px; font-size: 0.72rem; }
+.btn--md { min-height: 36px; padding: 0 14px; font-size: 0.82rem; }
+.btn--lg { min-height: 44px; padding: 0 18px; font-size: 0.9rem; font-weight: 600; }
+
+.btn--rect { border-radius: 10px; }
+.btn--block { display: flex; width: 100%; }
+.btn--start { justify-content: flex-start; text-align: left; }
+.btn--icon { padding: 0; aspect-ratio: 1; }
+/* A title-and-description choice (docs sources, pickers): stacks and wraps. */
+.btn--stack { flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; white-space: normal; line-height: 1.3; }
+
+/* Tones. Neutral keeps the surface palette; the rest share one recipe. */
+.btn--info { --tone: var(--info); }
+.btn--success { --tone: var(--success); }
+.btn--danger { --tone: var(--danger); }
+.btn--warning { --tone: var(--warning); }
+.btn--accent { --tone: var(--accent); }
+
+/* Appearances. */
+.btn--tinted:not(.btn--neutral) {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
+  color: var(--tone);
+}
+
+.btn--outline { background: transparent; }
+.btn--outline.btn--neutral { color: var(--text-primary); }
+.btn--outline:not(.btn--neutral) { border-color: var(--tone); color: var(--tone); }
+
+.btn--ghost { border-color: transparent; background: transparent; }
+.btn--ghost.btn--neutral { color: var(--text-primary); }
+.btn--ghost:not(.btn--neutral) { color: var(--tone); }
+
+.btn--solid {
+  border-color: var(--tone);
+  background: var(--tone);
+  color: var(--surface);
+  font-weight: 600;
+}
+.btn--solid.btn--neutral { --tone: var(--text-primary); }
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) { border-color: var(--text-secondary); background: var(--surface-mid); color: var(--text-primary); }
+  .btn--tinted:not(.btn--neutral):hover:not(:disabled) { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 22%, transparent); color: var(--tone); }
+  .btn--outline:not(.btn--neutral):hover:not(:disabled),
+  .btn--ghost:not(.btn--neutral):hover:not(:disabled) { background: color-mix(in srgb, var(--tone) 12%, transparent); color: var(--tone); }
+  .btn--ghost.btn--neutral:hover:not(:disabled) { border-color: transparent; }
+  .btn--solid:hover:not(:disabled) { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 85%, var(--text-primary)); color: var(--surface); }
+}
+
+/* Selected: toggles, filters, tabs and the open panel's trigger. */
+.btn.is-selected {
+  border-color: var(--pick);
+  background: color-mix(in srgb, var(--pick) 14%, transparent);
+  color: var(--text-primary);
+}
+.btn.is-selected:not(.btn--neutral) { border-color: var(--tone); color: var(--tone); }
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* A row in a menu or dropdown list: a real button, one hover colour. */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item:last-child { border-bottom: 0; }
+.menu-item--info { color: var(--info); }
+.menu-item--danger { color: var(--danger); }
+.menu-item--warning { color: var(--warning); }
+.menu-item.is-selected { background: var(--border-strong); }
+.menu-item:disabled { cursor: not-allowed; opacity: 0.45; }
+.menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+@media (hover: hover) and (pointer: fine) {
+  .menu-item:hover:not(:disabled) { background: var(--accent-bg); }
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .menu-item { min-height: var(--tap-min); }
+}

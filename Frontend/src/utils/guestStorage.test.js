@@ -11,6 +11,7 @@ import {
   getBonusLocations,
   getEncounters,
   getParty,
+  getBattleRecords,
   getRuns,
   getSessionStats,
   hasLocalData,
@@ -187,15 +188,23 @@ describe('party management (6-slot cap)', () => {
     expect(seventh).toBeNull()
   })
 
-  it('removeFromParty frees the slot for reuse', () => {
+  it('removing a member moves the rest up, leaving the last slot free', () => {
     const { run_id } = createRun({ game_id: 1 }, 'Run')
     const ids = Array.from({ length: 7 }, (_, i) => seedEncounter(run_id, 1, i + 1))
     ids.slice(0, 6).forEach(id => addToParty(run_id, 1, id))
 
-    removeFromParty(run_id, 1, ids[2]) // frees slot 3
-    const newSlot = addToParty(run_id, 1, ids[6])
+    removeFromParty(run_id, 1, ids[1]) // the second member leaves
 
-    expect(newSlot).toBe(3)
+    expect(getParty(run_id, 1).map(p => [p.party_slot, p.pokemon_id])).toEqual([
+      [1, ids[0]], [2, ids[2]], [3, ids[3]], [4, ids[4]], [5, ids[5]],
+    ])
+    // the next addition takes the free last slot
+    expect(addToParty(run_id, 1, ids[6])).toBe(6)
+
+    // clearing an encounter takes its pokemon out and closes that gap too
+    deleteEncounter(run_id, 1, ids[0])
+    expect(getParty(run_id, 1).map(p => p.party_slot)).toEqual([1, 2, 3, 4, 5])
+    expect(getParty(run_id, 1)[0].pokemon_id).toBe(ids[2])
   })
 
   it('refuses to add a pokemon that has no recorded encounter', () => {
@@ -206,6 +215,24 @@ describe('party management (6-slot cap)', () => {
 })
 
 describe('markTrainerVictory + getSessionStats', () => {
+  it('freezes guest appearance, attributes deaths to one battle, and keeps replay idempotent', () => {
+    const { run_id } = createRun({ game_id: 1001 }, 'Run')
+    const id = upsertEncounter(run_id, 1, 1, 0, 495, 'Snivy', 'Leaf', 'Quiet', 'Captured', true, null, 'female')
+    addToParty(run_id, 1, id)
+    markTrainerVictory(run_id, 1, 5, 33, 582, { participant_ids: [id], fainted_ids: [] })
+    upsertEncounter(run_id, 1, 1, 0, 496, 'Servine', 'Leaf', 'Quiet', 'Captured', true, id, 'female')
+    removeFromParty(run_id, 1, id)
+    markTrainerVictory(run_id, 1, 6, 34, 588, { participant_ids: [id], fainted_ids: [id] })
+    markTrainerVictory(run_id, 1, 5, 33, 582, { participant_ids: [], fainted_ids: [] })
+    const records = getBattleRecords(run_id, 1)
+    expect(records).toHaveLength(2)
+    expect(records[0].party[0]).toMatchObject({ species_id: 495, shiny: true, gender: 'female', died_in_battle: false })
+    expect(records[1].party[0]).toMatchObject({ species_id: 496, died_in_battle: true })
+    expect(getParty(run_id, 1)).toHaveLength(0)
+    deleteEncounter(run_id, 1, id)
+    expect(getBattleRecords(run_id, 1)[0].party[0].available).toBe(false)
+  })
+
   it('marking the same trainer twice does not double-count', () => {
     const { run_id } = createRun({ game_id: 1 }, 'Run')
     markTrainerVictory(run_id, 1, 5, 12)
@@ -292,3 +319,4 @@ describe('bonus locations', () => {
     expect(added.secondary_sort_order).toBe(2)
   })
 })
+

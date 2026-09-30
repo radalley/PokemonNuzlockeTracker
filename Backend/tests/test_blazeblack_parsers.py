@@ -125,6 +125,13 @@ def patched_vocabularies(monkeypatch):
         "BASCULIN", "DRAPION", "SERPERIOR", "VENUSAUR", "MEGANIUM",
         "SANDILE", "MAROWAK", "VIRIZION", "TORNADUS", "THUNDURUS",
         "MUSHARNA", "RESHIRAM", "ZEKROM",
+        # the encounter-table fixtures
+        "WOOBAT", "ZUBAT", "DRILBUR", "GOLBAT", "CHERUBI", "DEERLING", "FINNEON",
+        "SNOVER", "SEEL", "MIENSHAO", "SAWSBUCK", "SEADRA", "BEARTIC", "DRUDDIGON",
+        "BALTOY", "GOLETT", "ARTICUNO", "SUICUNE", "PHANPY", "DONPHAN", "REGICE",
+        "ONIX", "STEELIX", "UXIE", "COBALION", "KROKOROK", "REGIROCK", "REGIGIGAS",
+        "VOLCARONA", "MISDREAVUS", "CRESSELIA", "MANTINE", "KYOGRE", "PALPITOAD",
+        "MAWILE", "PATRAT", "MEW", "EMOLGA", "SUNFLORA", "VESPIQUEN",
     })
     monkeypatch.setattr(reference, "ability_vocabulary", lambda: {
         "Contrary", "Vital Spirit", "Adaptability", "Overgrow", "Torrent",
@@ -132,6 +139,10 @@ def patched_vocabularies(monkeypatch):
     })
     monkeypatch.setattr(reference, "locations", lambda: {
         "Route 1": 3, "Route 10": 20, "Striaton City": 7, "Challenger's Cave": 495,
+        "Route 2": 4, "Route 6": 15, "Route 8": 12, "Route 12": 23, "Icirrus City": 498,
+        "Wellspring Cave": 235, "Relic Castle": 240, "Mistralton Cave": 243,
+        "Celestial Tower": 246, "Twist Mountain": 247, "Dragonspiral Tower": 249,
+        "Undella Bay": 259,
     })
     monkeypatch.setattr(reference, "class_sprites", lambda: {
         "TRAINER_CLASS_PKMN_RANGER": "TRAINER_PIC_BW_RANGER_F",
@@ -334,13 +345,20 @@ def test_wild_parser_attributes_preamble_fused_sections():
 
     route1 = [r for r in rows if r["canonical_location_id"] == 3]
     assert {(r["species_id"], r["enounter_rate"]) for r in route1} == {("SNIVY", 20), ("TEPIG", 80)}
+    assert {r["method"] for r in route1} == {"grass"}
+    assert {(r["area"], r["area_sort"], r["condition"], r["slot_kind"]) for r in route1} == {("", 0, "", "slot")}
 
     cave = [r for r in rows if r["canonical_location_id"] == 495]
     species = {r["species_id"] for r in cave}
-    # The floor marker keeps encounters in the cave; the legendary lands there too.
+    # The floor marker keeps encounters in the cave, as their own floor.
     assert species == {"BASCULIN", "DRAPION"}
+    basculin = next(r for r in cave if r["species_id"] == "BASCULIN")
+    assert (basculin["method"], basculin["area"], basculin["area_sort"]) == ("cave", "B2F", 1)
+    # The legendary is a 1% overlay on the cave's host method, filed under
+    # the floor it names -- a floor no table lists becomes its own area.
     legendary = next(r for r in cave if r["species_id"] == "DRAPION")
-    assert legendary["method"] == "legendary"
+    assert (legendary["method"], legendary["slot_kind"], legendary["tag"]) == ("cave", "overlay", "legendary")
+    assert (legendary["area"], legendary["area_sort"], legendary["enounter_rate"]) == ("B1F", 2, 1)
     assert legendary["min_level"] == "70"
 
 
@@ -397,26 +415,470 @@ def test_wild_parser_dialects():
 
     route1 = [r for r in rows if r["canonical_location_id"] == 3]
     # The wrapped slot list continues onto the bare species line.
-    assert any(r["species_id"] == "ABSOL" and r["method"] == "grass-normal" for r in route1)
-    # Single-label desert lines get a default kind.
-    assert any(r["species_id"] == "SANDILE" and r["method"] == "sand-normal" for r in route1)
-    # 'Virizion. Level 56' (period) parses; with no slot line it lands as a
-    # 1%-style static without eating the next section's header.
+    assert any(r["species_id"] == "ABSOL" and r["method"] == "grass" for r in route1)
+    # Single-label desert lines map like any other label.
+    assert any(r["species_id"] == "SANDILE" and r["method"] == "sand" for r in route1)
+    # 'Virizion. Level 56' (period) parses; with no slot line it is a
+    # static encounter (no rate) in the room it names, and it does not eat
+    # the next section's header.
     virizion = [r for r in route1 if r["species_id"] == "VIRIZION"]
-    assert {(r["min_level"], r["enounter_rate"]) for r in virizion} == {("56", 1)}
+    assert {(r["min_level"], r["enounter_rate"], r["slot_kind"], r["method"], r["tag"], r["area"])
+            for r in virizion} == {("56", "", "static", "static", "legendary", "Rumination Field")}
 
     route10 = [r for r in rows if r["canonical_location_id"] == 20]
     assert any(r["species_id"] == "MAROWAK" for r in route10)
-    # Inline split-game legendary: one row per named game.
-    split = {(r["species_id"], r["game_id"]) for r in route10
+    # Inline split-game legendary: one row per named game, as overlays on
+    # the shaking grass of the area the block names.
+    split = {(r["species_id"], r["game_id"], r["method"], r["slot_kind"], r["area"]) for r in route10
              if r["species_id"] in ("TORNADUS", "THUNDURUS")}
-    assert split == {("TORNADUS", reference.VOLT_WHITE_GAME_ID),
-                     ("THUNDURUS", reference.BLAZE_BLACK_GAME_ID)}
-    # SPECIAL ENCOUNTER blocks load with their own method label.
+    assert split == {("TORNADUS", reference.VOLT_WHITE_GAME_ID, "grass-spots", "overlay", "Main Route"),
+                     ("THUNDURUS", reference.BLAZE_BLACK_GAME_ID, "grass-spots", "overlay", "Main Route")}
+    # SPECIAL ENCOUNTER blocks with no slot line are statics tagged special.
     musharna = [r for r in route10 if r["species_id"] == "MUSHARNA"]
-    assert {r["method"] for r in musharna} == {"special"}
+    assert {(r["method"], r["slot_kind"], r["tag"], r["area"]) for r in musharna} == {
+        ("static", "static", "special", "Dream Basement")}
     assert {r["game_id"] for r in musharna} == set(parse_wild.ALL_GAMES)
 
     # The section after the unknown one recovers cleanly.
     striaton = [r for r in rows if r["canonical_location_id"] == 7]
     assert {r["species_id"] for r in striaton} == {"VAPOREON"}
+
+
+WILD_TABLES_DOC = """
+Wellspring Cave 1F
+
+1F
+Cave, Normal: Woobat (60%), Zubat (40%)
+Cave, Special: Drilbur (100%)
+
+B1F
+Cave, Normal: Woobat (50%), Golbat (50%)
+==================================================================
+Route 6 - Spring / Summer / Autumn
+
+Grass, Normal: Cherubi (60%), Deerling (40%)
+Surf, Normal: Finneon (100%)
+
+Route 6 - Winter
+Grass, Normal: Snover (60%), Deerling (40%)
+Surf, Normal: Seel (100%)
+
+LEGENDARY ENCOUNTER
+
+Mew, Level 50
+Route 6, Summer
+Grass, Normal, 1%
+==================================================================
+Dragonspiral Tower
+
+Outside (Both Areas) - Spring, Summer, Autumn
+Grass, Doubles: Mienshao (50%), Sawsbuck (50%)
+Surf, Special: Seadra (100%)
+
+Outside (Both Areas) - Winter
+Grass, Doubles: Mienshao (50%), Beartic (50%)
+Surf, Special: Seadra (100%)
+
+Inside - Room One
+Tower, Normal: Druddigon (40%), Baltoy (30%), Golett (30%)
+
+LEGENDARY ENCOUNTER
+
+Articuno, Level 50
+Dragonspiral Tower, Outside, Winter
+Doubles Grass, 1%.
+* Only in the doubles grass right outside the tower!
+
+LEGENDARY ENCOUNTER
+
+Suicune, Level 50
+Dragonspiral Tower, Outside, Spring, Summer & Autumn
+Surf, Special, 1%.
+==================================================================
+Twist Mountain
+
+1F - All Seasons
+Cave, Normal: Phanpy (100%)
+
+Not 1F - All Seasons
+Cave, Normal: Donphan (100%)
+
+LEGENDARY ENCOUNTER
+
+Regice, Level 50
+Twist Mountain, Ice Rock Room, Winter
+Cave, Normal, 1%
+==================================================================
+Mistralton Cave 1F - 2F
+
+Cave, Normal: Onix (100%)
+
+Mistralton Cave 3F (Guidance Chamber)
+Cave, Normal: Steelix (100%)
+
+LEGENDARY ENCOUNTER
+
+Uxie, Level 50
+Mistralton Cave, 1F
+Cave, Normal, 1%
+
+LEGENDARY ENCOUNTER
+
+Cobalion, Level 56
+Guidance Chamber
+==================================================================
+Relic Castle
+
+B2F, B3F, B4F, B5F
+Sand: Krokorok (100%)
+
+LEGENDARY ENCOUNTER
+
+Regirock, Level 50
+Relic Castle, B5F
+Sand, 1%
+
+LEGENDARY ENCOUNTER
+
+Regigigas. Level 70
+Relic Castle, Volcarona Room
+Floor, 1%
+
+SPECIAL ENCOUNTER
+
+Volcarona, Level 75
+Relic Castle, Volcarona Room, Winter
+* Only after the Regis wake.
+==================================================================
+Celestial Tower
+
+5F (Roof)
+Tower, Normal: Misdreavus (100%)
+
+LEGENDARY ENCOUNTER
+
+Cresselia, Level 50
+Celestial Tower, Roof
+Tower, Normal, 1%
+==================================================================
+Undella Bay
+
+All Seasons
+Surf, Special: Mantine (100%)
+
+LEGENDARY ENCOUNTER
+
+Kyogre, Level 70
+Undella Bay, Summer
+Surf, Special, 1%
+==================================================================
+Icirrus City, Route 8
+
+Puddle, Normal: Palpitoad (100%)
+==================================================================
+Challenger's Cave - All Floors
+
+Cave, Normal: Mawile (100%)
+"""
+
+
+def _table(rows, location_id, key, area="", condition=""):
+    return [r for r in rows if r["canonical_location_id"] == location_id and r["method"] == key
+            and r["area"] == area and r["condition"] == condition and r["slot_kind"] == "slot"]
+
+
+def test_wild_parser_keeps_floors_and_seasons_apart():
+    rows, problems = parse_wild.parse(WILD_TABLES_DOC)
+    assert not problems, problems
+
+    def loc(name):
+        return reference.resolve_location(name)[0]
+
+    # A cave's floors are separate tables in doc order; both sum to 100.
+    wellspring = loc("Wellspring Cave")
+    first = _table(rows, wellspring, "cave", area="1F")
+    basement = _table(rows, wellspring, "cave", area="B1F")
+    assert sum(r["enounter_rate"] for r in first if r["game_id"] == 1001) == 100
+    assert sum(r["enounter_rate"] for r in basement if r["game_id"] == 1001) == 100
+    assert {r["area_sort"] for r in first} == {1} and {r["area_sort"] for r in basement} == {2}
+    assert {r["method"] for r in _table(rows, wellspring, "cave-spots", area="1F")} == {"cave-spots"}
+
+    # A seasonal title splits the route into two conditioned tables.
+    route6 = loc("Route 6")
+    warm = _table(rows, route6, "grass", condition="season:spring,summer,autumn")
+    cold = _table(rows, route6, "grass", condition="season:winter")
+    assert {r["species_id"] for r in warm} == {"CHERUBI", "DEERLING"}
+    assert {r["species_id"] for r in cold} == {"SNOVER", "DEERLING"}
+    assert not _table(rows, route6, "grass")
+
+    # '(Both Areas)' is dropped, the marker's season is kept, and a marker
+    # without one is all seasons; 'Inside - Room One' stays one label.
+    tower = loc("Dragonspiral Tower")
+    assert _table(rows, tower, "dark-grass", area="Outside", condition="season:winter")
+    assert _table(rows, tower, "dark-grass", area="Outside", condition="season:spring,summer,autumn")
+    assert _table(rows, tower, "tower", area="Inside - Room One")
+
+    # 'All Seasons' on a marker or a bare line means no condition.
+    twist = loc("Twist Mountain")
+    assert _table(rows, twist, "cave", area="1F") and _table(rows, twist, "cave", area="Not 1F")
+    assert _table(rows, loc("Undella Bay"), "surf-spots")
+
+    # Floor ranges and parenthesised floors ride on the title.
+    mistralton = loc("Mistralton Cave")
+    assert _table(rows, mistralton, "cave", area="1F - 2F")
+    assert _table(rows, mistralton, "cave", area="3F (Guidance Chamber)")
+
+    # 'All Floors' is no area; a two-place header feeds both places.
+    assert _table(rows, loc("Challenger's Cave"), "cave")
+    assert _table(rows, loc("Icirrus City"), "puddle") and _table(rows, loc("Route 8"), "puddle")
+
+
+def test_wild_parser_files_overlays_and_statics_by_room():
+    rows, problems = parse_wild.parse(WILD_TABLES_DOC)
+    assert not problems, problems
+
+    def one(species):
+        matches = [r for r in rows if r["species_id"] == species and r["game_id"] == 1001]
+        assert len(matches) == 1, species
+        return matches[0]
+
+    # A seasonal overlay joins the table whose seasons cover it and keeps
+    # the host method, its own season, the badge, the level and the note.
+    articuno = one("ARTICUNO")
+    assert (articuno["method"], articuno["area"], articuno["condition"]) == ("dark-grass", "Outside", "season:winter")
+    assert (articuno["slot_kind"], articuno["tag"], articuno["enounter_rate"], articuno["min_level"]) == ("overlay", "legendary", 1, "50")
+    assert articuno["note"] == "Only in the doubles grass right outside the tower!"
+    suicune = one("SUICUNE")
+    assert (suicune["method"], suicune["area"], suicune["condition"]) == ("surf-spots", "Outside", "season:spring,summer,autumn")
+    assert suicune["note"] == ""
+    # A season on an all-seasons table stays on the overlay row.
+    kyogre = one("KYOGRE")
+    assert (kyogre["area"], kyogre["condition"], kyogre["method"]) == ("", "season:summer", "surf-spots")
+    # An overlay with its own season joins the seasonal table covering it
+    # (spring/summer/autumn, not winter) and keeps its own season.
+    mew = one("MEW")
+    assert (mew["method"], mew["area"], mew["condition"], mew["slot_kind"]) == ("grass", "", "season:summer", "overlay")
+    # Room aliases, floor membership and parenthesised floors all resolve.
+    assert (one("REGICE")["area"], one("REGICE")["condition"]) == ("Not 1F", "season:winter")
+    assert one("UXIE")["area"] == "1F - 2F"
+    assert one("REGIROCK")["area"] == "B2F, B3F, B4F, B5F"
+    assert one("CRESSELIA")["area"] == "5F (Roof)"
+    # A room no table lists becomes its own area, shared by the static
+    # that names the same room; a static resolves its room the same way.
+    regigigas, volcarona = one("REGIGIGAS"), one("VOLCARONA")
+    assert (regigigas["method"], regigigas["slot_kind"], regigigas["area"]) == ("floor", "overlay", "Volcarona Room")
+    assert (volcarona["method"], volcarona["slot_kind"], volcarona["tag"], volcarona["enounter_rate"]) == ("static", "static", "special", "")
+    assert volcarona["area_sort"] == regigigas["area_sort"] > 0
+    # A static keeps its season, and a footnote after it lands on it alone.
+    assert (volcarona["condition"], volcarona["note"]) == ("season:winter", "Only after the Regis wake.")
+    assert regigigas["note"] == ""
+    assert one("COBALION")["area"] == "3F (Guidance Chamber)"
+
+
+WILD_BROKEN_DOC = """
+Route 1
+
+Grass, Normal: Snivy (60%), Tepig (30%)
+Sky, Normal: Starly (100%)
+Grass, Doubles: Snivy (60%), Snivy (40%)
+==================================================================
+Route 12
+
+Grass, Special: Emolga (95%), Sunflora (5%), Vespiquen (5%)
+==================================================================
+Route 2
+
+Grass, Normal: Patrat (100%)
+
+LEGENDARY ENCOUNTER
+
+Mew, Level 30
+Route 2
+Grass, Normal, 10%
+"""
+
+
+WILD_MIXED_DOC = """
+Route 1
+
+Grass, Normal: Snivy (100%)
+
+Outside
+Grass, Doubles: Tepig (100%)
+
+Route 1 - Winter
+Grass, Normal: Starly (100%)
+
+SPECIAL ENCOUNTER
+
+Musharna, Level 70
+Route 1
+"""
+
+
+def test_wild_parser_handles_mixed_areas_and_a_trailing_static():
+    rows, problems = parse_wild.parse(WILD_MIXED_DOC)
+    assert not problems, problems
+    # whole-location, floor and seasonal tables coexist without upsetting the sum check
+    assert {(r["area"], r["condition"], r["method"]) for r in rows if r["slot_kind"] == "slot" and r["game_id"] == 1001} == {
+        ("", "", "grass"), ("Outside", "", "dark-grass"), ("", "season:winter", "grass"),
+    }
+    # a static block that ends the document is still flushed
+    musharna = [r for r in rows if r["species_id"] == "MUSHARNA" and r["game_id"] == 1001]
+    assert [(r["slot_kind"], r["tag"], r["min_level"]) for r in musharna] == [("static", "special", "70")]
+
+
+def test_wild_parser_reports_broken_tables():
+    rows, problems = parse_wild.parse(WILD_BROKEN_DOC)
+    assert "table sums to 90%: Route 1 / whole location / all seasons / grass" in problems
+    assert "unknown encounter method 'Sky, Normal' at Route 1" in problems
+    assert any(p.startswith("duplicate slot with a different rate at Route 1") and "SNIVY" in p for p in problems)
+    assert any(p.startswith("overlay rate above 5% at Route 2") for p in problems)
+    # The doc's own 105% shaking-grass table on Route 12 is allowlisted...
+    assert not any("Route 12" in p for p in problems)
+    assert not any(r["species_id"] == "STARLY" for r in rows)
+    # ...but only at exactly that sum.
+    _, problems = parse_wild.parse(WILD_BROKEN_DOC.replace("Vespiquen (5%)", "Vespiquen (10%)"))
+    assert "table sums to 110%: Route 12 / whole location / all seasons / grass-spots" in problems
+
+
+def test_wild_parser_method_vocabulary_is_the_registry():
+    import encounter_methods
+    assert set(parse_wild.METHOD_KEYS.values()) <= set(encounter_methods.METHOD_KEYS)
+    assert "static" in encounter_methods.METHOD_KEYS
+
+
+def test_floor_ranges_expand_to_every_floor_between():
+    assert parse_wild.expand_floors("1F - 4F") == {"1F", "2F", "3F", "4F"}
+    assert parse_wild.expand_floors("B2F, B3F, B4F, B5F") == {"B2F", "B3F", "B4F", "B5F"}
+    assert parse_wild.expand_floors("5F (Roof)") == {"5F"}
+    assert parse_wild.expand_floors("Outside") == set()
+    assert parse_wild.expand_floors("B1F - B3F") == {"B1F", "B2F", "B3F"}
+    assert parse_wild.expand_floors("B3F - B1F") == {"B1F", "B2F", "B3F"}
+    # a range across the basement boundary is not expanded: just its endpoints
+    assert parse_wild.expand_floors("B1F - 1F") == {"B1F", "1F"}
+    assert parse_wild.expand_floors("Not 1F") == {"1F"}
+    assert parse_wild.expand_floors("Pot Rooms") == set()
+
+
+WILD_OVERLAY_EDGES_DOC = """
+Twist Mountain
+
+Not 1F - All Seasons
+Cave, Normal: Donphan (100%)
+
+LEGENDARY ENCOUNTER
+
+Regice, Level 50
+Twist Mountain, 1F
+Cave, Normal, 1%
+==================================================================
+Mistralton Cave 1F - 4F
+
+Cave, Normal: Onix (100%)
+
+LEGENDARY ENCOUNTER
+
+Uxie, Level 50
+Mistralton Cave, 3F
+Cave, Normal, 1%
+==================================================================
+Undella Bay
+
+All Seasons
+Surf, Special: Mantine (100%)
+
+Summer
+Surf, Special: Seadra (100%)
+
+LEGENDARY ENCOUNTER
+
+Kyogre, Level 70
+Undella Bay
+Surf, Special, 1%
+"""
+
+
+def test_overlay_filing_edges():
+    rows, problems = parse_wild.parse(WILD_OVERLAY_EDGES_DOC)
+    assert not problems, problems
+    one = lambda name: next(r for r in rows if r["species_id"] == name and r["game_id"] == 1001)
+    # '1F' must not fall into 'Not 1F' by floor membership: it becomes its own area
+    assert one("REGICE")["area"] == "1F"
+    # a floor inside a range joins the range's table
+    assert one("UXIE")["area"] == "1F - 4F"
+    # an unconditioned overlay prefers the all-seasons table over a seasonal one
+    assert one("KYOGRE")["condition"] == ""
+
+
+WILD_OVERLAY_SEASONS_DOC = """
+Dragonspiral Tower
+
+Outside - Winter
+Grass, Normal: Snover (100%)
+
+Outside - All Seasons
+Surf, Normal: Seadra (100%)
+
+LEGENDARY ENCOUNTER
+
+Articuno, Level 50
+Dragonspiral Tower, Outside
+Grass, Normal, 1%
+==================================================================
+Route 6 - Winter
+
+Grass, Normal: Snover (100%)
+
+LEGENDARY ENCOUNTER
+
+Mew, Level 50
+Route 6, Summer
+Grass, Normal, 1%
+"""
+
+
+def test_overlay_seasons_follow_the_host_method_and_uncovered_ones_are_loud():
+    rows, problems = parse_wild.parse(WILD_OVERLAY_SEASONS_DOC)
+    one = lambda name: next(r for r in rows if r["species_id"] == name and r["game_id"] == 1001)
+    # An unconditioned overlay inherits the season of the table with its own
+    # method, not the all-seasons table of another method at the same area.
+    assert (one("ARTICUNO")["area"], one("ARTICUNO")["condition"]) == ("Outside", "season:winter")
+    # A season no grass table covers is reported; the row still lands with
+    # its own season rather than vanishing.
+    assert problems == ["overlay season no table covers at Route 6 / whole location: Mew grass season:summer"]
+    assert one("MEW")["condition"] == "season:summer"
+
+
+def test_wild_parser_pipe_split_block_emits_one_static_per_game():
+    doc = """Route 1
+
+Grass, Normal: Snivy (100%)
+
+LEGENDARY ENCOUNTER
+/
+Reshiram (Blaze Black) | Zekrom (Volt White)
+Level 70
+Route 1
+==================================================================
+Striaton City
+
+Grass, Normal: Vaporeon (100%)
+"""
+    rows, problems = parse_wild.parse(doc)
+    assert not problems, problems
+    split = {(r["species_id"], r["game_id"], r["slot_kind"], r["min_level"], r["canonical_location_id"])
+             for r in rows if r["species_id"] in ("RESHIRAM", "ZEKROM")}
+    assert split == {("RESHIRAM", 1001, "static", "70", 3), ("ZEKROM", 1002, "static", "70", 3)}
+    # the static closed at the section rule, so the next title still resolves
+    assert _table(rows, 7, "grass")
+
+
+def test_wild_parser_all_floors_marker_line_means_no_area():
+    rows, problems = parse_wild.parse("""Route 10
+
+All Floors
+Cave, Normal: Mawile (100%)
+""")
+    assert not problems, problems
+    assert {r["area"] for r in _table(rows, 20, "cave")} == {""}

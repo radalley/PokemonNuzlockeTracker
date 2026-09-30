@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSessionStats } from '../utils/dataLayer'
+import { Button } from './Button'
 
 function StatItem({ label, value, compact = false }) {
   return (
@@ -87,7 +88,6 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
 
   if (!isOpen) return null
 
-  const miniBtn = { padding: '2px 8px', fontSize: '0.75em', cursor: 'pointer', borderRadius: '999px', border: '1px solid var(--border-strong)', background: 'var(--surface-mid)', color: 'var(--text-secondary)', font: 'inherit', lineHeight: '1.4' }
   const isYellow = Number(versionGroupId) === 2
   const starterOptions = isYellow ? YELLOW_EEVEE_OPTIONS : STARTER_OPTIONS
 
@@ -95,7 +95,7 @@ function AttemptSessionStats({ runId, attemptId, refreshKey = 0, compact = false
     <div className="attempt-session-stats" style={{ width: '100%', boxSizing: 'border-box', margin: '10px 0 16px 0', border: '1px solid var(--border-strong)', borderRadius: '8px', padding: '10px', background: 'var(--surface)', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>Run Stats</div>
-        {onToggle && <button className="attempt-session-stats__toggle" onClick={onToggle} title="Minimize" style={miniBtn}>−</button>}
+        {onToggle && <Button appearance="ghost" size="sm" icon className="attempt-session-stats__toggle" onClick={onToggle} title="Minimize" aria-label="Minimize run stats">−</Button>}
       </div>
 
       {showStarterControls && onStarterChange && (

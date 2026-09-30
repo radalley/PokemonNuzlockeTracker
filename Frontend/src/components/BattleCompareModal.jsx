@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import BattleFormatPill from './BattleFormatPill'
 import Sprite from './Sprite'
+import { Button } from './Button'
 import TypeIcon, { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
 import { getDamageCalc, openCalcWithTeams, prefetchDexPatch } from '../utils/damageCalc'
@@ -22,18 +23,6 @@ function TypeBadges({ type1, type2 }) {
   return (
     <TypeIconRow types={[t1, t2]} height={14} gap={3} justifyContent="center" style={{ marginTop: '3px' }} />
   )
-}
-
-const MODAL_ACTION_BUTTON_STYLE = {
-  minHeight: '34px',
-  padding: '6px 12px',
-  border: '1px solid var(--border-strong)',
-  borderRadius: '999px',
-  background: 'var(--surface-deep)',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  font: 'inherit',
-  fontSize: '0.82em',
 }
 
 const PARTY_SELECT_BUTTON_STYLE = {
@@ -146,6 +135,8 @@ function BattleCompareModal({
   battleResult = null,
   onClose,
   onMarkVictory,
+  faintedIds = [],
+  onToggleFainted = null,
   onDeclareDefeat = null,
   defeatSaving = false,
   defeatError = '',
@@ -428,6 +419,21 @@ function BattleCompareModal({
           </div>
         </div>
 
+        {onToggleFainted && playerParty.length > 0 && !defeated && !battleResult?.success && (
+          <fieldset className="battle-casualties" disabled={battleSaving || battleLoading}>
+            <legend>Fell in this battle</legend>
+            <div>{playerParty.map(mon => (
+              <label key={mon.pokemon_id}>
+                <input type="checkbox" checked={faintedIds.includes(Number(mon.pokemon_id))}
+                  onChange={() => onToggleFainted(Number(mon.pokemon_id))} />
+                <Sprite speciesId={mon.species_id} size={28} />
+                {mon.nickname || mon.species_name}
+              </label>
+            ))}</div>
+            {faintedIds.length > 0 && <small>These Pokémon will be marked fallen when you record victory.</small>}
+          </fieldset>
+        )}
+        {battleResult?.error && <p role="alert" style={{ color: 'var(--danger, #e05252)' }}>{battleResult.error}</p>}
         {/* Battle result banners */}
         {battleResult?.success && (
           <div style={{ marginTop: '12px', border: '1px solid #2d5a2d', background: 'rgba(91,168,91,0.1)', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
@@ -453,22 +459,16 @@ function BattleCompareModal({
         {/* Footer */}
         <div className="battle-compare__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
+            <Button
+              tone={damageCalc ? 'info' : 'neutral'}
               onClick={openDamageCalc}
               disabled={!damageCalc || battleLoading || playerParty.length === 0}
               title={damageCalc
                 ? 'Open the damage calculator with both teams already loaded'
                 : 'Damage calc is set up for Blaze Black first — other games are coming'}
-              style={{
-                ...MODAL_ACTION_BUTTON_STYLE,
-                ...(damageCalc
-                  ? { borderColor: '#7ec8e3', color: '#7ec8e3', background: 'rgba(126,200,227,0.12)' }
-                  : { opacity: 0.45, cursor: 'not-allowed' }),
-              }}
             >
               Damage Calc
-            </button>
+            </Button>
             {calcNote && (
               <span style={{ fontSize: '0.75em', color: '#7ec8e3', maxWidth: '340px' }}>{calcNote}</span>
             )}
@@ -478,47 +478,31 @@ function BattleCompareModal({
                   <span style={{ fontSize: '0.78em', color: '#e05252' }}>
                     End this attempt? {trainerName} is recorded as the killer and your party is marked fallen.
                   </span>
-                  <button type="button" onClick={() => setConfirmingDefeat(false)} disabled={defeatSaving} style={MODAL_ACTION_BUTTON_STYLE}>
+                  <Button onClick={() => setConfirmingDefeat(false)} disabled={defeatSaving}>
                     Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onDeclareDefeat}
-                    disabled={defeatSaving}
-                    style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#e05252', color: '#e05252', background: 'rgba(224,82,82,0.12)', cursor: defeatSaving ? 'wait' : 'pointer' }}
-                  >
+                  </Button>
+                  <Button tone="danger" onClick={onDeclareDefeat} disabled={defeatSaving} style={defeatSaving ? { cursor: 'wait' } : undefined}>
                     {defeatSaving ? 'Ending...' : '☠ Confirm Defeat'}
-                  </button>
+                  </Button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDefeat(true)}
-                  style={{ ...MODAL_ACTION_BUTTON_STYLE, borderColor: '#5a2d2d', color: '#e05252' }}
-                  title="Lost this battle? End the attempt and record the killer."
-                >
+                <Button tone="danger" appearance="outline" onClick={() => setConfirmingDefeat(true)} title="Lost this battle? End the attempt and record the killer.">
                   Declare Defeat
-                </button>
+                </Button>
               )
             )}
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-          <button type="button" onClick={onClose} style={MODAL_ACTION_BUTTON_STYLE}>Back</button>
-          <button
-            type="button"
+          <Button onClick={onClose}>Back</Button>
+          {/* The screen's one main action. */}
+          <Button
+            tone={(defeated || battleResult?.success) ? 'neutral' : 'success'}
+            appearance={(defeated || battleResult?.success) ? 'tinted' : 'solid'}
             onClick={onMarkVictory}
-            disabled={defeated || battleSaving || battleLoading || battleResult?.success}
-            style={{
-              ...MODAL_ACTION_BUTTON_STYLE,
-              background: (defeated || battleResult?.success) ? 'var(--surface-deep)' : 'rgba(91,168,91,0.12)',
-              cursor: (defeated || battleResult?.success) ? 'not-allowed' : 'pointer',
-              color: (defeated || battleResult?.success) ? 'var(--text-secondary)' : '#5ba85b',
-              borderColor: (defeated || battleResult?.success) ? 'var(--border-strong)' : '#5ba85b',
-              opacity: (defeated || battleResult?.success) ? 0.6 : 1,
-            }}
+            disabled={defeated || battleSaving || battleLoading || battleResult?.success || !!battleResult?.partyLoadFailed}
           >
             {defeated || battleResult?.success ? '✓ Victory' : battleSaving ? 'Saving...' : 'Mark Victory'}
-          </button>
+          </Button>
           </div>
         </div>
       </div>

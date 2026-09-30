@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import useHoverCapable from '../utils/useHoverCapable'
+import { Button, MenuItem } from './Button'
 
 function HeaderAuthMenu() {
   const { user, openAuthDialog, logout } = useAuth()
@@ -26,12 +27,12 @@ function HeaderAuthMenu() {
   if (!user) {
     return (
       <div className="site-header__auth">
-        <button type="button" className="site-header__auth-button" onClick={() => openAuthDialog('login')}>
+        <Button className="site-header__auth-button" onClick={() => openAuthDialog('login')}>
           Sign In
-        </button>
-        <button type="button" className="site-header__auth-button is-primary" onClick={() => openAuthDialog('register')}>
+        </Button>
+        <Button tone="accent" appearance="solid" className="site-header__auth-button is-primary" onClick={() => openAuthDialog('register')}>
           Create Account
-        </button>
+        </Button>
       </div>
     )
   }
@@ -62,36 +63,32 @@ function HeaderAuthMenu() {
             <div className="site-header__auth-menu-name">{user.display_name}</div>
             <div className="site-header__auth-menu-email">{user.email}</div>
           </div>
-          <button type="button" className="site-header__auth-menu-item is-disabled" disabled title="Settings coming soon">
+          <MenuItem disabled title="Settings coming soon">
             Settings
-          </button>
+          </MenuItem>
           {user.account_type === 'admin' && (
-            <button
-              type="button"
-              className="site-header__auth-menu-item"
+            <MenuItem
               onClick={() => {
                 setMenuOpen(false)
                 navigate('/admin/reports')
               }}
             >
               Reports
-            </button>
+            </MenuItem>
           )}
           {user.account_type === 'admin' && (
-            <button
-              type="button"
-              className="site-header__auth-menu-item"
+            <MenuItem
               onClick={() => {
                 setMenuOpen(false)
                 navigate('/admin/placement')
               }}
             >
               Placement
-            </button>
+            </MenuItem>
           )}
-          <button type="button" className="site-header__auth-menu-item" onClick={logout}>
+          <MenuItem tone="danger" onClick={logout}>
             Sign Out
-          </button>
+          </MenuItem>
         </div>
       )}
     </div>

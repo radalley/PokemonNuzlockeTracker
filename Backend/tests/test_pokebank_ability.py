@@ -28,9 +28,15 @@ def test_species_abilities_resolve_per_game(db_conn):
     vanilla = backend_module.get_species_abilities(db_conn, 495, game_id=17)
     hack = backend_module.get_species_abilities(db_conn, 495, game_id=1001)
 
-    assert vanilla == [{'name': 'Overgrow', 'hidden': False}, {'name': 'Contrary', 'hidden': True}]
+    assert vanilla == [
+        {'name': 'Overgrow', 'hidden': False, 'slot': 1},
+        {'name': 'Contrary', 'hidden': True, 'slot': 3},
+    ]
     # The override row wins for the hack; its Contrary is a regular slot.
-    assert hack == [{'name': 'Contrary', 'hidden': False}, {'name': 'Overgrow', 'hidden': False}]
+    assert hack == [
+        {'name': 'Contrary', 'hidden': False, 'slot': 1},
+        {'name': 'Overgrow', 'hidden': False, 'slot': 2},
+    ]
 
 
 def test_ability_round_trips_through_pokebank(db_conn):

@@ -9,6 +9,8 @@ import psycopg2.extras
 import psycopg2.pool
 from dotenv import load_dotenv
 import time
+import split_timeline
+import split_availability
 from backend import (get_games, create_run, get_runs, get_script,
                      get_encounter_pool, get_run_by_id, get_trainers_by_location,
                      get_trainer_parties_by_encounter, get_trainer_party_by_id, get_species_search, update_starter, delete_run, rename_run,
@@ -25,7 +27,8 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
                      add_observed_move, delete_observed_move, search_move_names, set_trainer_order,
                      end_attempt, reopen_attempt, get_attempt_summary, get_species_abilities,
-                     get_species_learnset, get_calc_dex_patch)
+                     get_species_learnset, get_calc_dex_patch,
+                     load_encounter_rows, pools_from_rows, tables_from_rows, get_encounter_methods)
 
 load_dotenv()
 
@@ -304,7 +307,15 @@ def trainer_list_route(location_id):
         version_group_id=version_group_id, game_id=game_id,
         include_rematches=include_rematches, include_events=include_events,
     )
-    return jsonify([dict(t) for t in trainers])
+    # A split-layout run also learns which split each trainer opens in.
+    starter = None
+    if run_id is not None:
+        run = get_run_by_id(conn, run_id, attempt_number) if attempt_number is not None else None
+        if run:
+            game_id = game_id if game_id is not None else run['game_id']
+            version_group_id = version_group_id if version_group_id is not None else run['version_group_id']
+            starter = run['starter']
+    return jsonify(split_availability.annotate_trainers(conn, trainers, location_id, game_id, version_group_id, starter))
 
 @app.route('/api/trainer-party/<trainer_name>', methods=['GET'])
 def trainer_party_route(trainer_name):
@@ -885,10 +896,63 @@ def trainer_victory_route(run_id, attempt_number):
         attempt_number,
         trainer_id,
         event_id,
+        participant_ids=data.get('participant_ids'),
+        fainted_ids=data.get('fainted_ids'),
     )
     if not result.get('success'):
+        conn.rollback()
         return jsonify(result), 400
     return jsonify(result)
+
+
+@app.route('/api/games/<int:game_id>/splits', methods=['GET'])
+def split_catalogue_route(game_id):
+    conn = get_db()
+    try:
+        return jsonify({'splits': split_timeline.catalogue(conn, game_id, request.args.get('starter') or None),
+                        'items': split_timeline.get_items(conn, game_id)})
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 404
+
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/battle-records', methods=['GET'])
+def battle_records_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    attempt = conn.execute('select attempt_id from attempts where run_id = %s and attempt_number = %s',
+                           (run_id, attempt_number)).fetchone()
+    if not attempt:
+        return jsonify({'error': 'Attempt not found'}), 404
+    return jsonify(split_timeline.get_records(conn, attempt['attempt_id']))
+
+
+@app.route('/api/admin/split-items', methods=['POST', 'PATCH', 'DELETE'])
+def split_items_admin_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        game_id = int(data['game_id'])
+        record_id = int(data['item_record_id']) if request.method != 'POST' else None
+        if request.method == 'DELETE':
+            result = conn.execute('delete from curated_split_items where item_record_id = %s and game_id = %s returning item_record_id',
+                                  (record_id, game_id)).fetchone()
+            if not result:
+                raise ValueError('Item record not found')
+            conn.commit()
+            return jsonify({'success': True})
+        result = split_timeline.save_item(conn, game_id, data.get('split_key'), data.get('item_name'), data.get('method'), record_id)
+        return jsonify(result)
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        return jsonify({'error': 'An identical item and method already exist in this split'}), 409
 
 @app.route('/api/box/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def box_route(run_id, attempt_number):
@@ -973,16 +1037,53 @@ def guest_script_route():
             data['special_trainer_count'] = special_count
         script.append(data)
 
-    pools = {}
-    for row in script:
-        if row.get('event_type') != 'Location':
-            continue
-        location_id = int(row['event_id'])
-        if location_id in pools:
-            continue
-        pools[location_id] = get_encounter_pool(conn, location_id, game_id)
+    location_ids = sorted({int(row['event_id']) for row in script if row.get('event_type') == 'Location'})
+    rows_by_location = load_encounter_rows(conn, location_ids, game_id) if location_ids else {}
 
-    return jsonify({'script': script, 'pools': pools})
+    payload = {
+        'script': script,
+        'pools': pools_from_rows(rows_by_location),
+        'pool_tables': tables_from_rows(rows_by_location),
+        'encounter_methods': get_encounter_methods(),
+    }
+    return jsonify(split_availability.decorate_page(conn, payload, game_id, version_group_id, starter))
+
+
+@app.route('/api/admin/availability', methods=['POST', 'DELETE'])
+def availability_admin_route():
+    """One curated availability rule: set (POST) or revert to inherit (DELETE)."""
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        game_id = int(data['game_id'])
+        if request.method == 'DELETE':
+            split_availability.delete_rule(conn, game_id, data.get('subject_kind'), data.get('subject_key'))
+            return jsonify({'success': True})
+        return jsonify(split_availability.save_rule(
+            conn, game_id, data.get('subject_kind'), data.get('subject_key'),
+            opens_in=data.get('opens_in'), gate_key=data.get('gate_key'), note=data.get('note'),
+        ))
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+
+
+@app.route('/api/admin/gates', methods=['PATCH'])
+def gates_admin_route():
+    """A gate's split (Surf opens in ...), from the Game flags panel."""
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(split_availability.save_gate(conn, int(data['game_id']), data.get('gate_key'), data.get('opens_in'), data.get('note')))
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
 
 
 if __name__ == '__main__':

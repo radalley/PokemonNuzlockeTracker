@@ -7,6 +7,28 @@ browser storage.
 
 Current architecture areas established in this design thread:
 
+- 2026-09-23 Blaze Black item sources implemented through Burgh. Additive
+  `curated_split_item_sources` records method kind, species, rate, detail and
+  provenance under the durable item row. Lenora (`badge:34`) has 68 unique
+  items: 43 ordinary Thief items, conditional Colbur, and 28 dust-cloud items
+  with four overlaps. Burgh (`badge:35`) has only five newly available items.
+  The panel groups/collapses Thief, Dust clouds, Conditional and manual entries
+  and expands individual sources. Local migration
+  `20260923_blazeblack_split_item_sources.sql` applied; production untouched.
+
+- 2026-09-17 split timeline/item library implemented locally. The attempt feed
+  alone retains the 1126px root; at >=1820px stats/splits occupy outer gutters,
+  follow normal page scrolling, and never become edge tabs when minimized.
+  Below 1820px corner flags open independently scrolling drawers.
+  `curated_split_items` is exact-game,
+  admin-curated split/item/method reference data with no collection state.
+  `attempt_battle_records` freezes ordered species/form/nickname/shiny/gender
+  and explicit per-battle deaths at first victory; guest parity included.
+  Sprites deep-link to current Box/Fallen state. Catalogue uses configured 8
+  gyms + 4 E4 + champion and existing type_focus, never guessed values. Local
+  migration `20260917_split_timeline.sql` applied; production untouched. See
+  `features/split-timeline.md`, ADR-0007, and `docs/split-timeline.md`.
+
 - Contact submissions are internal `contact_reports`, not direct user email.
   Admins manage reports and statistics at `/admin/reports`.
 - The main menu can continue the authenticated user's most recently opened run.
@@ -94,6 +116,19 @@ Current architecture areas established in this design thread:
   commits). Remaining deferred: guest script assembly consolidation, Gen 3
   re-extraction; custom move "Wood Horn" unrepresentable (2 learnset
   entries skipped).
+- 2026-08-28: encounter-controls rework + ability picker live (commit
+  55fba97). LocationRow's encounter side is a state machine
+  (renderEncounterActions): empty -> Caught/Missed decision buttons
+  (they ARE the save trigger; the status select is gone), Captured ->
+  Party/Dead/Evolve + Ability picker (vg-aware via
+  GET /api/species/<id>/abilities, entries {name, hidden}), Missed ->
+  muted chip + Caught/Undo, Dead -> Revive, pending/failed ->
+  Saving/Retry/Cancel with optimistic-status rollback on failed
+  creates. pokebank.ability (migration 20260907) flows through upsert
+  (column-probed), both readers, guest storage, and PokemonCard.
+  Lesson recorded: PowerShell Get-Content/-replace/Set-Content
+  round-trips mojibake non-ASCII glyphs and adds a BOM — use the Edit
+  tool or Python for files containing ★ ♀ ♂ — ✓.
 - 2026-08-27: dead-run declarations + post-mortem summary live (commit
   cd59152). attempts carries started_at/outcome/ended_at/
   ended_by_trainer_id/death_note (outcome NULL=live, 'won' reserved for
@@ -154,3 +189,14 @@ missing flask/psycopg2, which is why bare `python api.py` fails with
 Verify all memory against the current worktree and database before changing
 behavior. Local backend or database availability has previously looked like an
 authentication or empty-data regression from the frontend.
+
+Repo archive (2026-08-27, commit e83f2eb): the root `archive/` folder holds
+all legacy pre-ETL material moved out of `Backend/` after a reference audit
+(sqlite-era load*.py seeders, build_*_preview extraction scripts,
+load_*_build* forwarding shims, update_* one-offs, sprite tooling, GUI
+prototypes, raw bulk inputs, legacy sqlite DBs, seed_cache). See
+archive/README.md. Still LIVE in `Backend/`: the `<game>_build*_preview/`
+folders are the ETL's staging inputs (etl/config.py preview_dir() defaults
+there; every etl manifest names one) -- never archive them. Backend/ is now
+just api.py, backend.py, schema/env files, etl/, migrations/, tests/, and
+those preview folders.

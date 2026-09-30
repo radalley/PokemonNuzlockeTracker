@@ -3,6 +3,7 @@ import { apiFetch } from '../utils/api'
 import { getSpeciesLearnset, isLocalRun } from '../utils/dataLayer'
 import { formatConstant, parseBadgeIds, IV_STAT_KEYS, hasAnyIv } from '../utils/pokemonFormat'
 import Sprite from './Sprite'
+import { Button } from './Button'
 import TypeIcon, { TypeIconRow } from './TypeIcon'
 import PokemonStatRows, { POKEMON_STAT_ROWS } from './PokemonStatRows'
 
@@ -147,7 +148,7 @@ function PokemonSummary({
           <div className="pokemon-summary__status" style={{ color: statusInfo.color }}>{statusInfo.label}</div>
         </div>
         {onClose && (
-          <button type="button" className="pokemon-summary__close" onClick={onClose} aria-label="Close summary">✕</button>
+          <Button appearance="ghost" size="sm" icon className="pokemon-summary__close" onClick={onClose} aria-label="Close summary">✕</Button>
         )}
       </div>
 
@@ -277,42 +278,42 @@ function PokemonSummary({
       <div className="pokemon-summary__actions">
         {fallen ? (
           onRevive && (
-            <button type="button" className="pokemon-summary__action pokemon-summary__action--revive" onClick={() => onRevive(pokemon)}>
+            <Button tone="info" className="pokemon-summary__action pokemon-summary__action--revive" onClick={() => onRevive(pokemon)}>
               Revive
-            </button>
+            </Button>
           )
         ) : (
           <>
             {inParty
               ? onRemoveFromParty && (
-                <button type="button" className="pokemon-summary__action pokemon-summary__action--remove" onClick={() => onRemoveFromParty(pokemon)}>
+                <Button tone="warning" className="pokemon-summary__action pokemon-summary__action--remove" onClick={() => onRemoveFromParty(pokemon)}>
                   Party −
-                </button>
+                </Button>
               )
               : onAddToParty && (
-                <button type="button" className="pokemon-summary__action pokemon-summary__action--add" onClick={() => onAddToParty(pokemon)}>
+                <Button tone="success" className="pokemon-summary__action pokemon-summary__action--add" onClick={() => onAddToParty(pokemon)}>
                   Party +
-                </button>
+                </Button>
               )}
             {canEvolve && onEvolve && (
-              <button type="button" className="pokemon-summary__action pokemon-summary__action--evolve" onClick={() => onEvolve(pokemon)}>
+              <Button tone="accent" className="pokemon-summary__action pokemon-summary__action--evolve" onClick={() => onEvolve(pokemon)}>
                 Evolve
-              </button>
+              </Button>
             )}
             {onDead && (
               confirmDead ? (
                 <>
-                  <button type="button" className="pokemon-summary__action pokemon-summary__action--dead" onClick={() => { setConfirmDead(false); onDead(pokemon) }}>
+                  <Button tone="danger" appearance="solid" className="pokemon-summary__action pokemon-summary__action--dead" onClick={() => { setConfirmDead(false); onDead(pokemon) }}>
                     Confirm fallen
-                  </button>
-                  <button type="button" className="pokemon-summary__action" onClick={() => setConfirmDead(false)}>
+                  </Button>
+                  <Button className="pokemon-summary__action" onClick={() => setConfirmDead(false)}>
                     Cancel
-                  </button>
+                  </Button>
                 </>
               ) : (
-                <button type="button" className="pokemon-summary__action pokemon-summary__action--dead" onClick={() => setConfirmDead(true)}>
+                <Button tone="danger" appearance="outline" className="pokemon-summary__action pokemon-summary__action--dead" onClick={() => setConfirmDead(true)}>
                   Fallen
-                </button>
+                </Button>
               )
             )}
           </>

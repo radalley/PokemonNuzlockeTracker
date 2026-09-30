@@ -80,16 +80,47 @@ def test_party_caps_at_six_pokemon(db_conn):
     assert seventh_slot is None, "a 7th pokemon must not fit in a 6-slot party"
 
 
-def test_remove_from_party_frees_the_slot_for_reuse(db_conn):
+def slots_of(db_conn, attempt_id):
+    return [(r["party_slot"], r["pokemon_id"]) for r in db_conn.execute(
+        "select party_slot, pokemon_id from party where attempt_id = %s order by party_slot",
+        (attempt_id,)).fetchall()]
+
+
+def test_removing_a_member_moves_the_rest_up(db_conn):
     run_id, attempt_id = seed_run_and_attempt(db_conn)
     pokemon_ids = [seed_pokemon(db_conn, run_id, attempt_id, species_id=i) for i in range(1, 8)]
     for pid in pokemon_ids[:6]:
         backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pid)
 
-    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[2])  # frees slot 3
-    new_slot = backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pokemon_ids[6])
+    # take the second member out of a full party
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[1])
 
-    assert new_slot == 3
+    # everyone below moves up one; slot 6 is the empty one
+    assert slots_of(db_conn, attempt_id) == [
+        (1, pokemon_ids[0]), (2, pokemon_ids[2]), (3, pokemon_ids[3]),
+        (4, pokemon_ids[4]), (5, pokemon_ids[5]),
+    ]
+    assert backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pokemon_ids[6]) == 6
+
+    # a member leaving the middle again closes that gap too
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[3])
+    assert [slot for slot, _ in slots_of(db_conn, attempt_id)] == [1, 2, 3, 4, 5]
+    assert [pid for _, pid in slots_of(db_conn, attempt_id)] == [
+        pokemon_ids[0], pokemon_ids[2], pokemon_ids[4], pokemon_ids[5], pokemon_ids[6]]
+
+
+def test_removing_the_last_member_and_unknown_members_leave_the_order_alone(db_conn):
+    run_id, attempt_id = seed_run_and_attempt(db_conn)
+    pokemon_ids = [seed_pokemon(db_conn, run_id, attempt_id, species_id=i) for i in range(1, 4)]
+    for pid in pokemon_ids:
+        backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pid)
+
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[2])
+    assert slots_of(db_conn, attempt_id) == [(1, pokemon_ids[0]), (2, pokemon_ids[1])]
+
+    # removing someone who is not in the party changes nothing
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, 999999)
+    assert slots_of(db_conn, attempt_id) == [(1, pokemon_ids[0]), (2, pokemon_ids[1])]
 
 
 def test_add_to_party_unknown_attempt_returns_none(db_conn):

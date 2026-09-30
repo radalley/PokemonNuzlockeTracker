@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Sprite from '../components/Sprite'
+import { Button } from '../components/Button'
 import { getTrainerSpriteSrc } from '../components/trainerSprite'
 import { getAttemptSummary, createAttempt, reopenAttempt } from '../utils/dataLayer'
 
@@ -10,17 +11,6 @@ const CARD = {
   background: 'var(--surface)',
   padding: '14px',
   boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-}
-
-const ACTION = {
-  padding: '9px 16px',
-  borderRadius: '999px',
-  border: '1px solid var(--border-strong)',
-  background: 'var(--surface-mid)',
-  color: 'var(--text-primary)',
-  cursor: 'pointer',
-  font: 'inherit',
-  fontSize: '0.88em',
 }
 
 function formatClass(trainerClass) {
@@ -201,20 +191,20 @@ function AttemptSummary() {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <button type="button" style={ACTION} onClick={() => navigate(`/attempt/${runId}/${attemptId}`)}>
+        <Button onClick={() => navigate(`/attempt/${runId}/${attemptId}`)}>
           Review Attempt
-        </button>
-        <button type="button" style={{ ...ACTION, borderColor: '#5ba85b', color: '#5ba85b', background: 'rgba(91,168,91,0.12)' }} onClick={handleNewAttempt}>
+        </Button>
+        <Button tone="success" appearance="solid" onClick={handleNewAttempt}>
           + New Attempt
-        </button>
+        </Button>
         {ended && (
-          <button type="button" style={ACTION} onClick={handleReopen} title="Undo the death declaration">
+          <Button tone="warning" onClick={handleReopen} title="Undo the death declaration">
             Reopen Attempt
-          </button>
+          </Button>
         )}
-        <button type="button" style={ACTION} onClick={() => navigate('/')}>
+        <Button onClick={() => navigate('/')}>
           Main Menu
-        </button>
+        </Button>
       </div>
       {actionError && (
         <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.8em', color: '#e05252' }}>{actionError}</div>

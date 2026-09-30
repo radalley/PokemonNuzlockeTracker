@@ -62,7 +62,18 @@ ENCOUNTER_POOL_COLUMNS = [
     ("min_level", "text"),
     ("max_level", "text"),
     ("method", "text"),
-    ("enounter_rate", "integer"),
+    ("enounter_rate", "text"),
+    # Which table a row belongs to (area + condition), what kind of entry
+    # it is, and the doc's badge and footnote. Older previews lack them.
+    ("area", "text"),
+    ("area_sort", "text"),
+    ("condition", "text"),
+    ("slot_kind", "text"),
+    ("tag", "text"),
+    ("note", "text"),
+    # Added by the loader: the preview row's position, so the insert (and
+    # hence encounter_id) keeps the doc's order.
+    ("stage_order", "integer"),
 ]
 
 

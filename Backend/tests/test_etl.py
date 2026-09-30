@@ -9,9 +9,10 @@ portable trainer binding is actually in the generated SQL.
 """
 import pytest
 
+import encounter_methods
 from etl import manifests, normalize, preview, schemas
 from etl.loader import Guard, GuardedLoad, Metric, StageTable
-from etl.pipelines import gen5_event_bosses, gen5_trainers
+from etl.pipelines import clone_version_group, gen5_event_bosses, gen5_trainers, load_encounters
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +187,85 @@ def test_trainers_pipeline_guards_against_double_load():
     # Party rows must be linked and the load must abort if any are not.
     assert "SET trainer_id = tp.trainer_id" in sql
     assert "missing trainer_id links" in sql
+
+
+class _StubManifest:
+    label = "Stub / Hack"
+    game_ids = {"stub": 1001, "stub2": 1002}
+
+    def preview_dir(self):
+        raise AssertionError("preview_dir must come from args")
+
+    def expected(self, name, default=None):
+        return default
+
+
+ENCOUNTER_ROW = {
+    "game_id": "1001", "location_id": "", "canonical_location_id": "3", "species_id": "495",
+    "min_level": "", "max_level": "", "method": "grass", "enounter_rate": "20",
+    "area": "1F", "area_sort": "1", "condition": "season:winter", "slot_kind": "slot", "tag": "", "note": "",
+}
+
+
+def _encounter_load(tmp_path, monkeypatch, rows, replace=False):
+    monkeypatch.setattr(load_encounters.manifests, "load", lambda key: _StubManifest())
+    preview.write_csv(tmp_path / "encounter_pool_preview.csv", rows, list(rows[0]))
+    args = _Args("stub")
+    args.preview_dir = str(tmp_path)
+    args.replace = replace
+    return load_encounters.build_load(args).build_sql({"encounter_pool_stage": "/tmp/e.csv"}, rollback=True)
+
+
+def test_encounter_loader_carries_table_columns_and_guards(tmp_path, monkeypatch):
+    sql = _encounter_load(tmp_path, monkeypatch, [ENCOUNTER_ROW])
+    assert "area, area_sort, condition, slot_kind, tag, note" in sql
+    assert "nullif(area, '')" in sql and "nullif(area_sort, '')::integer" in sql
+    assert "coalesce(nullif(slot_kind, ''), 'slot')" in sql
+    # Every row must carry a registry method and a known slot kind.
+    assert "Stage contains an unknown encounter method" in sql
+    for key in encounter_methods.METHOD_KEYS:
+        assert f"'{key}'" in sql
+    assert "Stage contains an unknown slot kind" in sql
+    # Without --replace the double-load guard stands and nothing is deleted.
+    assert "already loaded (use --replace)" in sql
+    assert "DELETE FROM encounter_pool" not in sql
+    assert "slot_tables_off_100" in sql
+    # rows insert in preview order, never re-sorted by a staged column
+    assert "ORDER BY stage_order" in sql
+    assert "ORDER BY game_id" not in sql
+
+
+def test_encounter_loader_replace_deletes_the_games_first(tmp_path, monkeypatch):
+    sql = _encounter_load(tmp_path, monkeypatch, [ENCOUNTER_ROW], replace=True)
+    assert "DELETE FROM encounter_pool WHERE nullif(game_id::text, '')::integer IN (1001, 1002)" in sql
+    assert "already loaded" not in sql
+    # The delete runs inside the same transaction, before the insert.
+    assert sql.index("DELETE FROM encounter_pool") < sql.index("INSERT INTO encounter_pool")
+
+
+def test_encounter_loader_tolerates_previews_without_table_columns(tmp_path, monkeypatch):
+    old = {k: v for k, v in ENCOUNTER_ROW.items()
+           if k not in ("area", "area_sort", "condition", "slot_kind", "tag", "note")}
+    sql = _encounter_load(tmp_path, monkeypatch, [old])
+    assert "NULL,\n  NULL,\n  NULL,\n  'slot',\n  NULL,\n  NULL" in sql
+    assert "unknown slot kind" not in sql
+    # nothing in the statement names a column the old preview did not stage
+    assert "area_sort" not in sql.split("INSERT INTO encounter_pool")[1].split("FROM encounter_pool_stage")[1]
+    assert "ORDER BY stage_order" in sql
+
+
+def test_blazeblack_manifest_count_matches_the_committed_preview():
+    manifest = manifests.load("blazeblack")
+    rows = preview.read_csv(manifest.preview_dir() / "encounter_pool_preview.csv")
+    assert len(rows) == manifest.expected("encounters")
+    # every committed row carries a registry method and a known slot kind
+    assert {r["method"] for r in rows} <= set(encounter_methods.METHOD_KEYS)
+    assert {r["slot_kind"] for r in rows} <= set(encounter_methods.SLOT_KINDS)
+
+
+def test_clone_carries_encounter_table_columns():
+    sql = clone_version_group.build_sql(11, 1001, [(1001, 17, "Blaze Black"), (1002, 18, "Volt White")], full=True)
+    assert "ep.area, ep.area_sort, ep.condition, ep.slot_kind, ep.tag, ep.note" in sql
 
 
 def test_event_boss_pipeline_binds_trainers_portably():

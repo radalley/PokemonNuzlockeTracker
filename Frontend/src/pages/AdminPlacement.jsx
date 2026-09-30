@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import SiteHeader from '../components/SiteHeader'
+import { Button } from '../components/Button'
 import { useAuth } from '../contexts/AuthContext'
 import { apiFetch } from '../utils/api'
 
@@ -206,7 +207,12 @@ function AdminPlacement() {
                     borderTop: '1px solid var(--border-strong)',
                   }}
                 >
-                  <td style={{ padding: '6px' }}>{versionLabels.get(vg) || `Version group ${vg}`}</td>
+                  <td style={{ padding: '6px' }}>
+                    {/* The row handles the click; this button makes it reachable by keyboard. */}
+                    <Button appearance="ghost" size="sm" align="start" selected={selected} aria-pressed={selected}>
+                      {versionLabels.get(vg) || `Version group ${vg}`}
+                    </Button>
+                  </td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.total_trainers}</td>
                   <td style={{ padding: '6px', textAlign: 'right' }}>{row.placed}</td>
                   <td style={{ padding: '6px', textAlign: 'right', color: Number(row.actionable_gaps ?? row.unplaced) > 0 ? '#e0a052' : '#5ba85b' }}>{row.actionable_gaps ?? row.unplaced}</td>
@@ -232,14 +238,13 @@ function AdminPlacement() {
                 />
                 Only trainers with suggestions
               </label>
-              <button
-                type="button"
+              <Button
+                tone="success"
                 disabled={bulkBusy || autoAcceptable.length === 0}
                 onClick={acceptAllUnambiguous}
-                style={{ padding: '6px 12px' }}
               >
                 {bulkBusy ? 'Placing...' : `Accept ${autoAcceptable.length} unambiguous`}
-              </button>
+              </Button>
               {message && <span style={{ color: '#52c97a', fontSize: '0.85em' }}>{message}</span>}
               {error && <span style={{ color: '#e05252', fontSize: '0.85em' }}>{error}</span>}
             </div>
@@ -275,41 +280,31 @@ function AdminPlacement() {
                         <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>No suggestions.</span>
                       )}
                       {(trainer.suggestions || []).map((suggestion, index) => (
-                        <button
+                        <Button
                           key={`${suggestion.canonical_location_id}-${suggestion.source}-${index}`}
-                          type="button"
+                          size="sm"
+                          tone={suggestion.in_script ? 'accent' : 'neutral'}
+                          appearance={suggestion.in_script ? 'tinted' : 'outline'}
                           disabled={busyKeys.has(trainer.encounter_name)}
                           onClick={() => placeOne(trainer, suggestion)}
                           title={[
                             suggestion.detail,
                             suggestion.in_script ? null : 'Not in this game\'s route list; will not display until the script covers it.',
                           ].filter(Boolean).join(' — ')}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            border: '1px solid var(--border-strong)',
-                            background: suggestion.in_script ? 'var(--accent-bg)' : 'transparent',
-                            opacity: suggestion.in_script ? 1 : 0.55,
-                            fontSize: '0.8em',
-                            cursor: 'pointer',
-                          }}
+                          style={suggestion.in_script ? undefined : { opacity: 0.55 }}
                         >
                           {suggestion.location_name}
                           {suggestion.area_name ? ` · ${suggestion.area_name}` : ''}
                           <span style={{ opacity: 0.65 }}> ({SOURCE_LABELS[suggestion.source] || suggestion.source})</span>
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
                 ))}
                 {hasMore && (
-                  <button
-                    type="button"
-                    onClick={() => loadTrainers(versionGroupId, trainers.length, true)}
-                    style={{ padding: '8px' }}
-                  >
+                  <Button shape="rect" onClick={() => loadTrainers(versionGroupId, trainers.length, true)}>
                     Load more
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

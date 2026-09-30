@@ -8,6 +8,9 @@ import {
 
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ runId: '7', attemptId: '2' }),
+  useSearchParams: () => [new URLSearchParams(window.location.search)],
+  useLocation: () => ({ state: null }),
+  Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>,
 }))
 
 vi.mock('../utils/dataLayer', () => ({
@@ -79,6 +82,15 @@ describe('Box page', () => {
     await act(async () => { root.unmount() })
     container.remove()
     vi.clearAllMocks()
+    window.history.replaceState({}, '', '/')
+  })
+
+  it('opens a linked fallen Pokemon directly', async () => {
+    window.history.replaceState({}, '', '/box/7/2?pokemon=2')
+    await act(async () => root.render(<Box key="linked" />))
+    await flush()
+    expect(container.querySelector('#box-pokemon-2').getAttribute('aria-pressed')).toBe('true')
+    expect(container.querySelector('.pokemon-summary').textContent).toContain('Patrat')
   })
 
   it('splits the box into alive and fallen sections', () => {

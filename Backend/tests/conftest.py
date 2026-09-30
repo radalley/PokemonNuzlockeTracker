@@ -223,6 +223,7 @@ create table event_bosses (
 );
 
 create table encounter_pool (
+    encounter_id integer generated always as identity,
     game_id text,
     location_id integer,
     canonical_location_id integer,
@@ -230,7 +231,13 @@ create table encounter_pool (
     min_level integer,
     max_level integer,
     method text,
-    enounter_rate integer
+    enounter_rate integer,
+    area text,
+    area_sort integer,
+    condition text,
+    slot_kind text not null default 'slot',
+    tag text,
+    note text
 );
 
 create table trainer_pool (

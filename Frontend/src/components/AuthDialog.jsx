@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { Button } from './Button'
 
 function AuthDialog() {
   const {
@@ -92,7 +93,7 @@ function AuthDialog() {
               <h2 className="auth-dialog__title">Reset password</h2>
               <p className="auth-dialog__subtitle">We'll send a reset link to your email.</p>
             </div>
-            <button type="button" className="auth-dialog__close" onClick={closeAuthDialog}>Close</button>
+            <Button size="sm" onClick={closeAuthDialog}>Close</Button>
           </div>
           {forgotSent ? (
             <div className="auth-dialog__forgot-sent">
@@ -105,9 +106,9 @@ function AuthDialog() {
                 <input type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} required />
               </label>
               {error && <div className="auth-dialog__error">{error}</div>}
-              <button type="submit" className="auth-dialog__submit" disabled={submitting}>
+              <Button type="submit" size="lg" shape="rect" tone="accent" appearance="solid" block disabled={submitting}>
                 {submitting ? 'Sending...' : 'Send reset link'}
-              </button>
+              </Button>
             </form>
           )}
           <div className="auth-dialog__footer">
@@ -128,7 +129,7 @@ function AuthDialog() {
             <h2 className="auth-dialog__title">{isRegister ? 'Create account' : 'Sign in'}</h2>
             <p className="auth-dialog__subtitle">Use one account across laptop and PC.</p>
           </div>
-          <button type="button" className="auth-dialog__close" onClick={closeAuthDialog}>Close</button>
+          <Button size="sm" onClick={closeAuthDialog}>Close</Button>
         </div>
 
         <button
@@ -174,9 +175,9 @@ function AuthDialog() {
 
           {error && <div className="auth-dialog__error">{error}</div>}
 
-          <button type="submit" className="auth-dialog__submit" disabled={submitting}>
+          <Button type="submit" size="lg" shape="rect" tone="accent" appearance="solid" block disabled={submitting}>
             {submitting ? 'Working...' : isRegister ? 'Create account' : 'Sign in'}
-          </button>
+          </Button>
         </form>
 
         <div className="auth-dialog__footer">

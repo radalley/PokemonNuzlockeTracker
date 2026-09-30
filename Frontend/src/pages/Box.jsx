@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { apiFetch } from '../utils/api'
-import { useParams } from 'react-router-dom'
+import { resolveEvolvedAbility } from '../utils/evolveAbility'
+import { useParams, useSearchParams, useLocation, Link } from 'react-router-dom'
+import { Button } from '../components/Button'
 import AttemptHeader from '../components/AttemptHeader'
 import AttemptSidePanel from '../components/AttemptSidePanel'
 import BoxTile from '../components/BoxTile'
@@ -15,18 +17,6 @@ import {
   removeFromParty,
   updateEncounterStatus,
 } from '../utils/dataLayer'
-
-const MODAL_BUTTON_STYLE = {
-  minHeight: '34px',
-  padding: '6px 14px',
-  border: '1px solid var(--border-strong)',
-  borderRadius: '999px',
-  background: 'var(--surface-deep)',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  font: 'inherit',
-  fontSize: '0.85em',
-}
 
 function withStatusPayload(pokemon, patch) {
   return {
@@ -43,11 +33,14 @@ function withStatusPayload(pokemon, patch) {
  */
 function Box() {
   const { runId, attemptId } = useParams()
+  const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const linkedPokemonId = Number(searchParams.get('pokemon')) || null
   const attemptNumber = parseInt(attemptId)
   const [runDetails, setRunDetails] = useState(null)
   const [pokemon, setPokemon] = useState([])
   const [loaded, setLoaded] = useState(false)
-  const [selectedId, setSelectedId] = useState(null)
+  const [selectedId, setSelectedId] = useState(linkedPokemonId)
   const [statsRefreshKey, setStatsRefreshKey] = useState(0)
   const [statsOpen, setStatsOpen] = useState(false)
   const [partyRefreshKey, setPartyRefreshKey] = useState(0)
@@ -57,6 +50,11 @@ function Box() {
   const [evolvableSpecies, setEvolvableSpecies] = useState(new Set())
 
   const gameId = runDetails?.game_id || null
+
+  useEffect(() => {
+    if (!loaded || !linkedPokemonId) return
+    document.getElementById(`box-pokemon-${linkedPokemonId}`)?.scrollIntoView?.({ block: 'center' })
+  }, [loaded, linkedPokemonId])
 
   useEffect(() => {
     getRunDetails(runId, attemptId)
@@ -176,8 +174,15 @@ function Box() {
 
   const closeEvolve = () => { setEvolveTarget(null); setEvolveOptions(null) }
 
-  const handleConfirmEvolve = (toSpeciesId) => {
-    updateEncounterStatus(runId, attemptId, withStatusPayload(evolveTarget, { species_id: toSpeciesId }))
+  // species_name travels with the id (guest storage keeps whatever name it
+  // is given) and the ability follows its slot onto the evolved species.
+  const handleConfirmEvolve = (option) => {
+    resolveEvolvedAbility(evolveTarget.ability, evolveTarget.species_id, option.to_species_id, gameId)
+      .then(ability => updateEncounterStatus(runId, attemptId, withStatusPayload(evolveTarget, {
+        species_id: option.to_species_id,
+        species_name: option.name,
+        ability,
+      })))
       .then(() => {
         closeEvolve()
         setPartyRefreshKey(k => k + 1)
@@ -216,7 +221,7 @@ function Box() {
             backgroundColor: 'rgba(0,0,0,0.7)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: '16px', overflowY: 'auto', overscrollBehavior: 'contain',
-            zIndex: 3000
+            zIndex: 3100
           }}
         >
           <div
@@ -236,24 +241,20 @@ function Box() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 {evolveOptions.map(opt => (
-                  <button
-                    type="button"
+                  <Button
                     key={opt.to_species_id}
-                    onClick={() => handleConfirmEvolve(opt.to_species_id)}
-                    style={{
-                      ...MODAL_BUTTON_STYLE,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      gap: '10px', minHeight: '48px',
-                      color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)'
-                    }}
+                    tone="accent"
+                    size="lg"
+                    block
+                    onClick={() => handleConfirmEvolve(opt)}
                   >
                     <Sprite speciesId={opt.to_species_id} size={48} />
                     {opt.name}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
-            <button type="button" onClick={closeEvolve} style={{ ...MODAL_BUTTON_STYLE, marginTop: '20px' }}>Cancel</button>
+            <Button onClick={closeEvolve} style={{ marginTop: '20px' }}>Cancel</Button>
           </div>
         </div>
       )}
@@ -264,6 +265,8 @@ function Box() {
         <AttemptSidePanel runId={runId} attemptId={attemptNumber} statsRefreshKey={statsRefreshKey} statsOpen={statsOpen} onToggleStats={() => setStatsOpen(v => !v)} />
 
         <div className="attempt-page__body attempt-page__body--inset box-page" style={{ padding: '20px', textAlign: 'left' }}>
+          {location.state?.fromSplit?.startsWith(`/attempt/${runId}/${attemptId}#split-`) && <Link to={location.state.fromSplit} className="btn btn--neutral btn--tinted btn--md" style={{ textDecoration: 'none' }}>← Back to split</Link>}
+          {loaded && linkedPokemonId && !pokemon.some(p => Number(p.pokemon_id) === linkedPokemonId) && <p role="status">This Pokémon is no longer in this attempt’s Box.</p>}
           <div className={`box-page__layout${selected ? ' box-page__layout--open' : ''}`}>
             <div className="box-page__sections">
               <section className="box-section" aria-labelledby="box-living-heading">

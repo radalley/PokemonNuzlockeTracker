@@ -21,7 +21,8 @@ def fill_sql(game_ids):
 CREATE TEMP TABLE encounter_gap_fill ON COMMIT DROP AS
 SELECT
   g.game_id::text AS game_id, ep.location_id, ep.canonical_location_id,
-  ep.species_id, ep.min_level, ep.max_level, ep.method, ep.enounter_rate
+  ep.species_id, ep.min_level, ep.max_level, ep.method, ep.enounter_rate,
+  ep.area, ep.area_sort, ep.condition, ep.slot_kind, ep.tag, ep.note
 FROM games g
 JOIN encounter_pool ep
   ON nullif(ep.game_id::text, '')::integer = g.base_game_id
@@ -41,10 +42,12 @@ GROUP BY 1, 2 ORDER BY 1, 2;
 
 INSERT INTO encounter_pool (
   game_id, location_id, canonical_location_id, species_id,
-  min_level, max_level, method, enounter_rate
+  min_level, max_level, method, enounter_rate,
+  area, area_sort, condition, slot_kind, tag, note
 )
 SELECT game_id, location_id, canonical_location_id, species_id,
-       min_level, max_level, method, enounter_rate
+       min_level, max_level, method, enounter_rate,
+       area, area_sort, condition, slot_kind, tag, note
 FROM encounter_gap_fill
 ORDER BY game_id, canonical_location_id, species_id;
 

@@ -45,7 +45,8 @@ RUN_COLUMNS = [
     ('V', 'W', {'canon': 8, 'name': 'Route 3'}),
     ('X', 'Y', {'canon': 233, 'name': 'Striaton City'}),
     ('Z', 'AA', {'canon': 237, 'name': 'Pinwheel Forest'}),
-    ('AB', 'AC', {'canon': 237, 'name': 'Inner Pinwheel Forest', 'bonus_of': 237}),
+    # The interior is its own script row since 20260925_bb_pinwheel_inside.
+    ('AB', 'AC', {'canon': 504, 'name': 'Pinwheel Forest (Inside)'}),
 ]
 
 STARTER_BRANCH = {'TEPIG': 'Fire', 'SNIVY': 'Grass', 'OSHAWOTT': 'Water'}

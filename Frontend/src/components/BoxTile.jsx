@@ -22,6 +22,7 @@ function BoxTile({ pokemon, selected = false, inParty = false, onSelect }) {
 
   return (
     <button
+      id={`box-pokemon-${pokemon.pokemon_id}`}
       type="button"
       className={className}
       onClick={() => onSelect(pokemon)}

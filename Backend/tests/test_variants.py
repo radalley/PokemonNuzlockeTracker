@@ -9,7 +9,7 @@ and the is_level_cap flag on script rows.
 import pytest
 
 import backend as backend_module
-from etl.pipelines import clone_version_group
+from etl.pipelines import clone_version_group, fill_encounter_gaps
 
 
 # ---------------------------------------------------------------------------
@@ -207,3 +207,32 @@ def test_script_rows_carry_level_cap_flag_and_isolate_version_groups(db_conn):
     assert clone_boss["badge_id"] == 33
     # Isolation: the clone's boss row resolves to the clone's trainer.
     assert clone_boss["event_id"] != base_boss["event_id"]
+
+
+def test_fill_encounter_gaps_inherits_table_columns_for_undocumented_locations(db_conn):
+    seed_base_game(db_conn)
+    db_conn.execute(
+        "insert into games (game_id, name, game_tag, generation, version_group_id, base_game_id, is_rom_hack) "
+        "values (1001, 'Hack', 'BB', 5, 1001, 17, true)"
+    )
+    # The base row carries every table column; a second base location is
+    # one the hack documents itself, so it must not be inherited.
+    db_conn.execute(
+        "update encounter_pool set area = '1F', area_sort = 1, condition = 'season:winter', "
+        "slot_kind = 'overlay', tag = 'legendary', note = 'deep down' where game_id = '17'"
+    )
+    db_conn.execute(
+        "insert into encounter_pool (game_id, canonical_location_id, species_id, method, enounter_rate) "
+        "values ('17', 7, 505, 'walk', 100), ('1001', 7, 506, 'grass', 100)"
+    )
+    db_conn.execute(fill_encounter_gaps.fill_sql([1001]))
+    db_conn.commit()
+
+    hack = db_conn.execute(
+        "select canonical_location_id, species_id, area, area_sort, condition, slot_kind, tag, note "
+        "from encounter_pool where game_id = '1001' order by canonical_location_id, species_id"
+    ).fetchall()
+    assert [tuple(r.values()) for r in hack] == [
+        (1, 504, "1F", 1, "season:winter", "overlay", "legendary", "deep down"),
+        (7, 506, None, None, None, "slot", None, None),
+    ]

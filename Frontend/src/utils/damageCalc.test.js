@@ -119,7 +119,7 @@ describe('buildCustomSets', () => {
 
   it('keeps a recorded 0 IV and drops unrecorded slots', () => {
     const { sets } = buildCustomSets([{ species_name: 'HOOTHOOT', ivs: { atk: 0, spa: 30 } }], [], null, 18)
-    expect(sets.Hoothoot['Hoothoot (yours)'].ivs).toEqual({ atk: 0, spa: 30 })
+    expect(sets.Hoothoot['Hoothoot (yours)'].ivs).toEqual({ at: 0, sa: 30 })
   })
 
   it('title-cases uppercase species and fixes punctuated names', () => {

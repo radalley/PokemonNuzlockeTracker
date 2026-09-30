@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { apiFetch } from '../utils/api'
-import { useAuth } from '../contexts/AuthContext'
+import { useEditMode } from '../contexts/EditModeContext'
 import { moveBy, moveRelative, reorderWithinGroup, sameOrder } from '../utils/trainerOrder'
+import { resolveEvolvedAbility } from '../utils/evolveAbility'
 import Sprite from './Sprite'
 import { IV_MIN, IV_MAX, emptyIvs, normalizeIvs } from '../utils/pokemonFormat'
 import TrainerCard from './TrainerCard'
 import { TypeIconRow } from './TypeIcon'
+import EncounterTables from './EncounterTables'
+import MethodIcon from './MethodIcon'
+import { buildEncounterView, conditionLabel, methodMeta, rememberSeason, rememberedSeason, slotKey } from '../utils/encounterTables'
+import { lockedTrainerCount, splitPhrase, tableAvailability } from '../utils/splitFeed'
+import OpensInPicker from './OpensInPicker'
+import { Button, MenuItem } from './Button'
 import {
   saveEncounter,
   deleteEncounterById,
@@ -16,6 +23,9 @@ import {
   addToParty,
   removeFromParty,
 } from '../utils/dataLayer'
+
+const EMPTY_TABLES = []
+const EMPTY_METHODS = []
 
 const NATURES = [
   { name: 'Adamant', up: 'Atk', down: 'SpA' },
@@ -50,17 +60,6 @@ const PANEL_STYLE = {
   borderRadius: '14px',
   background: 'var(--surface)',
   boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-}
-
-const SUMMARY_BUTTON_STYLE = {
-  minHeight: '34px',
-  padding: '6px 10px',
-  border: '1px solid var(--border-strong)',
-  borderRadius: '999px',
-  background: 'transparent',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  font: 'inherit',
 }
 
 const ROW_ACTION_GROUP_STYLE = {
@@ -137,27 +136,16 @@ function getStatBarColor(value) {
   return '#5ba85b'
 }
 
-function SummaryButton({ active = false, disabled = false, style = {}, children, ...props }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      style={{
-        ...SUMMARY_BUTTON_STYLE,
-        background: active ? 'var(--surface-mid)' : 'var(--surface-deep)',
-        borderColor: active ? '#7ec8e3' : 'var(--border-strong)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.55 : 1,
-        ...style,
-      }}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-}
 
-function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, generation = null, pool = [], allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master', attemptEnded = false }) {
+const EMPTY_INDEX = new Map()
+const EMPTY_GATES = []
+const NO_SPLITS = []
+
+function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null, generation = null, pool = [], poolTables = EMPTY_TABLES, encounterMethods = EMPTY_METHODS, season: seasonProp = null, onSeasonChange: onSeasonChangeProp = null, allSpecies = [], dupedFamilyIds = new Set(), onEncounterChange, onStatusChange, onPartyChange, onStructureChange, partyPokemonIds = new Set(), onVictoryRecorded = null, viewMode = 'master', attemptEnded = false,
+  // Split layout (Blaze Black): the split index and the run's current
+  // split ordinal decide what is reachable; a jump from a split's returns
+  // list arrives as openRequest; admins get the Opens-in controls.
+  splitLayout = false, splitIndex = EMPTY_INDEX, currentOrdinal = Number.POSITIVE_INFINITY, splits = NO_SPLITS, gates = EMPTY_GATES, openRequest = null, onAvailabilityChange = null }) {
   const searchRef = useRef(null)
   const menuRef = useRef(null)
   const natureRef = useRef(null)
@@ -169,13 +157,12 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const [trainers, setTrainers] = useState([])
   const [trainersLoaded, setTrainersLoaded] = useState(false)
-  // Admin reorder: one card edits at a time, and a drag from its handle
+  // Admin reorder, shown while the header's edit mode is on: a drag from a
+  // card's handle
   // can only land on a sibling in the same group (area) of this location.
   // The drag source lives in a ref so dragstart never re-renders the
   // element being dragged, which would cancel the drag.
-  const { user } = useAuth()
-  const isAdmin = user?.account_type === 'admin'
-  const [editingTrainerId, setEditingTrainerId] = useState(null)
+  const { editMode } = useEditMode()
   const draggingRef = useRef(null)
   const [draggingId, setDraggingId] = useState(null)
   const [dropTarget, setDropTarget] = useState(null)
@@ -188,6 +175,23 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     Number(row.trainer_count ?? 0) === 0 && Number(row.special_trainer_count ?? 0) > 0)
 
   const [encounter, setEncounter] = useState(null)
+  // The encounter tables (blank state): the slot a species was claimed
+  // from (UI-only until Phase 4 persists it), the area tab and the season.
+  const [claimedSlot, setClaimedSlot] = useState(null)
+  // Option A flow: a tap on the tables only SELECTS a slot; the confirm bar
+  // turns the selection into a Caught or Missed encounter.
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [tablesArea, setTablesArea] = useState(null)
+  // The season is one per run: Attempt owns it and passes it down so every
+  // row agrees. A row rendered on its own keeps (and remembers) its own.
+  const [localSeason, setLocalSeason] = useState(() => (seasonProp ? null : rememberedSeason(runId)))
+  const tablesSeason = seasonProp ?? localSeason
+  // Retyping the species in the editor keeps the editor mounted (and the
+  // input focused) even while no species is chosen; the player goes back
+  // to the tables with 'Back to tables' or Change.
+  const [keepEditor, setKeepEditor] = useState(false)
+  const encounterView = useMemo(() => buildEncounterView(poolTables, encounterMethods), [poolTables, encounterMethods])
+  const hasTables = encounterView.tables.length > 0 || encounterView.rare.length > 0
   const [encounterDetails, setEncounterDetails] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState(pool)
@@ -216,6 +220,28 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
 
   const [locationName, setLocationName] = useState(row.display_name || '')
   const [isEditingLocationName, setIsEditingLocationName] = useState(false)
+
+  // A jump from a later split's returns list: which split's content is new
+  // here (badged NEW / highlighted) and the method tab to land on.
+  const [focusSplitKey, setFocusSplitKey] = useState(null)
+  const [tablesFocus, setTablesFocus] = useState(null)
+  const [highlightTrainerIds, setHighlightTrainerIds] = useState(new Set())
+  useEffect(() => {
+    if (!openRequest?.nonce) return
+    setActivePanel(openRequest.panel === 'trainers' ? 'trainers' : 'encounter')
+    setFocusSplitKey(openRequest.splitKey || null)
+    setTablesFocus(openRequest.panel === 'encounter' ? { nonce: openRequest.nonce, methods: openRequest.methods || [], areas: openRequest.areas || [] } : null)
+    setHighlightTrainerIds(new Set((openRequest.trainerIds || []).map(Number)))
+  }, [openRequest?.nonce]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const homeSplit = splitLayout ? splitIndex.get(row.home_split) || null : null
+  const homeOrdinal = homeSplit ? homeSplit.ordinal : 0
+  const availabilityOf = splitLayout ? (entry => tableAvailability(entry, splitIndex, currentOrdinal)) : null
+  const trainerSplitOf = trainer => (splitLayout && trainer?.opens_in ? splitIndex.get(trainer.opens_in) || null : null)
+  const trainerLocked = trainer => {
+    const split = trainerSplitOf(trainer)
+    return Boolean(split) && split.ordinal > currentOrdinal
+  }
 
   useEffect(() => {
     setLocationName(row.display_name || '')
@@ -247,7 +273,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }, [locationName, row.is_bonus_location, row.display_name, row.event_id, row.secondary_sort_order, runId, attemptNumber])
 
   useEffect(() => {
-    if (!savedEncounter) return
+    // Only a row the server knows hydrates the editor: Attempt also holds
+    // optimistic {species_id, status} entries with no pokemon behind them.
+    if (!savedEncounter?.pokemon_id) return
     skipNextEncounterSaveRef.current = true
     setEncounter({ species_id: savedEncounter.species_id, name: savedEncounter.species_name })
     setSearchQuery(savedEncounter.species_name || '')
@@ -473,11 +501,22 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   const specialTrainers = trainers.filter(t => t.is_event || t.is_rematch)
   // Group by sub-area (gym, building, cave floor). The backend already orders
   // area-less trainers first, then areas by their sort order, so insertion
-  // order here is the display order.
+  // order here is the display order. In the split layout, trainers that
+  // open in a later split than this row's home leave their area group for
+  // a "New in <leader>'s split" group at the end, one per split.
   const trainerGroups = useMemo(() => {
     const groups = []
     const byArea = new Map()
+    const bySplit = new Map()
     for (const trainer of availableTrainers) {
+      const later = trainerSplitOf(trainer)
+      if (later && later.ordinal > homeOrdinal) {
+        if (!bySplit.has(later.split_key)) {
+          bySplit.set(later.split_key, { key: `split:${later.split_key}`, name: `New in ${splitPhrase(later)}`, kind: null, split: later, later: true, trainers: [] })
+        }
+        bySplit.get(later.split_key).trainers.push(trainer)
+        continue
+      }
       const key = trainer.area_id ?? null
       if (!byArea.has(key)) {
         const group = { key, name: trainer.area_name || null, kind: trainer.area_kind || null, trainers: [] }
@@ -486,8 +525,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       }
       byArea.get(key).trainers.push(trainer)
     }
-    return groups
-  }, [availableTrainers])
+    return [...groups, ...[...bySplit.values()].sort((a, b) => a.split.ordinal - b.split.ordinal)]
+  }, [availableTrainers, splitLayout, splitIndex, homeOrdinal]) // eslint-disable-line react-hooks/exhaustive-deps
   const hasNamedAreas = trainerGroups.some(g => g.name)
   const specialGroups = useMemo(() => {
     const rematches = specialTrainers.filter(t => t.is_rematch)
@@ -497,14 +536,19 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (events.length) groups.push({ key: 'events', name: 'Special Battles', trainers: events, special: true })
     return groups
   }, [specialTrainers])
-  // Use the loaded value if trainers are loaded, otherwise use the seed value from row
+  // Use the loaded value if trainers are loaded, otherwise use the seed value from row.
+  // The pill counts only trainers reachable so far; ones locked behind a
+  // later split are left out until it opens.
   const defeatedTrainerCount = trainersLoaded
     ? availableTrainers.filter(t => Boolean(t.is_defeated)).length
     : Number(row.trainer_count ?? 0) - Number(row.available_trainer_count ?? 0)
   const hasSeedTrainerCount = row.trainer_count != null
   const initialTrainerCount = Number(row.trainer_count ?? 0)
   const initialSpecialCount = Number(row.special_trainer_count ?? 0)
-  const trainerCount = trainersLoaded ? availableTrainers.length : initialTrainerCount
+  const lockedCount = splitLayout
+    ? (trainersLoaded ? availableTrainers.filter(trainerLocked).length : lockedTrainerCount(row, splitIndex, currentOrdinal))
+    : 0
+  const trainerCount = Math.max(0, (trainersLoaded ? availableTrainers.length : initialTrainerCount) - lockedCount)
   // Allow first load only when trainer counts are unknown; honor explicit zero
   // counts. A location whose roster is all rematch/event trainers (stadiums,
   // the cruise, League rematches) still opens its panel for the special groups.
@@ -512,7 +556,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     ? (availableTrainers.length === 0 && specialTrainers.length === 0 && initialSpecialCount === 0)
     : (hasSeedTrainerCount && initialTrainerCount === 0 && initialSpecialCount === 0)
   const inParty = pokemonId ? partyPokemonIds.has(pokemonId) : false
-  const summaryName = nickname || encounter?.name || 'Encounter'
+  const summaryName = nickname || encounter?.name || (hasTables ? 'Choose encounter' : 'Log encounter')
   const type1 = encounterDetails?.type1 || null
   const type2 = encounterDetails?.type2 || null
   const showEncounterView = viewMode === 'master' || viewMode === 'encounters'
@@ -540,10 +584,53 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
   }, [activePanel, showEncounterView, showTrainerView])
 
+  useEffect(() => {
+    if (activePanel !== 'encounter') {
+      setKeepEditor(false)
+      // nothing was saved by a selection, so closing the panel drops it
+      setSelectedSlot(null)
+    }
+  }, [activePanel])
+
+  // A status chosen for a pick the server never stored (the create failed):
+  // drop it, invalidate the pending save, and roll back Attempt's
+  // optimistic entry, so no later pick inherits it.
+  const discardUnsavedStatus = () => {
+    if (pokemonIdRef.current || !status) return
+    encounterSaveSequenceRef.current += 1
+    if (encounter?.species_id && onStatusChange) {
+      onStatusChange(row.encounter_key, encounter.species_id, '')
+    }
+    setStatus('')
+    setEncounterSaveError('')
+    setIsSavingEncounter(false)
+  }
+
+  // Everything entered for an unsaved pick, back to blank.
+  const resetDraft = () => {
+    setEncounter(null)
+    setEncounterDetails(null)
+    setSearchQuery('')
+    setSearchResults(pool)
+    setShowSearch(false)
+    setNickname('')
+    setNature('')
+    setAbility('')
+    setIsShiny(false)
+    setGender('male')
+    setIvs(emptyIvs())
+    setForms([])
+    setClaimedSlot(null)
+    setKeepEditor(false)
+    setEncounterSaveError('')
+  }
+
   const handleClear = () => {
     // Invalidate any in-flight save so a pending create cannot resurrect
-    // the row after it was cleared.
+    // the row after it was cleared. Its finally block will now skip the
+    // saving flag, so clear it here or the row stays locked.
     encounterSaveSequenceRef.current += 1
+    setIsSavingEncounter(false)
     // A status that never reached the server left an optimistic entry in
     // the parent (dupe graying); roll it back.
     if (!pokemonIdRef.current && status && encounter?.species_id && onStatusChange) {
@@ -554,19 +641,10 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         .then(() => { if (onEncounterChange) onEncounterChange() })
         .catch(err => console.error('Failed to delete encounter:', err))
     }
-    setEncounter(null)
-    setEncounterDetails(null)
-    setSearchQuery('')
-    setSearchResults(pool)
+    resetDraft()
     pokemonIdRef.current = null
     setPokemonId(null)
-    setNickname('')
-    setNature('')
     setStatus('')
-    setAbility('')
-    setIsShiny(false)
-    setGender('male')
-    setForms([])
     setShowMenu(false)
     setActivePanel(null)
   }
@@ -689,7 +767,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     const groupStyle = compact
       ? ROW_ACTION_GROUP_STYLE
       : { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', width: '100%' }
-    const buttonStyle = compact ? { whiteSpace: 'nowrap' } : { minHeight: '42px' }
+    // The summary row's actions are the default size; the open card's are
+    // the large confirm size.
+    const size = compact ? 'md' : 'lg'
 
     if (!encounter?.species_id) {
       // Also covers a status-bearing row mid species-edit: no live buttons
@@ -698,12 +778,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       if (compact) return null
       return (
         <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
-          <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
-            Caught
-          </SummaryButton>
-          <SummaryButton disabled title="Pick a species first" style={{ ...buttonStyle, color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.08)' }}>
-            Missed
-          </SummaryButton>
+          <Button size={size} tone="success" disabled title="Pick a species first">Caught</Button>
+          <Button size={size} tone="warning" disabled title="Pick a species first">Missed</Button>
         </div>
       )
     }
@@ -714,17 +790,11 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       return (
         <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           {isSavingEncounter ? (
-            <SummaryButton disabled style={{ ...buttonStyle, gridColumn: '1 / -1', width: '100%' }}>
-              Saving...
-            </SummaryButton>
+            <Button size={size} disabled style={{ gridColumn: '1 / -1', width: '100%' }}>Saving...</Button>
           ) : (
             <>
-              <SummaryButton onClick={requestImmediateSave} style={{ ...buttonStyle, color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
-                Retry Save
-              </SummaryButton>
-              <SummaryButton onClick={handleClear} title="Discard this encounter" style={buttonStyle}>
-                Cancel
-              </SummaryButton>
+              <Button size={size} tone="danger" onClick={requestImmediateSave}>Retry Save</Button>
+              <Button size={size} onClick={claimedSlot ? handleUndoDecision : handleClear} title="Discard this encounter">Cancel</Button>
             </>
           )}
         </div>
@@ -734,39 +804,32 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (status === 'Dead') {
       return (
         <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: compact ? groupStyle.gridTemplateColumns : '1fr' }}>
-          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ ...buttonStyle, gridColumn: '1 / -1', minWidth: 0, width: '100%', color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.12)' }}>
+          <Button size={size} tone="warning" disabled={isSavingEncounter || !pokemonId} onClick={handleRevive} style={{ gridColumn: '1 / -1', minWidth: 0, width: '100%' }}>
             Revive
-          </SummaryButton>
+          </Button>
         </div>
       )
     }
     if (status === 'Captured') {
       return (
         <div className={`encounter-actions encounter-actions--${variant}`} style={groupStyle}>
-          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handlePartyToggle} style={{ ...buttonStyle, color: inParty ? '#7ec8e3' : '#52c97a', borderColor: inParty ? '#7ec8e3' : '#52c97a', background: inParty ? 'rgba(126,200,227,0.12)' : 'rgba(82,201,122,0.12)' }}>
+          <Button size={size} tone={inParty ? 'info' : 'success'} disabled={isSavingEncounter || !pokemonId} onClick={handlePartyToggle}>
             {compact ? `Party ${inParty ? '-' : '+'}` : (inParty ? 'Party -' : 'Party')}
-          </SummaryButton>
-          <SummaryButton disabled={isSavingEncounter || !pokemonId} onClick={handleDeath} style={{ ...buttonStyle, color: '#e05252', borderColor: '#e05252', background: 'rgba(224,82,82,0.12)' }}>
-            Dead
-          </SummaryButton>
-          <SummaryButton disabled={isSavingEncounter || !pokemonId || !hasEvolutions} onClick={() => setShowEvolve(true)} style={{ ...buttonStyle, color: 'var(--accent)', borderColor: 'var(--accent-border)', background: 'var(--accent-bg)' }}>
-            Evolve
-          </SummaryButton>
+          </Button>
+          <Button size={size} tone="danger" disabled={isSavingEncounter || !pokemonId} onClick={handleDeath}>Dead</Button>
+          <Button size={size} tone="accent" disabled={isSavingEncounter || !pokemonId || !hasEvolutions} onClick={() => setShowEvolve(true)}>Evolve</Button>
         </div>
       )
     }
     if (status === 'Missed') {
       return (
         <div className={`encounter-actions encounter-actions--${variant}`} style={groupStyle}>
-          <div style={{ ...buttonStyle, minHeight: compact ? '34px' : '42px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.8em', color: '#d4a017', border: '1px dashed #d4a017', borderRadius: '999px', background: 'rgba(212,160,23,0.08)', boxSizing: 'border-box', opacity: 0.9 }}>
+          {/* A status, not an action: the dashed chip says what was logged. */}
+          <div className="encounter-actions__status" style={{ minHeight: compact ? '36px' : '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', fontSize: compact ? '0.82rem' : '0.9rem', color: 'var(--warning)', border: '1px dashed var(--warning)', borderRadius: '999px', background: 'color-mix(in srgb, var(--warning) 8%, transparent)', boxSizing: 'border-box' }}>
             Missed
           </div>
-          <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
-            Caught
-          </SummaryButton>
-          <SummaryButton disabled={isSavingEncounter} onClick={handleClear} title="Undo: clear this encounter" style={buttonStyle}>
-            Undo
-          </SummaryButton>
+          <Button size={size} tone="success" disabled={isSavingEncounter} onClick={handleCatch}>Caught</Button>
+          <Button size={size} disabled={isSavingEncounter} onClick={claimedSlot ? handleUndoDecision : handleClear} title="Undo: clear this encounter">Undo</Button>
         </div>
       )
     }
@@ -775,12 +838,8 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     if (compact) return null
     return (
       <div className={`encounter-actions encounter-actions--${variant}`} style={{ ...groupStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
-        <SummaryButton disabled={isSavingEncounter} onClick={handleCatch} style={{ ...buttonStyle, color: '#52c97a', borderColor: '#52c97a', background: 'rgba(82,201,122,0.12)' }}>
-          Caught
-        </SummaryButton>
-        <SummaryButton disabled={isSavingEncounter} onClick={handleMiss} style={{ ...buttonStyle, color: '#d4a017', borderColor: '#d4a017', background: 'rgba(212,160,23,0.08)' }}>
-          Missed
-        </SummaryButton>
+        <Button size={size} tone="success" disabled={isSavingEncounter} onClick={handleCatch}>Caught</Button>
+        <Button size={size} tone="warning" disabled={isSavingEncounter} onClick={handleMiss}>Missed</Button>
       </div>
     )
   }
@@ -788,16 +847,96 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   // An ability belongs to one species: every species change clears it
   // rather than silently carrying it onto a Pokemon that cannot have it.
   const handleEncounterSelect = (species) => {
+    // A different species never inherits a status that failed to save.
+    if (species.species_id !== encounter?.species_id) discardUnsavedStatus()
     setEncounter(species)
     setAbility('')
     setSearchQuery(species.name)
     setShowSearch(false)
     setActivePanel('encounter')
+    setClaimedSlot(null)
+    setKeepEditor(false)
   }
 
-  const handleEvolveSelect = (evo) => {
-    setEncounter({ species_id: evo.to_species_id, name: evo.name })
+  // A tap on a table row, a static, a plain-pool row or a search result
+  // selects it; a second tap on the same entry clears the selection.
+  const handleSelectSlot = (slot) => {
+    if (attemptEnded || !slot?.species_id) return
+    // A table that has not opened yet cannot take the location's one
+    // encounter; searched species carry no table and are never blocked.
+    if (availabilityOf && slot.source !== 'search' && availabilityOf(slot).state !== 'open') return
+    setSelectedSlot(current => (current && slotKey(current) === slotKey(slot) ? null : slot))
+  }
+
+  // Admin Opens-in controls (edit mode, split layout only).
+  const renderOpensIn = (kind, key, label, current, inheritedLabel, align = 'left') => (
+    <OpensInPicker
+      gameId={gameId}
+      subjectKind={kind}
+      subjectKey={key}
+      subjectLabel={label}
+      current={current || {}}
+      inheritedLabel={inheritedLabel}
+      splits={splits}
+      gates={gates}
+      index={splitIndex}
+      onSaved={onAvailabilityChange}
+      align={align}
+    />
+  )
+  const showOpensIn = splitLayout && editMode && gameId != null && !row.is_bonus_location
+  const areaAvailability = area => (row.areas || []).find(a => a.area === area) || null
+
+  // The confirm bar: the selection becomes the encounter and is saved at
+  // once with the chosen status, like the Caught / Missed buttons today.
+  // The stat screen (nickname, nature, IVs) opens after.
+  const handleConfirmEncounter = (nextStatus) => {
+    const slot = selectedSlot
+    if (attemptEnded || !slot?.species_id) return
+    setEncounter({ species_id: slot.species_id, name: slot.name })
     setAbility('')
+    setSearchQuery(slot.name)
+    setShowSearch(false)
+    setClaimedSlot(slot)
+    setKeepEditor(false)
+    setSelectedSlot(null)
+    setActivePanel('encounter')
+    saveStatusImmediatelyRef.current = true
+    setStatus(nextStatus)
+    if (onStatusChange) onStatusChange(row.encounter_key, slot.species_id, nextStatus)
+  }
+
+  // Undo a decision made from the tables: the encounter is cleared (and
+  // deleted if it saved) and the tables come back with the pick selected.
+  const handleUndoDecision = () => {
+    const slot = claimedSlot
+    handleClear()
+    setActivePanel('encounter')
+    if (slot) setSelectedSlot(slot)
+  }
+
+  // Back to the tables from an unsaved pick: the pick is discarded whole
+  // (nickname, nature, shiny, IVs), not carried onto the next species.
+  const handleChangeEncounter = () => {
+    discardUnsavedStatus()
+    resetDraft()
+  }
+
+  const handleSeasonChange = (season) => {
+    if (onSeasonChangeProp) {
+      onSeasonChangeProp(season)
+      return
+    }
+    setLocalSeason(season)
+    rememberSeason(runId, season)
+  }
+
+  // The ability follows its slot onto the evolved species; it resolves
+  // before any state changes so the auto-save fires once, not twice.
+  const handleEvolveSelect = async (evo) => {
+    const nextAbility = await resolveEvolvedAbility(ability, encounter?.species_id, evo.to_species_id, gameId)
+    setEncounter({ species_id: evo.to_species_id, name: evo.name })
+    setAbility(nextAbility)
     setSearchQuery(evo.name)
     setShowEvolve(false)
     setEvolutions(null)
@@ -839,12 +978,6 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
       })
       .finally(() => setReorderSaving(false))
   }
-
-  // Edit mode lives with the cards: when they go away (panel closed, list
-  // reloading) it goes with them, so a reopened card starts clean.
-  useEffect(() => {
-    if (activePanel !== 'trainers' || !trainersLoaded) setEditingTrainerId(null)
-  }, [activePanel, trainersLoaded])
 
   const reorderControlsFor = (group, index) => {
     const ids = group.trainers.map(t => t.trainer_id)
@@ -921,6 +1054,174 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
     }
   }
 
+  // The blank state shows the tables; a chosen species, a stored row, or a
+  // species being retyped in the editor shows the editor.
+  const isStored = Boolean(pokemonId || savedEncounter?.pokemon_id)
+  const panelMode = activePanel === 'encounter' && !encounter?.species_id && !isStored && !keepEditor ? 'tables' : 'editor'
+  // Change / Back to tables: only for an undecided, unstored pick, and only
+  // when the tables panel has something to go back to.
+  const canReturnToTables = !status && !isStored && (hasTables || pool.length > 0)
+
+  const renderSearchInput = (placeholder) => (
+    <div ref={searchRef} style={{ position: 'relative' }}>
+      <input
+        type="text"
+        placeholder={placeholder}
+        autoComplete="off"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        value={searchQuery}
+        // A create in flight is about this species: hold the input until it lands.
+        readOnly={isSavingEncounter && !pokemonId}
+        onChange={(e) => {
+          if (panelMode === 'editor') setKeepEditor(true)
+          discardUnsavedStatus()
+          setSearchQuery(e.target.value)
+          setEncounter(null)
+          setEncounterDetails(null)
+          setAbility('')
+          setClaimedSlot(null)
+          setShowSearch(true)
+        }}
+        onFocus={() => {
+          setShowSearch(true)
+          setActivePanel('encounter')
+        }}
+        style={{
+          width: '100%',
+          height: '40px',
+          boxSizing: 'border-box',
+          borderRadius: '10px',
+          border: '1px solid var(--border-strong)',
+          background: 'var(--surface-deep)',
+          color: 'var(--text-secondary)',
+          padding: '0 12px',
+          fontSize: '0.9em',
+        }}
+      />
+
+      {showSearch && searchResults.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '46px',
+          left: 0,
+          right: 0,
+          maxHeight: '190px',
+          overflowY: 'auto',
+          background: 'var(--surface-mid)',
+          border: '1px solid var(--border-strong)',
+          borderRadius: '10px',
+          zIndex: 1000
+        }}>
+          {searchResults.map(species => (
+            <MenuItem
+              key={species.species_id}
+              onClick={() => {
+                if (panelMode === 'tables') {
+                  handleSelectSlot({ species_id: species.species_id, name: species.name, method: null, slot_kind: 'slot', source: 'search' })
+                  setShowSearch(false)
+                  return
+                }
+                handleEncounterSelect(species)
+              }}
+              style={dupedFamilyIds.has(species.species_id) && species.species_id !== savedEncounter?.species_id ? { opacity: 0.35 } : undefined}
+            >
+              <Sprite speciesId={species.species_id} size={26} useIcon />
+              <span>{species.name}</span>
+            </MenuItem>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  // Where the chosen species came from, until a save (Phase 4 persists it).
+  const renderProvenance = () => {
+    if (!encounter?.species_id) {
+      if (!canReturnToTables || panelMode !== 'editor') return null
+      return (
+        <div className="encounter-provenance" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.78em', color: 'var(--text-secondary)' }}>
+          <span>No species chosen</span>
+          <Button size="sm" onClick={handleChangeEncounter}>Back to tables</Button>
+        </div>
+      )
+    }
+    if (pokemonId && !claimedSlot) return null
+    const meta = claimedSlot?.method ? methodMeta(encounterMethods, claimedSlot.method) : null
+    const bits = meta
+      ? [
+          meta.label,
+          claimedSlot.rate != null ? `${claimedSlot.rate}%` : (claimedSlot.slot_kind === 'static' ? 'Static' : null),
+          claimedSlot.area,
+          claimedSlot.condition ? conditionLabel(claimedSlot.condition) : null,
+          claimedSlot.min_level != null ? `Lv ${claimedSlot.min_level}` : null,
+        ].filter(Boolean)
+      : [claimedSlot?.source === 'pool' ? 'Encounter list' : 'Searched']
+    return (
+      <div className="encounter-provenance" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '8px', fontSize: '0.78em', color: 'var(--text-secondary)' }}>
+        {meta && <MethodIcon group={meta.group} rare={Boolean(meta.is_rare)} size={16} title={meta.label} />}
+        <span>{bits.join(' · ')}</span>
+        {canReturnToTables && (
+          <Button size="sm" onClick={handleChangeEncounter}>Change</Button>
+        )}
+        {status === 'Captured' && claimedSlot && pokemonId && (
+          <Button size="sm" onClick={handleUndoDecision} disabled={isSavingEncounter} title="Clear this encounter and pick again">Undo</Button>
+        )}
+      </div>
+    )
+  }
+
+  // Bottom right of the tables: the selected species and the decision.
+  const renderConfirmBar = () => {
+    const slot = selectedSlot
+    const meta = slot?.method ? methodMeta(encounterMethods, slot.method) : null
+    const detail = !slot ? null : meta
+      ? [
+          meta.label,
+          slot.rate != null ? `${slot.rate}%` : (slot.slot_kind === 'static' ? 'Static' : null),
+          slot.area,
+          slot.condition ? conditionLabel(slot.condition) : null,
+          slot.min_level != null ? `Lv ${slot.min_level}` : null,
+        ].filter(Boolean).join(' · ')
+      : (slot.source === 'pool' ? 'Encounter list' : 'Searched')
+    const disabled = !slot || attemptEnded
+    return (
+      <div className="encounter-confirm-dock" style={{ position: 'sticky', display: 'flex', justifyContent: 'flex-end', marginTop: '14px', zIndex: 2, pointerEvents: 'none' }}>
+        <div
+          className={`encounter-confirm${slot ? ' encounter-confirm--armed' : ''}`}
+          role="group"
+          aria-label="Confirm encounter"
+          style={{
+            pointerEvents: 'auto', display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '10px',
+            padding: '8px 8px 8px 12px', borderRadius: '14px', background: 'var(--surface)',
+            border: `1px solid ${slot ? 'var(--pick)' : 'var(--border-strong)'}`, boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+          }}
+        >
+          {slot ? (
+            <span className="encounter-confirm__pick" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <Sprite speciesId={slot.species_id} size={30} useIcon />
+              <span style={{ display: 'grid', minWidth: 0 }}>
+                <b style={{ fontSize: '0.92em' }}>{slot.name}</b>
+                <small style={{ fontSize: '0.76em', color: 'var(--text-secondary)' }}>{detail}</small>
+              </span>
+            </span>
+          ) : (
+            <span className="encounter-confirm__prompt" style={{ fontSize: '0.85em', color: 'var(--text-secondary)' }}>
+              {attemptEnded ? 'This attempt has ended' : 'Tap a Pokémon to select it'}
+            </span>
+          )}
+          <Button tone="warning" size="lg" className="encounter-confirm__missed" disabled={disabled} onClick={() => handleConfirmEncounter('Missed')} style={{ minWidth: '104px' }}>
+            Missed
+          </Button>
+          <Button tone="success" size="lg" className="encounter-confirm__caught" disabled={disabled} onClick={() => handleConfirmEncounter('Captured')} style={{ minWidth: '104px' }}>
+            Caught
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const renderLocationCell = () => {
     if (!row.is_bonus_location) {
       return (
@@ -981,7 +1282,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
   }
 
   return (
-    <div className="location-row" style={{ marginBottom: '14px' }}>
+    <div id={`location-${row.encounter_key}`} className="location-row" style={{ marginBottom: '14px' }}>
       {showEvolve && (
         // z-index clears the fixed header and footer, which both sit at
         // 1000; the panel scrolls because a species with many evolutions
@@ -1025,33 +1326,14 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
                 {evolutions.map(evo => (
-                  <button
-                    key={evo.to_species_id}
-                    onClick={() => handleEvolveSelect(evo)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px',
-                      padding: '8px 16px',
-                      fontSize: '0.9em',
-                      cursor: 'pointer',
-                      color: '#7ec8e3',
-                      borderColor: '#7ec8e3'
-                    }}
-                  >
+                  <Button key={evo.to_species_id} tone="accent" size="lg" block onClick={() => handleEvolveSelect(evo)} style={{ gap: '10px', minHeight: '56px' }}>
                     <Sprite speciesId={evo.to_species_id} size={48} />
                     {evo.name}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
-            <button
-              onClick={() => setShowEvolve(false)}
-              style={{ marginTop: '20px', padding: '6px 16px', cursor: 'pointer', fontSize: '0.85em' }}
-            >
-              Cancel
-            </button>
+            <Button onClick={() => setShowEvolve(false)} style={{ marginTop: '20px' }}>Cancel</Button>
           </div>
         </div>
       )}
@@ -1064,8 +1346,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
         padding: '2px 0',
         flexWrap: 'wrap',
       }}>
-        <div className="location-row__name" style={{ minWidth: 0, flex: '0 1 220px' }}>
+        <div className="location-row__name" style={{ minWidth: 0, flex: '0 1 220px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {renderLocationCell()}
+          {showOpensIn && renderOpensIn('location', String(row.event_id), row.display_name, row, 'story order')}
         </div>
 
         {showEncounterView && (
@@ -1084,29 +1367,29 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               )}
             </div>
 
-            <SummaryButton className="location-row__encounter-button" active={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, textAlign: 'left', color: 'var(--text-primary)' }}>
+            <Button className="location-row__encounter-button" align="start" selected={activePanel === 'encounter'} onClick={() => togglePanel('encounter')} style={{ flex: '0 1 240px', width: '240px', minWidth: 0, color: 'var(--text-primary)' }}>
               <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                 {summaryName}
               </span>
-            </SummaryButton>
+            </Button>
           </>
         )}
 
         {showTrainerView && !row.is_bonus_location && (
-          <SummaryButton className="location-row__trainer-button" disabled={trainerButtonDisabled} active={activePanel === 'trainers'} onClick={() => togglePanel('trainers')} style={{ whiteSpace: 'nowrap' }}>
+          <Button className="location-row__trainer-button" disabled={trainerButtonDisabled} selected={activePanel === 'trainers'} onClick={() => togglePanel('trainers')}>
             Trainers {defeatedTrainerCount}/{trainerCount}{(() => {
               const special = trainersLoaded && showSpecialTrainers ? specialTrainers.length : initialSpecialCount
               return special > 0 ? ` +${special}★` : ''
             })()}
-          </SummaryButton>
+          </Button>
         )}
 
         {showEncounterView && activePanel !== 'encounter' && renderEncounterActions('summary')}
 
         <div ref={menuRef} className="location-row__menu" style={{ position: 'relative', marginLeft: 'auto' }}>
-          <SummaryButton onClick={() => setShowMenu(current => !current)} style={{ minWidth: 0, padding: '6px 10px' }}>
+          <Button onClick={() => setShowMenu(current => !current)} selected={showMenu} aria-label="Location actions" aria-expanded={showMenu} style={{ minWidth: 0, padding: '0 12px' }}>
             ...
-          </SummaryButton>
+          </Button>
           {showMenu && (
             <div style={{
               position: 'absolute',
@@ -1125,40 +1408,62 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
               // after overflowY would reset it and clip the scroll.
               overflowX: 'hidden'
             }}>
-              <div
-                onClick={handleAddLocation}
-                style={{ padding: '10px 12px', cursor: 'pointer', color: '#7ec8e3', borderBottom: '1px solid var(--border-strong)' }}
-              >
-                Add location
-              </div>
+              <MenuItem tone="info" onClick={handleAddLocation}>Add location</MenuItem>
               {row.is_bonus_location && (
-                <div
-                  onClick={handleDeleteLocation}
-                  style={{ padding: '10px 12px', cursor: 'pointer', color: '#e55', borderBottom: '1px solid var(--border-strong)' }}
-                >
-                  Delete location
-                </div>
+                <MenuItem tone="danger" onClick={handleDeleteLocation}>Delete location</MenuItem>
               )}
-              <div
-                onClick={handleClear}
-                style={{ padding: '10px 12px', cursor: 'pointer', color: '#e55' }}
-              >
-                Clear encounter
-              </div>
+              <MenuItem tone="danger" onClick={handleClear}>Clear encounter</MenuItem>
               {status === 'Captured' && pokemonId && (
-                <div
-                  onClick={() => { setShowMenu(false); handleMiss() }}
-                  style={{ padding: '10px 12px', cursor: 'pointer', color: '#d4a017' }}
-                >
-                  Mark as Missed
-                </div>
+                <MenuItem tone="warning" onClick={() => { setShowMenu(false); handleMiss() }}>Mark as Missed</MenuItem>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {showEncounterView && activePanel === 'encounter' && (
+      {showEncounterView && activePanel === 'encounter' && panelMode === 'tables' && (
+        <div className="location-row__panel location-row__panel--encounter location-row__panel--tables" style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
+          <div className="encounter-tables__header" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <div style={{ flex: '1 1 240px', maxWidth: '360px' }}>{renderSearchInput('Search any species')}</div>
+            <div style={{ fontSize: '0.75em', color: 'var(--text-secondary)' }}>
+              {hasTables ? 'Pick how you met it, then the species.' : 'Pick the species you met.'}
+            </div>
+          </div>
+          <EncounterTables
+            view={encounterView}
+            locationName={row.display_name}
+            fallbackPool={pool}
+            dupedFamilyIds={dupedFamilyIds}
+            disabled={attemptEnded}
+            area={tablesArea}
+            onAreaChange={setTablesArea}
+            season={tablesSeason}
+            onSeasonChange={handleSeasonChange}
+            selectedKey={slotKey(selectedSlot)}
+            onSelect={handleSelectSlot}
+            availabilityOf={availabilityOf}
+            newSplitKey={focusSplitKey}
+            focus={tablesFocus}
+            gates={gates}
+            renderTableAdmin={showOpensIn ? (table => {
+              const sample = table.rows[0] || table.overlays[0]
+              const parent = table.area ? areaAvailability(table.area) : row
+              const parentSplit = parent?.opens_in ? splitIndex.get(parent.opens_in) : null
+              return renderOpensIn('table', `${row.event_id}|${table.area || ''}|${table.method}|${table.condition || ''}`,
+                `${row.display_name} · ${table.meta.label}${table.area ? ` (${table.area})` : ''}`, sample,
+                parentSplit ? `${parentSplit.label} or the method's gate` : 'the area and gate', 'right')
+            }) : null}
+            renderAreaAdmin={showOpensIn ? (area => {
+              const current = areaAvailability(area)
+              const homeLabel = row.opens_in ? (splitIndex.get(row.opens_in)?.label || 'the location') : 'the location'
+              return renderOpensIn('area', `${row.event_id}|${area}`, `${row.display_name} · ${area}`, current, homeLabel)
+            }) : null}
+          />
+          {renderConfirmBar()}
+        </div>
+      )}
+
+      {showEncounterView && activePanel === 'encounter' && panelMode === 'editor' && (
         <div className="location-row__panel location-row__panel--encounter" style={{ ...PANEL_STYLE, marginTop: '10px', padding: '16px' }}>
           <div className="encounter-editor" style={{
             display: 'grid',
@@ -1167,72 +1472,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
             alignItems: 'stretch',
           }}>
             <div className="encounter-editor__column encounter-editor__column--identity" style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', gap: '14px', minHeight: '320px', padding: '14px', border: 'none', background: 'transparent' }}>
-              <div ref={searchRef} style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="Encounter"
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    setEncounter(null)
-                    setEncounterDetails(null)
-                    setAbility('')
-                    setShowSearch(true)
-                  }}
-                  onFocus={() => {
-                    setShowSearch(true)
-                    setActivePanel('encounter')
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    boxSizing: 'border-box',
-                    borderRadius: '10px',
-                    border: '1px solid var(--border-strong)',
-                    background: 'var(--surface-deep)',
-                    color: 'var(--text-secondary)',
-                    padding: '0 12px',
-                    fontSize: '0.9em',
-                  }}
-                />
-
-                {showSearch && searchResults.length > 0 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '46px',
-                    left: 0,
-                    right: 0,
-                    maxHeight: '190px',
-                    overflowY: 'auto',
-                    background: 'var(--surface-mid)',
-                    border: '1px solid var(--border-strong)',
-                    borderRadius: '10px',
-                    zIndex: 1000
-                  }}>
-                    {searchResults.map(species => (
-                      <div
-                        key={species.species_id}
-                        onClick={() => handleEncounterSelect(species)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px 10px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid var(--border-strong)',
-                          ...(dupedFamilyIds.has(species.species_id) && species.species_id !== savedEncounter?.species_id ? { opacity: 0.35, color: '#888' } : {})
-                        }}
-                      >
-                        <Sprite speciesId={species.species_id} size={26} useIcon />
-                        <span>{species.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div>
+                {renderSearchInput('Encounter')}
+                {renderProvenance()}
               </div>
 
               <div className="encounter-editor__sprite-card" style={{
@@ -1249,52 +1491,33 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                 <div style={{ position: 'absolute', top: '8px', left: '44px', right: '44px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
                   <TypeIconRow types={[type1, type2]} height={22} gap={8} placeholder justifyContent="center" />
                 </div>
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  shape="rect"
+                  icon
+                  selected={isShiny}
                   onClick={() => setIsShiny(current => !current)}
                   title="Toggle shiny"
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '8px',
-                    width: '28px',
-                    height: '28px',
-                    border: '1px solid var(--border-strong)',
-                    borderRadius: '8px',
-                    background: 'var(--surface-deep)',
-                    color: isShiny ? '#f4d35e' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    fontSize: '0.9em',
-                    lineHeight: 1
-                  }}
+                  aria-label="Shiny"
+                  style={{ position: 'absolute', top: '8px', left: '8px', color: isShiny ? '#f4d35e' : undefined }}
                 >
                   ★
-                </button>
+                </Button>
                 {encounterDetails?.has_gender === 'true' && (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    shape="rect"
+                    icon
                     onClick={() => {
                       if (encounterDetails?.one_gender === 'true') return
                       setGender(g => g === 'female' ? 'male' : 'female')
                     }}
                     title={encounterDetails?.one_gender === 'true' ? `Always ${gender}` : `Toggle gender`}
-                    style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '28px',
-                      height: '28px',
-                      border: '1px solid var(--border-strong)',
-                      borderRadius: '8px',
-                      background: 'var(--surface-deep)',
-                      color: gender === 'female' ? '#e84d8a' : '#4d8fe8',
-                      cursor: encounterDetails?.one_gender === 'true' ? 'default' : 'pointer',
-                      fontSize: '1em',
-                      lineHeight: 1,
-                    }}
+                    aria-label={gender === 'female' ? 'Female' : 'Male'}
+                    style={{ position: 'absolute', top: '8px', right: '8px', fontSize: '0.9rem', color: gender === 'female' ? '#e84d8a' : '#4d8fe8', cursor: encounterDetails?.one_gender === 'true' ? 'default' : undefined }}
                   >
                     {gender === 'female' ? '♀' : '♂'}
-                  </button>
+                  </Button>
                 )}
                 {encounter?.species_id ? (
                   <Sprite speciesId={encounter.species_id} size={200} shiny={isShiny} female={gender === 'female' && encounterDetails?.has_female === 'true'} style={status === 'Dead' ? { filter: 'grayscale(1)', opacity: 0.5 } : status === 'Missed' ? { opacity: 0.4 } : undefined} />
@@ -1413,25 +1636,15 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     maxHeight: '220px',
                     overflowY: 'auto'
                   }}>
-                    <div
-                      onClick={() => { setNature(''); setShowNature(false) }}
-                      style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border-strong)', color: 'var(--text-secondary)', fontSize: '0.85em' }}
-                    >
+                    <MenuItem onClick={() => { setNature(''); setShowNature(false) }} style={{ color: 'var(--text-secondary)' }}>
                       - Clear -
-                    </div>
+                    </MenuItem>
                     {NATURES.map(entry => (
-                      <div
+                      <MenuItem
                         key={entry.name}
+                        selected={nature === entry.name}
                         onClick={() => { setNature(entry.name); setShowNature(false) }}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid var(--border-strong)',
-                          backgroundColor: nature === entry.name ? 'var(--border-strong)' : 'transparent'
-                        }}
+                        style={{ justifyContent: 'space-between' }}
                       >
                         <span style={{ fontSize: '0.9em' }}>{entry.name}</span>
                         <span style={{ fontSize: '0.75em', marginLeft: '12px', display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -1444,7 +1657,7 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                             <span style={{ color: '#888' }}>Neutral</span>
                           )}
                         </span>
-                      </div>
+                      </MenuItem>
                     ))}
                   </div>
                 )}
@@ -1586,36 +1799,32 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                     return entries.map(option => {
                       const chosen = ability && option.name === ability
                       return (
-                        <button
+                        <Button
                           key={option.name}
-                          type="button"
+                          tone={chosen ? 'success' : 'neutral'}
+                          shape="rect"
+                          block
+                          align="start"
                           disabled={!clickable || isSavingEncounter}
                           onClick={() => handleSelectAbility(chosen ? '' : option.name)}
                           title={clickable ? (chosen ? 'Press to unset' : 'Press to record this ability') : undefined}
                           style={{
-                            textAlign: 'left',
-                            font: 'inherit',
-                            fontSize: '0.8em',
-                            padding: '7px 10px',
-                            borderRadius: '8px',
-                            border: chosen ? '1px solid #52c97a' : '1px solid var(--border-strong)',
-                            background: chosen ? 'rgba(82,201,122,0.12)' : 'var(--surface-deep)',
-                            color: chosen ? '#52c97a' : 'var(--text-secondary)',
-                            fontWeight: chosen ? 'bold' : 'normal',
+                            fontWeight: chosen ? 700 : 400,
                             fontStyle: option.hidden ? 'italic' : 'normal',
-                            cursor: clickable && !isSavingEncounter ? 'pointer' : 'default',
+                            // A read-only list until the Pokemon is caught, not a dead control.
                             opacity: clickable ? 1 : 0.75,
+                            cursor: clickable && !isSavingEncounter ? 'pointer' : 'default',
                           }}
                         >
                           {formatAbility(option.name)}{option.hidden ? ' (Hidden)' : ''}{chosen ? ' ✓' : ''}
-                        </button>
+                        </Button>
                       )
                     })
                   })()}
                 </div>
               </div>
 
-              <div className="encounter-editor__actions" style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <div className={`encounter-editor__actions${!status ? ' encounter-editor__actions--sticky' : ''}`} style={{ display: 'flex', alignItems: 'flex-end' }}>
                 {renderEncounterActions('panel')}
               </div>
             </div>
@@ -1646,9 +1855,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: hasNamedAreas || specialGroups.length ? '14px' : '8px' }}>
               {[...trainerGroups, ...specialGroups].map(group => (
-                <div key={group.key ?? 'location'} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div key={group.key ?? 'location'} className={group.later ? 'trainer-group trainer-group--later' : 'trainer-group'} style={{ display: 'flex', flexDirection: 'column', gap: '8px', ...(group.later ? { '--split-color': group.split.color } : {}) }}>
                   {group.name && (
-                    <div style={{
+                    <div className="trainer-group__head" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -1657,26 +1866,40 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                       textTransform: 'uppercase',
                       color: group.kind === 'gym' ? 'var(--accent)' : 'var(--text-secondary)',
                     }}>
-                      <span>{group.name}</span>
-                      <span style={{ flex: 1, height: '1px', background: 'var(--border-strong)' }} />
+                      <span>
+                        {group.later && <span className="opens-chip__medal" aria-hidden="true">{group.split.label.charAt(0)}</span>}
+                        {group.name}
+                      </span>
+                      <span style={{ flex: 1, height: '1px', background: group.later ? 'color-mix(in srgb, var(--split-color) 50%, transparent)' : 'var(--border-strong)' }} />
                       <span style={{ opacity: 0.7 }}>
                         {group.trainers.filter(t => t.is_defeated).length}/{group.trainers.length}
                       </span>
                     </div>
                   )}
                   {group.trainers.map((trainer, index) => {
-                    const reorderable = isAdmin && !group.special
+                    // Later-split groups are the resolver's order, not a curated one.
+                    const reorderable = editMode && !group.special && !group.later
+                    const locked = trainerLocked(trainer)
+                    const laterSplit = trainerSplitOf(trainer)
                     const slotClass = [
                       'trainer-slot',
                       dropTarget?.trainerId === trainer.trainer_id ? `trainer-slot--drop-${dropTarget.position}` : '',
                       draggingId === trainer.trainer_id ? 'trainer-slot--dragging' : '',
+                      highlightTrainerIds.has(Number(trainer.trainer_id)) ? 'trainer-slot--highlight' : '',
                     ].filter(Boolean).join(' ')
                     return (
                       <div
                         key={trainer.trainer_id}
                         className={slotClass}
+                        style={laterSplit ? { '--split-color': laterSplit.color } : undefined}
                         {...(reorderable ? slotDragHandlers(group, trainer) : {})}
                       >
+                        {showOpensIn && !group.special && (
+                          <div style={{ marginBottom: '4px' }}>
+                            {renderOpensIn('trainer', trainer.encounter_name, `${trainer.trainer_name || trainer.encounter_name}`, trainer,
+                              trainer.area_name ? `${trainer.area_name} or ${homeSplit?.label || 'this row'}` : (homeSplit?.label || 'this row'))}
+                          </div>
+                        )}
                         <TrainerCard
                           encounterName={trainer.encounter_name}
                           trainerName={trainer.trainer_name}
@@ -1694,11 +1917,9 @@ function LocationRow({ row, savedEncounter, runId, attemptNumber, gameId = null,
                           onVictoryRecorded={() => handleTrainerVictoryRecorded(trainer.trainer_id)}
                           attemptEnded={attemptEnded}
                           battleType={Number(trainer.is_double) ? 'double' : null}
-                          editing={isAdmin ? editingTrainerId === trainer.trainer_id : null}
-                          onToggleEdit={isAdmin
-                            ? () => setEditingTrainerId(prev => (prev === trainer.trainer_id ? null : trainer.trainer_id))
-                            : null}
                           reorder={reorderable ? reorderControlsFor(group, index) : null}
+                          lockedLabel={locked ? `Opens in ${laterSplit.label}` : null}
+                          lockedColor={locked ? laterSplit.color : null}
                         />
                       </div>
                     )

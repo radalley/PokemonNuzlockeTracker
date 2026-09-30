@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import SiteHeader from '../components/SiteHeader'
 import { useAuth } from '../contexts/AuthContext'
 import { createRun } from '../utils/dataLayer'
+import { Button } from '../components/Button'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -157,28 +158,19 @@ function NewRun() {
         </label>
 
         <div className="new-run-actions new-run-actions-top">
-          <button type="button" className="page-action-button page-action-button--success" onClick={handleCreate}>Create</button>
+          <Button tone="success" appearance="solid" onClick={handleCreate}>Create</Button>
         </div>
       </div>
 
       <div className="new-run-picker">
         <div className="new-run-generation-bar">
-          <button
-            type="button"
-            className={`new-run-generation-pill${selectedGeneration === 'all' ? ' is-selected' : ''}`}
-            onClick={() => setSelectedGeneration('all')}
-          >
+          <Button size="sm" selected={selectedGeneration === 'all'} onClick={() => setSelectedGeneration('all')}>
             All
-          </button>
+          </Button>
           {generations.map(generation => (
-            <button
-              key={generation}
-              type="button"
-              className={`new-run-generation-pill${Number(selectedGeneration) === generation ? ' is-selected' : ''}`}
-              onClick={() => setSelectedGeneration(generation)}
-            >
+            <Button key={generation} size="sm" selected={Number(selectedGeneration) === generation} onClick={() => setSelectedGeneration(generation)}>
               Gen {generation}
-            </button>
+            </Button>
           ))}
         </div>
 

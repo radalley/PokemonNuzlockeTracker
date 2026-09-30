@@ -4,6 +4,7 @@ import SiteHeader from '../components/SiteHeader'
 import Sprite from '../components/Sprite'
 import { useAuth } from '../contexts/AuthContext'
 import { getRuns, deleteRun, renameRun } from '../utils/dataLayer'
+import { Button } from '../components/Button'
 
 function getGameLogoSrc(gameName) {
   return `/sprites/Game Logos/Pokemon_${String(gameName || '').replace(/\s+/g, '_')}.png`
@@ -223,8 +224,8 @@ function LoadRunRow({ run, onLoad, onDelete, onRename }) {
 
       <td className="load-run-cell load-run-cell--actions">
         <div className="load-run-actions-row">
-          <button type="button" className="page-action-button page-action-button--success" onClick={onLoad} disabled={!run.latest_attempt}>Load</button>
-          <button type="button" className="page-action-button page-action-button--danger" onClick={onDelete}>Delete</button>
+          <Button tone="success" onClick={onLoad} disabled={!run.latest_attempt}>Load</Button>
+          <Button tone="danger" appearance="outline" onClick={onDelete}>Delete</Button>
         </div>
       </td>
     </tr>
@@ -282,14 +283,10 @@ function LoadRun() {
               All data will be lost.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
-              <button type="button" className="page-action-button" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button
-                type="button"
-                className="page-action-button page-action-button--danger"
-                onClick={() => handleDeleteRun(confirmDelete)}
-              >
+              <Button onClick={() => setConfirmDelete(null)}>Cancel</Button>
+              <Button tone="danger" appearance="solid" onClick={() => handleDeleteRun(confirmDelete)}>
                 Yes, Delete Permanently
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -302,22 +299,13 @@ function LoadRun() {
           <>
             {generations.length > 1 && (
               <div className="load-run-filters">
-                <button
-                  type="button"
-                  className={`load-run-filter-btn${genFilter === null ? ' is-active' : ''}`}
-                  onClick={() => setGenFilter(null)}
-                >
+                <Button size="sm" selected={genFilter === null} onClick={() => setGenFilter(null)}>
                   All
-                </button>
+                </Button>
                 {generations.map(gen => (
-                  <button
-                    key={gen}
-                    type="button"
-                    className={`load-run-filter-btn${genFilter === gen ? ' is-active' : ''}`}
-                    onClick={() => setGenFilter(gen)}
-                  >
+                  <Button key={gen} size="sm" selected={genFilter === gen} onClick={() => setGenFilter(gen)}>
                     Gen {gen}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

@@ -2,6 +2,8 @@ import psycopg2
 import psycopg2.extras
 import time
 import json
+import encounter_methods
+import split_availability
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
@@ -982,6 +984,7 @@ def delete_bonus_location(conn, run_id, attempt_number, canonical_location_id, s
             f'delete from party where attempt_id = %s and pokemon_id in ({placeholders})',
             (attempt_id, *pokemon_ids)
         )
+        compact_party_slots(conn, attempt_id)
 
     conn.execute(
         'delete from pokebank '
@@ -1060,6 +1063,29 @@ def get_party_for_attempt(conn, run_id, attempt_number):
     ).fetchall()
     return [_fold_ivs(dict(r)) for r in rows]
 
+def compact_party_slots(conn, attempt_id):
+    """Close the gap a departing member leaves: the rest keep their order and
+    move up, so the free slots are always the last ones.
+
+    (attempt_id, party_slot) is the primary key, so the rows are rewritten in
+    one transaction rather than renumbered in place, where an intermediate
+    slot could collide with a slot still held by another member."""
+    rows = conn.execute(
+        'select party_slot, pokemon_id from party where attempt_id = %s '
+        'order by party_slot nulls last, pokemon_id',
+        (attempt_id,)
+    ).fetchall()
+    if all(row['party_slot'] == slot for slot, row in enumerate(rows, start=1)):
+        return
+    conn.execute('delete from party where attempt_id = %s', (attempt_id,))
+    for slot, row in enumerate(rows, start=1):
+        conn.execute(
+            'insert into party (attempt_id, party_slot, pokemon_id) values (%s, %s, %s)',
+            (attempt_id, slot, row['pokemon_id'])
+        )
+    conn.commit()
+
+
 def add_to_party_for_attempt(conn, run_id, attempt_number, pokemon_id):
     row = conn.execute(
         'select attempt_id from attempts where run_id = %s and attempt_number = %s',
@@ -1099,6 +1125,7 @@ def remove_from_party_for_attempt(conn, run_id, attempt_number, pokemon_id):
         'delete from party where attempt_id = %s and pokemon_id = %s',
         (attempt_id, pokemon_id)
     )
+    compact_party_slots(conn, attempt_id)
     conn.commit()
 
 def _parse_id_set(value):
@@ -1119,9 +1146,12 @@ def _parse_id_set(value):
     return {int(p) for p in parts if p.isdigit()}
 
 def _has_column(conn, table_name, column_name):
+    # Scoped to the active schema, like _has_constraint: a same-named
+    # table elsewhere (another Supabase schema, a staging copy) must not
+    # make a read path select columns its own table lacks.
     return conn.execute(
         'select 1 from information_schema.columns '
-        'where table_name = %s and column_name = %s limit 1',
+        'where table_schema = current_schema() and table_name = %s and column_name = %s limit 1',
         (table_name, column_name)
     ).fetchone() is not None
 
@@ -1620,15 +1650,31 @@ def _set_attempt_badge_ids(conn, attempt_id, badge_ids):
             (attempt_id, int(badge_id))
         )
 
-def mark_trainer_victory(conn, run_id, attempt_number, trainer_id, event_id=None):
+def mark_trainer_victory(conn, run_id, attempt_number, trainer_id, event_id=None, participant_ids=None, fainted_ids=None):
+    from split_timeline import prepare_party, record_victory
     _ensure_badge_schema(conn)
+    has_trainers_defeated = _has_column(conn, 'pokebank', 'trainers_defeated')
+    if not has_trainers_defeated:
+        conn.execute('alter table pokebank add column trainers_defeated text')
+        conn.commit()
+        has_trainers_defeated = True
     row = conn.execute(
-        'select attempt_id from attempts where run_id = %s and attempt_number = %s',
+        'select attempt_id, outcome from attempts where run_id = %s and attempt_number = %s for update',
         (run_id, attempt_number)
     ).fetchone()
     if not row:
         return {'success': False, 'error': 'Attempt not found'}
     attempt_id = row['attempt_id']
+    if row['outcome'] is not None:
+        return {'success': False, 'error': 'This attempt has ended'}
+    valid_trainer = conn.execute(
+        'select tp.trainer_id from trainer_pool tp join runs r on r.run_id = %s '
+        'join games g on g.game_id = r.game_id '
+        'where tp.trainer_id = %s and tp.version_group_id = g.version_group_id',
+        (run_id, trainer_id),
+    ).fetchone()
+    if not valid_trainer:
+        return {'success': False, 'error': 'Trainer not found for this game'}
 
     event_row = None
     if event_id is not None:
@@ -1650,6 +1696,10 @@ def mark_trainer_victory(conn, run_id, attempt_number, trainer_id, event_id=None
         'select 1 from trainers_defeated where run_id = %s and attempt_id = %s and trainer_id = %s limit 1',
         (run_id, attempt_id, trainer_id)
     ).fetchone()
+    try:
+        snapshot = prepare_party(conn, attempt_id, participant_ids, fainted_ids) if not existing else None
+    except ValueError as exc:
+        return {'success': False, 'error': str(exc)}
     if not existing:
         conn.execute(
             'insert into trainers_defeated (run_id, attempt_id, trainer_id) values (%s, %s, %s)',
@@ -1662,18 +1712,11 @@ def mark_trainer_victory(conn, run_id, attempt_number, trainer_id, event_id=None
     badge_awarded = None
     updated_party_pokemon = 0
 
-    has_trainers_defeated = _has_column(conn, 'pokebank', 'trainers_defeated')
-    if not has_trainers_defeated:
-        conn.execute('alter table pokebank add column trainers_defeated text')
-        conn.commit()
-        has_trainers_defeated = True
-
     if victory_is_new and has_trainers_defeated:
         party_rows = conn.execute(
             'select pb.pokemon_id, pb.trainers_defeated '
-            'from party p join pokebank pb on p.pokemon_id = pb.pokemon_id '
-            'where p.attempt_id = %s',
-            (attempt_id,)
+            'from pokebank pb where pb.attempt_id = %s and pb.pokemon_id = any(%s)',
+            (attempt_id, [p['pokemon_id'] for p in snapshot])
         ).fetchall()
         for pr in party_rows:
             defeated_ids = _parse_id_set(pr['trainers_defeated'])
@@ -1700,12 +1743,16 @@ def mark_trainer_victory(conn, run_id, attempt_number, trainer_id, event_id=None
             }
             inserted_party_badges = conn.execute(
                 'insert into pokemon_badges (pokemon_id, badge_id, event_id) '
-                'select p.pokemon_id, %s, %s from party p where p.attempt_id = %s '
+                'select p.pokemon_id, %s, %s from pokebank p where p.attempt_id = %s and p.pokemon_id = any(%s) '
                 'on conflict (pokemon_id, badge_id) do nothing',
-                (badge_id, event_id, attempt_id)
+                (badge_id, event_id, attempt_id, [p['pokemon_id'] for p in snapshot])
             )
             updated_party_pokemon += inserted_party_badges.rowcount
 
+    if victory_is_new:
+        record_victory(conn, attempt_id, trainer_id, event_id, snapshot)
+        # Anyone who fell in that battle left the party: close the gap.
+        compact_party_slots(conn, attempt_id)
     conn.commit()
     return {
         'success': True,
@@ -1830,26 +1877,11 @@ def get_attempt_page_data(conn, run_id, attempt_number):
         row['special_trainer_count'] = trainer_meta['special_trainer_count'] if trainer_meta else 0
         row['has_available_trainers'] = bool(row['available_trainer_count'])
 
-    pools = {}
+    pools, pool_tables = {}, {}
     if location_ids and game_id:
-        placeholders = ','.join(['%s'] * len(location_ids))
-        rows = conn.execute(
-            f'SELECT ep.canonical_location_id, ep.species_id, s.name '
-            f'FROM encounter_pool ep '
-            f'LEFT JOIN species s ON ep.species_id = s.species_id '
-            f'WHERE nullif(ep.canonical_location_id::text, \'\')::integer IN ({placeholders}) AND nullif(ep.game_id::text, \'\')::integer = %s',
-            location_ids + [int(game_id)]
-        ).fetchall()
-        pool_species_ids = {}
-        for row in rows:
-            lid = int(row['canonical_location_id'])
-            if lid not in pools:
-                pools[lid] = []
-                pool_species_ids[lid] = set()
-            if row['species_id'] in pool_species_ids[lid]:
-                continue
-            pool_species_ids[lid].add(row['species_id'])
-            pools[lid].append({'species_id': row['species_id'], 'name': row['name']})
+        rows_by_location = load_encounter_rows(conn, location_ids, game_id)
+        pools = pools_from_rows(rows_by_location)
+        pool_tables = tables_from_rows(rows_by_location)
 
     pokebank = get_pokebank_for_attempt(conn, run_id, attempt_number)
     encounters = {p['encounter_key']: p for p in pokebank}
@@ -1860,13 +1892,18 @@ def get_attempt_page_data(conn, run_id, attempt_number):
         (run_id, attempt_number)
     ).fetchone()
 
-    return {
+    payload = {
         'run': run_dict,
         'script': script_list,
         'pools': pools,
+        'pool_tables': pool_tables,
+        'encounter_methods': get_encounter_methods(),
         'encounters': encounters,
         'attempt': dict(attempt_info) if attempt_info else None,
     }
+    # Split-layout games (Blaze Black) also get their sections and the
+    # resolved availability; every other game's payload is unchanged.
+    return split_availability.decorate_page(conn, payload, game_id, version_group_id, starter, defeated_ids)
 
 def get_attempt_session_stats(conn, run_id, attempt_number):
     attempt_row = conn.execute(
@@ -2100,6 +2137,111 @@ def get_location_by_id(conn, location_id):
         (location_id,)
     ).fetchone()
     return row['location_name'] if row else None
+
+def get_encounter_methods():
+    """The encounter-method registry, served with the tables so the
+    frontend never hard-codes a method name."""
+    return encounter_methods.registry()
+
+
+def _encounter_tables_migrated(conn):
+    # Probed once per process after the columns exist; migrations are
+    # additive, so a positive answer never goes stale. A negative one is
+    # re-checked, so applying the migration needs no restart.
+    if not _schema_ready.get('encounter_tables'):
+        _schema_ready['encounter_tables'] = _has_column(conn, 'encounter_pool', 'area')
+    return _schema_ready['encounter_tables']
+
+
+def load_encounter_rows(conn, location_ids, game_id):
+    """Every encounter_pool row for the given locations of one game, as
+    {canonical_location_id: [row]} in display order: area (doc order),
+    all-seasons tables before seasonal ones, method by the registry, slots
+    before overlays before statics, rate descending.
+
+    A database without the table columns (migration not applied) still
+    answers, with the table fields None, so the read path never 500s."""
+    ids = sorted({int(x) for x in location_ids if x is not None and str(x) != ''})
+    if not ids or game_id is None:
+        return {}
+    placeholders = ','.join(['%s'] * len(ids))
+    method_order = ' '.join(f"WHEN '{key}' THEN {rank}" for key, rank in encounter_methods.SORT_ORDER.items())
+    if _encounter_tables_migrated(conn):
+        table_columns = 'ep.area, ep.area_sort, ep.condition, ep.slot_kind, ep.tag, ep.note, '
+        order_by = (
+            'ORDER BY ep.canonical_location_id, coalesce(ep.area_sort, 0), ep.condition NULLS FIRST, '
+            f'CASE ep.method {method_order} ELSE 999 END, '
+            "CASE ep.slot_kind WHEN 'slot' THEN 0 WHEN 'overlay' THEN 1 ELSE 2 END, "
+            'ep.enounter_rate DESC NULLS LAST, ep.encounter_id'
+        )
+    else:
+        table_columns = (
+            "NULL::text AS area, NULL::integer AS area_sort, NULL::text AS condition, "
+            "'slot'::text AS slot_kind, NULL::text AS tag, NULL::text AS note, "
+        )
+        order_by = (
+            'ORDER BY ep.canonical_location_id, '
+            f'CASE ep.method {method_order} ELSE 999 END, '
+            'ep.enounter_rate DESC NULLS LAST, ep.encounter_id'
+        )
+    rows = conn.execute(
+        'SELECT ep.canonical_location_id, ep.species_id, s.name, ep.method, '
+        + table_columns +
+        'ep.enounter_rate AS rate, ep.min_level, ep.max_level '
+        'FROM encounter_pool ep '
+        'LEFT JOIN species s ON s.species_id = ep.species_id '
+        f"WHERE nullif(ep.canonical_location_id::text, '')::integer IN ({placeholders}) "
+        "AND nullif(ep.game_id::text, '')::integer = %s "
+        + order_by,
+        (*ids, int(game_id))
+    ).fetchall()
+    by_location = {}
+    for row in rows:
+        by_location.setdefault(int(row['canonical_location_id']), []).append({
+            'species_id': row['species_id'],
+            'name': row['name'],
+            'method': row['method'],
+            'area': row['area'],
+            'area_sort': row['area_sort'],
+            'condition': row['condition'],
+            'slot_kind': row['slot_kind'] or 'slot',
+            'tag': row['tag'],
+            'rate': row['rate'],
+            'min_level': row['min_level'],
+            'max_level': row['max_level'],
+            'note': row['note'],
+        })
+    return by_location
+
+
+def pools_from_rows(rows_by_location):
+    """The species picker's pool: one entry per species, first seen wins."""
+    pools = {}
+    for lid, rows in rows_by_location.items():
+        seen = set()
+        pools[lid] = []
+        for row in rows:
+            if row['species_id'] in seen:
+                continue
+            seen.add(row['species_id'])
+            pools[lid].append({'species_id': row['species_id'], 'name': row['name']})
+    return pools
+
+
+def tables_from_rows(rows_by_location):
+    """The rows the encounter tables are built from: rows whose method is in
+    the registry. Inherited Starter rows have no method, and a pool loaded
+    before the reparse carries old keys ('grass-normal') with every floor
+    merged; both stay pool-only so the panel falls back to the plain list.
+    Empty fields are left out: they are most of a hack's payload."""
+    return {
+        lid: [
+            {key: value for key, value in row.items() if value is not None and value != ''}
+            for row in rows if row['method'] in encounter_methods.SORT_ORDER
+        ]
+        for lid, rows in rows_by_location.items()
+    }
+
 
 def _dedupe_encounter_pool_rows(rows):
     unique_rows = []
@@ -2765,9 +2907,10 @@ def get_species_abilities(conn, species_id, game_id=None):
 
     Resolves through the same version-group-aware patch join the party
     queries use, so a hack's override layer (Blaze Black's Regular-mode
-    abilities) wins over the generation pick. Returns [{name, hidden}] in
-    slot order (ability3 is the hidden slot), deduplicated; display
-    formatting is client-side.
+    abilities) wins over the generation pick. Returns [{name, hidden, slot}]
+    in slot order (ability3 is the hidden slot), deduplicated so a repeated
+    name keeps its first slot; display formatting is client-side. The slot
+    lets an evolution carry the ability across to the same slot.
     """
     game_generation = _get_game_generation(conn, game_id=game_id)
     version_group_id = None
@@ -2787,11 +2930,13 @@ def get_species_abilities(conn, species_id, game_id=None):
         return []
     abilities = []
     seen = set()
-    for slot, hidden in (('ability1', False), ('ability2', False), ('ability3', True)):
-        value = (row[slot] or '').strip()
+    for slot, (column, hidden) in enumerate(
+        (('ability1', False), ('ability2', False), ('ability3', True)), start=1
+    ):
+        value = (row[column] or '').strip()
         if value and value not in seen:
             seen.add(value)
-            abilities.append({'name': value, 'hidden': hidden})
+            abilities.append({'name': value, 'hidden': hidden, 'slot': slot})
     return abilities
 
 def get_species_learnset(conn, species_id, game_id=None):

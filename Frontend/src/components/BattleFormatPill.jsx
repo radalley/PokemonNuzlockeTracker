@@ -1,20 +1,12 @@
-const BATTLE_FORMAT_STYLES = {
-  double: { color: '#7ec8e3', label: 'Double' },
-  triple: { color: '#f2b46b', label: 'Triple' },
-  rotation: { color: '#b48ce3', label: 'Rotation' },
-}
+import { BATTLE_FORMATS, normalizeBattleFormat } from '../utils/battleFormat'
 
-export function normalizeBattleFormat(value) {
-  const key = String(value || '').trim().toLowerCase()
-  return BATTLE_FORMAT_STYLES[key] ? key : null
-}
-
-function BattleFormatPill({ format, fontSize = '0.68em' }) {
+function BattleFormatPill({ format, fontSize = '0.68em', className = '' }) {
   const normalized = normalizeBattleFormat(format)
   if (!normalized) return null
-  const { color, label } = BATTLE_FORMAT_STYLES[normalized]
+  const { color, label } = BATTLE_FORMATS[normalized]
   return (
     <span
+      className={className || undefined}
       title={`${label} battle`}
       style={{
         fontSize,

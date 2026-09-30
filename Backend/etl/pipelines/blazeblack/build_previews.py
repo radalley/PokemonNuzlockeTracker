@@ -495,9 +495,13 @@ def main():
             print(f"  - {problem}")
         if len(problems) > 40:
             print(f"  ... and {len(problems) - 40} more")
-    fatal = [p for p in problems if "unresolved" in p and "species" in p]
+    # Encounter tables must be whole: a merged or misfiled table would
+    # show a player odds that add up to 200%.
+    fatal = [p for p in problems if ("unresolved" in p and "species" in p)
+             or p.startswith(("table sums", "unknown encounter method", "duplicate slot", "overlay rate"))]
     if fatal or duplicate_names:
-        print("\nFATAL: unresolved species or duplicate keys; fix before loading.", file=sys.stderr)
+        print("\nFATAL: unresolved species, broken encounter tables, or duplicate keys; fix before loading.",
+              file=sys.stderr)
         raise SystemExit(1)
 
 

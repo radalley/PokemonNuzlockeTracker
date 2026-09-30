@@ -144,8 +144,10 @@ SELECT setval(
   true
 );
 
-INSERT INTO encounter_pool (game_id, location_id, canonical_location_id, species_id, min_level, max_level, method, enounter_rate)
-SELECT v.new_id, ep.location_id, ep.canonical_location_id, ep.species_id, ep.min_level, ep.max_level, ep.method, ep.enounter_rate
+INSERT INTO encounter_pool (game_id, location_id, canonical_location_id, species_id, min_level, max_level, method, enounter_rate,
+                            area, area_sort, condition, slot_kind, tag, note)
+SELECT v.new_id, ep.location_id, ep.canonical_location_id, ep.species_id, ep.min_level, ep.max_level, ep.method, ep.enounter_rate,
+       ep.area, ep.area_sort, ep.condition, ep.slot_kind, ep.tag, ep.note
 FROM encounter_pool ep
 JOIN (VALUES {games_values}) AS v(new_id, base_id, name)
   ON nullif(ep.game_id::text, '')::integer = v.base_id;

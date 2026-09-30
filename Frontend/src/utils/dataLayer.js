@@ -126,6 +126,14 @@ export async function getAttemptPageData(runId, attemptNumber) {
     const script = (scriptData.script || []).map(row => ({
       ...row,
       is_defeated: defeatedSet.has(Number(row.event_id)),
+      // Split layout: returning trainers carry their beaten state the way
+      // the server marks them for signed-in runs.
+      revisits: Array.isArray(row.revisits)
+        ? row.revisits.map(revisit => ({
+            ...revisit,
+            trainers: (revisit.trainers || []).map(t => ({ ...t, is_defeated: defeatedSet.has(Number(t.trainer_id)) })),
+          }))
+        : row.revisits,
       secondary_sort_order: Number(row.secondary_sort_order || 0),
       is_bonus_location: Boolean(row.is_bonus_location),
       encounter_key: `${row.event_id}:${Number(row.secondary_sort_order || 0)}`,
@@ -165,8 +173,12 @@ export async function getAttemptPageData(runId, attemptNumber) {
       run: runDetails,
       script: fullScript,
       pools: scriptData.pools || {},
+      pool_tables: scriptData.pool_tables || {},
+      encounter_methods: scriptData.encounter_methods || [],
       encounters,
       attempt: guest.getAttemptOutcome(runId, attemptNumber),
+      // Availability is reference data, so guests get the same sections.
+      ...(scriptData.splits ? { splits: scriptData.splits, split_gates: scriptData.split_gates || [] } : {}),
     }
   }
 
@@ -296,9 +308,52 @@ export async function removeFromParty(runId, attemptNumber, pokemonId) {
   return res.json()
 }
 
-export async function markTrainerVictory(runId, attemptNumber, trainerId, eventId = null, badgeId = null) {
+export async function getBattleRecords(runId, attemptNumber) {
+  if (isLocalRun(runId)) return guest.getBattleRecords(runId, attemptNumber)
+  const res = await apiFetch(`/api/runs/${runId}/attempts/${attemptNumber}/battle-records`)
+  if (!res.ok) throw new Error('Unable to load battle records')
+  return res.json()
+}
+
+export async function getSplitCatalogue(gameId, starter) {
+  const res = await apiFetch(`/api/games/${gameId}/splits?starter=${encodeURIComponent(starter || 'Fire')}`)
+  if (!res.ok) throw new Error('Unable to load splits')
+  return res.json()
+}
+
+/** One curated availability rule (admin): a split or a gate, or null to inherit. */
+export async function saveAvailabilityRule(gameId, subjectKind, subjectKey, { opensIn = null, gateKey = null, note = null } = {}) {
+  const inherit = !opensIn && !gateKey
+  const res = await apiFetch('/api/admin/availability', {
+    method: inherit ? 'DELETE' : 'POST',
+    body: JSON.stringify({ game_id: gameId, subject_kind: subjectKind, subject_key: subjectKey, opens_in: opensIn, gate_key: gateKey, note }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || 'Unable to save availability')
+  return data
+}
+
+/** A gate's split (admin, Game flags): opens_in null means "not set". */
+export async function saveGate(gameId, gateKey, opensIn, note = null) {
+  const res = await apiFetch('/api/admin/gates', {
+    method: 'PATCH',
+    body: JSON.stringify({ game_id: gameId, gate_key: gateKey, opens_in: opensIn, note }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || 'Unable to save the game flag')
+  return data
+}
+
+export async function saveSplitItem(gameId, item, method = 'POST') {
+  const res = await apiFetch('/api/admin/split-items', { method, body: JSON.stringify({ game_id: gameId, ...item }) })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Unable to save item')
+  return data
+}
+
+export async function markTrainerVictory(runId, attemptNumber, trainerId, eventId = null, badgeId = null, battle = {}) {
   if (isLocalRun(runId)) {
-    const result = guest.markTrainerVictory(runId, attemptNumber, trainerId, badgeId)
+    const result = guest.markTrainerVictory(runId, attemptNumber, trainerId, badgeId, eventId, battle)
     if (result.badge_awarded) {
       const res = await apiFetch(`/api/badges?ids=${result.badge_awarded.badge_id}`)
       if (res.ok) {
@@ -314,6 +369,8 @@ export async function markTrainerVictory(runId, attemptNumber, trainerId, eventI
     body: JSON.stringify({
       trainer_id: trainerId,
       event_id: eventId,
+      participant_ids: battle.participant_ids,
+      fainted_ids: battle.fainted_ids,
     }),
   })
   return res.json()

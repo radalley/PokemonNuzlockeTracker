@@ -16,6 +16,18 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Encounter tables: legendary/rare gold and the selected-species cyan,
+     dark enough to read as text on the light surfaces. */
+  --rare: #8a6500;
+  --pick: #1c6f8c;
+
+  /* Button tones (components/Button.css): one colour per meaning. Light
+     values are dark enough to read as text on the light surfaces. */
+  --info: #1c6f8c;
+  --success: #1f8a4c;
+  --danger: #c93434;
+  --warning: #8a6500;
+
   /* Minimum comfortable tap target. Applied by the (pointer: coarse)
      tier at the end of this file, which is deliberately NOT width-gated:
      an iPhone in landscape is 844px wide and would miss a 640px query. */
@@ -61,6 +73,14 @@
     --accent-border: rgba(192, 132, 252, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+    --rare: #e6c15c;
+    --pick: #7ec8e3;
+
+    --info: #7ec8e3;
+    --success: #52c97a;
+    --danger: #e05252;
+    --warning: #d4a017;
   }
 
   #social .button-icon {
@@ -123,33 +143,9 @@ textarea {
   box-sizing: border-box;
 }
 
-.attempt-footer__button {
-  padding: 6px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-mid);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8em;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .attempt-footer__button:hover {
-    background: var(--surface-mid);
-    border-color: #FFC631;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
-.attempt-footer__button:focus-visible {
-  background: var(--surface-mid);
-  border-color: #FFC631;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
+/* Sticky controls inside the attempt feed rest above the fixed footer. */
+.encounter-confirm-dock {
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 .contact-panel__backdrop {
@@ -194,15 +190,6 @@ textarea {
   margin-top: 4px;
   color: var(--text-secondary);
   font-size: 0.86rem;
-}
-
-.contact-panel__close {
-  padding: 6px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
 }
 
 .contact-panel__field {
@@ -313,24 +300,6 @@ textarea {
   width: auto;
 }
 
-.site-header__nav-button {
-  background: var(--surface-mid);
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-@media (hover: hover) and (pointer: fine) {
-  .site-header__nav-button:hover {
-    background: var(--surface-mid);
-    border-color: #FFC631;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
 .site-header__auth {
   display: flex;
   align-items: center;
@@ -342,28 +311,6 @@ textarea {
   gap: 0;
   padding-bottom: 8px;
   margin-bottom: -8px;
-}
-
-.site-header__auth-button {
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-primary);
-  background: transparent;
-  cursor: pointer;
-}
-
-.site-header__auth-button.is-primary {
-  background: var(--surface-mid);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .site-header__auth-button:hover {
-    background: var(--surface-mid);
-    border-color: #FFC631;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
 }
 
 .site-header__user-button {
@@ -443,30 +390,6 @@ textarea {
   font-size: 0.78rem;
   color: var(--text-secondary);
   word-break: break-all;
-}
-
-.site-header__auth-menu-item {
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-}
-
-.site-header__auth-menu-item:hover {
-  background: var(--surface-mid);
-}
-
-.site-header__auth-menu-item.is-disabled {
-  color: var(--text-secondary);
-  cursor: default;
-}
-
-.site-header__auth-menu-item.is-disabled:hover {
-  background: transparent;
 }
 
 h1,
@@ -563,23 +486,6 @@ p {
   align-self: center;
 }
 
-.home-action-button {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 14px;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
-  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .home-action-button:hover {
-    background: var(--surface-mid);
-    border-color: #FFC631;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
 .home-auth-note {
   max-width: 460px;
   color: var(--text-secondary);
@@ -669,15 +575,6 @@ p {
   color: var(--text-secondary);
 }
 
-.auth-dialog__close {
-  padding: 6px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
 .auth-dialog__form {
   display: grid;
   gap: 14px;
@@ -749,21 +646,10 @@ p {
   color: #ffb0aa;
 }
 
-.auth-dialog__submit,
 .auth-dialog__switch {
   cursor: pointer;
 }
 
-.auth-dialog__submit {
-  padding: 12px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  background: var(--surface-mid);
-  color: var(--text-primary);
-}
-
-.auth-dialog__submit:hover,
-.auth-dialog__close:hover,
 .auth-dialog__switch:hover {
   border-color: #FFC631;
 }
@@ -1348,29 +1234,6 @@ p {
   margin-bottom: 14px;
 }
 
-.new-run-generation-pill {
-  min-height: 30px;
-  padding: 6px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  line-height: 1;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .new-run-generation-pill:hover {
-    border-color: #FFC631;
-    background: var(--surface-mid);
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
 .continue-run-button {
   box-sizing: border-box;
   width: 100%;
@@ -1495,12 +1358,6 @@ p {
   background: rgba(69, 128, 173, 0.1);
 }
 
-.new-run-generation-pill.is-selected {
-  border-color: #7ec8e3;
-  background: rgba(126, 200, 227, 0.12);
-  color: #7ec8e3;
-}
-
 .new-run-game-table {
   display: grid;
   gap: 8px;
@@ -1591,90 +1448,12 @@ p {
   align-self: end;
 }
 
-.page-action-button {
-  min-height: 34px;
-  padding: 6px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  line-height: 1;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .page-action-button:hover:not(:disabled) {
-    background: var(--surface-mid);
-    border-color: #FFC631;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
-.page-action-button:focus-visible:not(:disabled) {
-  background: var(--surface-mid);
-  border-color: #FFC631;
-  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  transform: translateY(-1px);
-}
-
-.page-action-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.page-action-button--success {
-  border-color: #5ba85b;
-  color: #5ba85b;
-  background: rgba(91, 168, 91, 0.12);
-}
-
-.page-action-button--danger {
-  border-color: #e05252;
-  color: #e05252;
-  background: rgba(224, 82, 82, 0.12);
-}
-
 .load-run-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 0 16px 16px;
   justify-content: center;
-}
-
-.load-run-filter-btn {
-  min-height: 30px;
-  padding: 4px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.85rem;
-  line-height: 1;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .load-run-filter-btn:hover {
-    border-color: #FFC631;
-    background: var(--surface-mid);
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-    transform: translateY(-1px);
-  }
-}
-
-.load-run-filter-btn.is-active {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
-  color: var(--accent);
-  font-weight: 600;
 }
 
 .load-run-table-wrap {
@@ -2232,6 +2011,73 @@ code {
   grid-column: 6;
 }
 
+/* Battle format sash (double / triple / rotation). The cap cell stretches
+   to the row's height so the sash slot can reach the card's top and bottom
+   edges (the card's 8px padding is taken back with negative insets); the
+   band is centred in the slot and turned 50deg, so it runs from the top
+   edge down to the right and is cut only by those two edges. */
+.trainer-card-summary .trainer-card-summary__cap--format {
+  align-self: stretch;
+}
+
+.trainer-card-summary__format-pill {
+  display: none;
+}
+
+.trainer-card-summary__sash {
+  position: relative;
+  align-self: stretch;
+  width: 116px;
+  flex-shrink: 0;
+}
+
+.trainer-card-summary__sash-clip {
+  position: absolute;
+  inset: -8px 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.trainer-card-summary__sash--open .trainer-card-summary__sash-clip {
+  bottom: 0;
+}
+
+.trainer-card-summary__sash-band {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220px;
+  height: 24px;
+  transform: translate(-50%, -50%) rotate(50deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  background: rgba(var(--format-rgb), 0.24);
+  border-top: 1px solid var(--format-color);
+  border-bottom: 1px solid var(--format-color);
+  color: var(--format-color);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(1px);
+}
+
+.trainer-card-summary__sash-pips {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.trainer-card-summary__sash-pips > span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 /* Admin reorder: the slot a dragged card would land in. */
 .trainer-slot {
   border-radius: 12px;
@@ -2289,6 +2135,20 @@ code {
 
   .trainer-card-summary .trainer-card-summary__chevron {
     grid-column: 5;
+  }
+
+  /* The cap shares its row with a wrapped party strip here, so the sash
+     could not span the card: the compact pill stands in. */
+  .trainer-card-summary .trainer-card-summary__cap--format {
+    align-self: center;
+  }
+
+  .trainer-card-summary__sash {
+    display: none;
+  }
+
+  .trainer-card-summary__format-pill {
+    display: inline-block;
   }
 }
 
@@ -2532,6 +2392,7 @@ code {
   }
 
   .attempt-header__nav-button {
+    min-height: 28px !important;
     padding: 4px 7px !important;
     font-size: 0.68em !important;
   }
@@ -2601,8 +2462,6 @@ code {
   .attempt-footer__button {
     flex: 1 1 0;
     max-width: 180px;
-    padding: 6px 8px;
-    font-size: 0.72em;
   }
 
   .location-row {
@@ -2699,6 +2558,57 @@ code {
 
   .encounter-actions--panel > * {
     min-width: 0;
+  }
+
+  /* Encounter tables (the blank-encounter view). */
+  .encounter-tables__rows {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .encounter-tables__row {
+    min-height: 44px !important;
+    grid-template-columns: 28px minmax(0, 1fr) 44px 42px !important;
+  }
+
+  .encounter-tables__strip,
+  .encounter-tables__tabs {
+    margin-inline: -8px;
+    padding-inline: 8px;
+  }
+
+  .encounter-tables__tab {
+    min-height: 40px;
+  }
+
+  /* The confirm bar spans the panel: the pick on top, two wide buttons. */
+  .encounter-confirm-dock {
+    justify-content: stretch !important;
+  }
+
+  .encounter-confirm {
+    width: 100%;
+    justify-content: space-between !important;
+  }
+
+  .encounter-confirm__pick,
+  .encounter-confirm__prompt {
+    flex: 1 1 100%;
+  }
+
+  .encounter-confirm__missed,
+  .encounter-confirm__caught {
+    flex: 1 1 0;
+    min-width: 0 !important;
+    min-height: 44px;
+  }
+
+  /* After a claim the decision buttons stay in reach under a deep list. */
+  .encounter-editor__actions--sticky {
+    position: sticky;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    z-index: 1;
+    padding-top: 8px;
+    background: var(--surface);
   }
 
   .location-row__panel--trainers {
@@ -2847,17 +2757,6 @@ code {
     box-shadow: 0 28px 72px rgba(0, 0, 0, 0.45);
   }
 
-  .home-action-button {
-    background: #1b1c23;
-    border-color: #343a47;
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
-  }
-
-  .home-action-button:hover {
-    background: #232835;
-    box-shadow: 0 20px 52px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(126, 200, 227, 0.2);
-  }
-
   .continue-run-button {
     background: #1b1c23;
     border-color: #343a47;
@@ -2903,6 +2802,22 @@ code {
   .encounter-actions--summary > *,
   .encounter-actions--panel > * {
     min-height: var(--tap-min) !important;
+  }
+
+  /* Encounter tables: strip chips, area and season pills, method tabs,
+     the provenance Change / Undo / Back buttons and the confirm bar. */
+  .encounter-tables__chip,
+  .encounter-tables__area,
+  .encounter-tables__season,
+  .encounter-tables__tab,
+  .encounter-provenance button,
+  .encounter-confirm button {
+    min-height: var(--tap-min) !important;
+  }
+
+  .encounter-tables__area,
+  .encounter-tables__season {
+    min-width: var(--tap-min) !important;
   }
 
   /* The overflow trigger is square-ish, so it needs the width too; its
@@ -2971,17 +2886,8 @@ code {
   }
 
   /* The rest of the app: menu, run list, new run, auth. */
-  .site-header__nav-button,
-  .site-header__auth-button,
   .site-header__user-button,
-  .page-action-button,
-  .load-run-filter-btn,
-  .new-run-generation-pill,
-  .home-action-button,
-  .contact-panel__close,
-  .auth-dialog__close,
   .auth-dialog__field input,
-  .auth-dialog__submit,
   .new-run-field select,
   .new-run-field input {
     min-height: var(--tap-min) !important;
@@ -3278,16 +3184,6 @@ code {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8em;
-  line-height: 1;
 }
 
 .pokemon-summary__facts {
@@ -3527,23 +3423,7 @@ code {
 
 .pokemon-summary__action {
   flex: 1 1 100px;
-  min-height: 36px;
-  padding: 6px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.82em;
-  white-space: nowrap;
 }
-
-.pokemon-summary__action--add { color: #5ba85b; border-color: #5ba85b; background: rgba(91, 168, 91, 0.12); }
-.pokemon-summary__action--remove,
-.pokemon-summary__action--dead { color: #e55; border-color: #e55; background: rgba(224, 82, 82, 0.12); }
-.pokemon-summary__action--evolve { color: var(--accent); border-color: var(--accent-border); background: var(--accent-bg); }
-.pokemon-summary__action--revive { color: #7ec8e3; border-color: #7ec8e3; background: rgba(126, 200, 227, 0.12); }
 
 @media (max-width: 1149.98px) {
   /* The header is sticky and in flow here, so there is no fixed bar to

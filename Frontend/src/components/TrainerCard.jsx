@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import Sprite from './Sprite'
+import { Button } from './Button'
 import TypeIcon, { TypeIconRow } from './TypeIcon'
 import PokemonStatRows from './PokemonStatRows'
 import { getTrainerSpriteSrc } from './trainerSprite'
 import BattleCompareModal from './BattleCompareModal'
-import BattleFormatPill, { normalizeBattleFormat } from './BattleFormatPill'
+import BattleFormatPill from './BattleFormatPill'
+import BattleFormatSash from './BattleFormatSash'
+import { normalizeBattleFormat } from '../utils/battleFormat'
 import { apiFetch } from '../utils/api'
 import { getParty, markTrainerVictory, endAttempt } from '../utils/dataLayer'
 import { battleMoveSlots, hasEstimatedMoves } from '../utils/trainerMoves'
-import { useAuth } from '../contexts/AuthContext'
+import { useEditMode } from '../contexts/EditModeContext'
 
 function normalizeItemName(raw) {
   const token = String(raw || '').trim()
@@ -58,32 +61,13 @@ function parseTrainerItems(value) {
 // badge banner registers before the modal returns you to the sheet.
 const VICTORY_BADGE_LINGER_MS = 1600
 
-const REORDER_BUTTON_STYLE = {
-  minWidth: '30px',
-  padding: '0 6px',
-  border: '1px solid var(--border-strong)',
-  borderRadius: '8px',
-  background: 'var(--surface-deep)',
-  color: 'var(--text-secondary)',
-  cursor: 'pointer',
-  font: 'inherit',
-  fontSize: '0.72em',
-}
-
-function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null, editing = null, onToggleEdit = null, reorder = null }) {
-  const { user } = useAuth()
-  const isAdmin = user?.account_type === 'admin'
+function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = null, trainerItems = '', encounterTitle = '', showLevelCap = false, levelCap = null, typeFocus = null, hideClass = false, gameId = null, generation = null, versionGroupId = null, runId = null, attemptId = null, trainerId = null, bossEventId = null, badgeId = null, enableBattle = false, isDefeated = false, onVictoryRecorded = null, attemptEnded = false, battleType = null, reorder = null, lockedLabel = null, lockedColor = null }) {
   const [open, setOpen] = useState(false)
-  // Admin edit mode, offered once the card is open on its party: the
-  // seen-move controls, and the reorder handle when the parent offers
-  // one, only show while editing. A parent may own the flag so that one
-  // card at a time edits within a location.
-  const [editingSelf, setEditingSelf] = useState(false)
-  const isEditing = isAdmin && trainerId != null && open && Boolean(editing ?? editingSelf)
-  const toggleEdit = () => {
-    if (onToggleEdit) onToggleEdit()
-    else setEditingSelf(value => !value)
-  }
+  // The header's admin edit mode: the reorder handle (when the parent
+  // offers one) shows on every card, and the seen-move controls show on
+  // an open card's party.
+  const { editMode } = useEditMode()
+  const isEditing = editMode && trainerId != null
   const rootRef = useRef(null)
   const [party, setParty] = useState([])
   const [partyLoaded, setPartyLoaded] = useState(false)
@@ -96,6 +80,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
   const closeTimerRef = useRef(null)
   const [showBattleModal, setShowBattleModal] = useState(false)
   const [playerParty, setPlayerParty] = useState([])
+  const [faintedIds, setFaintedIds] = useState([])
   const [battleLoading, setBattleLoading] = useState(false)
   const [battleSaving, setBattleSaving] = useState(false)
   const [battleResult, setBattleResult] = useState(null)
@@ -178,9 +163,12 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
     setDefeatError('')
     setBattleResult(null)
     setShowBattleModal(true)
+    setFaintedIds([])
+    setPlayerParty([])
     setBattleLoading(true)
     getParty(runId, attemptId)
       .then(data => setPlayerParty(data || []))
+      .catch(() => setBattleResult({ success: false, partyLoadFailed: true, error: 'Unable to load your party. Close and retry.' }))
       .finally(() => setBattleLoading(false))
   }
 
@@ -289,9 +277,11 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
   const markVictory = (event) => {
     event.stopPropagation()
-    if (!runId || !attemptId || !trainerId) return
+    if (!runId || !attemptId || !trainerId || battleSaving || battleLoading) return
     setBattleSaving(true)
-    markTrainerVictory(runId, attemptId, trainerId, bossEventId, badgeId)
+    markTrainerVictory(runId, attemptId, trainerId, bossEventId, badgeId, {
+      participant_ids: playerParty.map(p => Number(p.pokemon_id)), fainted_ids: faintedIds,
+    })
       .then(data => {
         setBattleResult(data)
         if (data?.success) {
@@ -315,6 +305,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           }
         }
       })
+      .catch(err => setBattleResult({ success: false, error: err.message || 'Unable to record victory. Please retry.' }))
       .finally(() => setBattleSaving(false))
   }
 
@@ -322,7 +313,7 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
     <div
       ref={rootRef}
       className={`trainer-card${isEditing ? ' trainer-card--editing' : ''}`}
-      style={{ border: `1px solid ${isEditing ? 'var(--accent)' : 'var(--border-strong)'}`, borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
+      style={{ border: `1px solid ${isEditing && open ? 'var(--accent)' : 'var(--border-strong)'}`, borderRadius: '12px', padding: '8px', cursor: 'pointer', userSelect: 'none', overflow: 'hidden', background: 'var(--surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
       onMouseDown={(event) => {
         // A drag that starts in an interactive control (text selection in the
         // add-move input) composes its click on this root; remember the press
@@ -334,8 +325,6 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
         if (event.target.closest('input, button, select, textarea, a, label, datalist')) return
         const nextOpen = !open
         setOpen(nextOpen)
-        // Closing the card puts its edit mode away with it.
-        if (!nextOpen && isEditing) toggleEdit()
         if (nextOpen && party.length === 0) {
           // If a prior load failed, retry when the card is reopened.
           setPartyLoaded(false)
@@ -402,12 +391,14 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           </div>
         )}
 
-        {/* The format pill shares the level-cap grid cell: it sits left of
-            the cap and can never wrap onto a row of its own in any of the
-            summary's three grid templates. */}
+        {/* The format marker shares the level-cap grid cell, left of the
+            cap: a full-height sash on a wide card, the compact pill once
+            the cap drops to a lower row (the sash could not reach the
+            card's top edge there). */}
         {(normalizeBattleFormat(battleType) || (showLevelCap && resolvedLevelCap !== null)) && (
-          <div className="trainer-card-summary__cap" style={{ marginRight: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0 }}>
-            <BattleFormatPill format={battleType} fontSize="0.72em" />
+          <div className={`trainer-card-summary__cap${normalizeBattleFormat(battleType) ? ' trainer-card-summary__cap--format' : ''}`} style={{ marginRight: '12px', display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', flexShrink: 0 }}>
+            <BattleFormatSash format={battleType} open={open} />
+            <BattleFormatPill format={battleType} fontSize="0.72em" className="trainer-card-summary__format-pill" />
             {showLevelCap && resolvedLevelCap !== null && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '0.7em', color: 'var(--text-secondary)' }}>Level Cap</div>
@@ -421,16 +412,17 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
 
         {(() => {
           const showBattle = Boolean(enableBattle && runId && attemptId && trainerId && (defeated || !attemptEnded))
-          const showEdit = isAdmin && trainerId != null && open
-          if (!showBattle && !showEdit) return null
+          const showReorder = isEditing && reorder
+          if (!showBattle && !showReorder) return null
           // One grid cell holds the battle control and the admin controls,
           // so the summary's three grid templates stay untouched.
           return (
             <div className="trainer-card-summary__battle" style={{ display: 'inline-flex', alignItems: 'stretch', flexWrap: 'wrap', gap: '6px', flexShrink: 0 }}>
-              {isEditing && reorder && (
+              {showReorder && (
                 <div className="trainer-card-summary__reorder" style={{ display: 'inline-flex', alignItems: 'stretch', gap: '3px' }}>
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    shape="rect"
                     draggable={!reorder.saving}
                     disabled={Boolean(reorder.saving)}
                     title="Drag to reorder"
@@ -438,56 +430,33 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                     onClick={event => event.preventDefault()}
                     onDragStart={event => reorder.onDragStart(event, rootRef.current)}
                     onDragEnd={reorder.onDragEnd}
-                    style={{ ...REORDER_BUTTON_STYLE, cursor: reorder.saving ? 'wait' : 'grab', fontSize: '1em', opacity: reorder.saving ? 0.5 : 1 }}
+                    style={{ minWidth: '30px', padding: '0 6px', fontSize: '0.9rem', cursor: reorder.saving ? 'wait' : 'grab' }}
                   >
                     ⠿
-                  </button>
-                  <button
-                    type="button"
-                    title="Move up"
-                    aria-label="Move up"
-                    disabled={!reorder.canMoveUp}
-                    onClick={reorder.onMoveUp}
-                    style={{ ...REORDER_BUTTON_STYLE, opacity: reorder.canMoveUp ? 1 : 0.35, cursor: reorder.canMoveUp ? 'pointer' : 'default' }}
-                  >
+                  </Button>
+                  <Button size="sm" shape="rect" title="Move up" aria-label="Move up" disabled={!reorder.canMoveUp} onClick={reorder.onMoveUp} style={{ minWidth: '30px', padding: '0 6px' }}>
                     ▲
-                  </button>
-                  <button
-                    type="button"
-                    title="Move down"
-                    aria-label="Move down"
-                    disabled={!reorder.canMoveDown}
-                    onClick={reorder.onMoveDown}
-                    style={{ ...REORDER_BUTTON_STYLE, opacity: reorder.canMoveDown ? 1 : 0.35, cursor: reorder.canMoveDown ? 'pointer' : 'default' }}
-                  >
+                  </Button>
+                  <Button size="sm" shape="rect" title="Move down" aria-label="Move down" disabled={!reorder.canMoveDown} onClick={reorder.onMoveDown} style={{ minWidth: '30px', padding: '0 6px' }}>
                     ▼
-                  </button>
+                  </Button>
                 </div>
-              )}
-              {showEdit && (
-                <button
-                  className="trainer-card-summary__edit"
-                  type="button"
-                  onClick={toggleEdit}
-                  title={isEditing ? 'Finish editing' : (reorder ? 'Edit seen moves and order' : 'Edit seen moves')}
-                  style={{ minHeight: '34px', padding: '6px 10px', border: `1px solid ${isEditing ? 'var(--accent)' : 'var(--border-strong)'}`, borderRadius: '999px', background: isEditing ? 'rgba(170,59,255,0.12)' : 'var(--surface-deep)', color: isEditing ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
-                >
-                  {isEditing ? 'Done' : 'Edit'}
-                </button>
               )}
               {showBattle && (defeated ? (
-                <div className="trainer-card-summary__battle-state" style={{ minHeight: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 10px', fontSize: '0.78em', color: '#5ba85b', border: '1px solid #5ba85b', borderRadius: '999px', background: 'rgba(91,168,91,0.12)', flexShrink: 0, boxSizing: 'border-box' }}>
+                <div className="trainer-card-summary__battle-state" style={{ minHeight: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 14px', fontSize: '0.82rem', color: 'var(--success)', border: '1px solid var(--success)', borderRadius: '999px', background: 'color-mix(in srgb, var(--success) 12%, transparent)', flexShrink: 0, boxSizing: 'border-box' }}>
                   Defeated
                 </div>
+              ) : lockedLabel ? (
+                // Not reachable yet (a later split): the fight stays visible
+                // for planning but cannot be recorded.
+                <div className="trainer-card-summary__battle-state trainer-card-summary__locked" title={lockedLabel} style={{ minHeight: '36px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '0 14px', fontSize: '0.82rem', color: lockedColor || 'var(--text-secondary)', border: `1px solid ${lockedColor || 'var(--border-strong)'}`, borderRadius: '999px', background: 'transparent', flexShrink: 0, boxSizing: 'border-box' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+                  {lockedLabel}
+                </div>
               ) : (
-                <button
-                  className="trainer-card-summary__battle-button"
-                  type="button"
-                  onClick={openBattleModal}
-                  style={{ minHeight: '34px', padding: '6px 10px', border: '1px solid #7ec8e3', borderRadius: '999px', background: 'rgba(126,200,227,0.12)', color: '#7ec8e3', cursor: 'pointer', font: 'inherit', fontSize: '0.78em', flexShrink: 0 }}
-                >
+                <Button tone="info" className="trainer-card-summary__battle-button" onClick={openBattleModal} style={{ flexShrink: 0 }}>
                   Battle
-                </button>
+                </Button>
               ))}
             </div>
           )
@@ -584,25 +553,32 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                             <span>Acc {move.accuracy ?? '—'}</span>
                           </div>
                           {seen && isEditing && (
-                            <button
-                              type="button"
+                            <Button
+                              appearance="ghost"
+                              size="sm"
+                              icon
                               onClick={(e) => { e.stopPropagation(); removeObservedMove(p.slot, move.move_name) }}
                               title="Remove observed move"
-                              style={{ position: 'absolute', top: '2px', right: '2px', border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.72em', lineHeight: 1, padding: '2px' }}
+                              aria-label="Remove observed move"
+                              style={{ position: 'absolute', top: '1px', right: '1px', minHeight: '22px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}
                             >
                               ✕
-                            </button>
+                            </Button>
                           )}
                           {!seen && isEditing && p.slot != null && (
-                            <button
-                              type="button"
+                            <Button
+                              tone="success"
+                              appearance="ghost"
+                              size="sm"
+                              icon
                               onClick={(e) => { e.stopPropagation(); addObservedMove(p.slot, move.move_name) }}
                               title="Confirm this move was seen"
+                              aria-label="Confirm this move was seen"
                               disabled={Boolean(moveSaving[p.slot])}
-                              style={{ position: 'absolute', top: '2px', right: '2px', border: 'none', background: 'transparent', color: '#5ba85b', cursor: moveSaving[p.slot] ? 'wait' : 'pointer', fontSize: '0.72em', lineHeight: 1, padding: '2px' }}
+                              style={{ position: 'absolute', top: '1px', right: '1px', minHeight: '22px', fontSize: '0.7rem', cursor: moveSaving[p.slot] ? 'wait' : undefined }}
                             >
                               ✓
-                            </button>
+                            </Button>
                           )}
                         </div>
                       )
@@ -631,14 +607,16 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
                               <datalist id={`observed-moves-${trainerId}-${p.slot}`}>
                                 {moveSuggestions.map(name => <option key={name} value={name} />)}
                               </datalist>
-                              <button
-                                type="button"
+                              <Button
+                                tone="success"
+                                size="sm"
+                                shape="rect"
                                 disabled={Boolean(moveSaving[p.slot]) || !(moveDraft[p.slot] || '').trim()}
                                 onClick={(e) => { e.stopPropagation(); addObservedMove(p.slot) }}
-                                style={{ fontSize: '0.72em', padding: '4px 8px', borderRadius: '5px', border: '1px solid #5ba85b', background: 'rgba(91,168,91,0.12)', color: '#5ba85b', cursor: moveSaving[p.slot] ? 'wait' : 'pointer' }}
+                                style={moveSaving[p.slot] ? { cursor: 'wait' } : undefined}
                               >
                                 Add
-                              </button>
+                              </Button>
                             </div>
                             {moveError[p.slot] && (
                               <div style={{ fontSize: '0.68em', color: '#e05252', marginTop: '3px' }}>{moveError[p.slot]}</div>
@@ -697,6 +675,8 @@ function TrainerCard({ encounterName, trainerName, trainerClass, trainerPic = nu
           battleResult={battleResult}
           onClose={closeBattleModal}
           onMarkVictory={markVictory}
+          faintedIds={faintedIds}
+          onToggleFainted={id => setFaintedIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id])}
           onDeclareDefeat={runId && attemptId ? declareDefeat : null}
           defeatSaving={defeatSaving}
           defeatError={defeatError}

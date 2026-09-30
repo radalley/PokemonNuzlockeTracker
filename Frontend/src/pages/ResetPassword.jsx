@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import SiteHeader from '../components/SiteHeader'
+import { Button } from '../components/Button'
 
 function ResetPassword() {
   const navigate = useNavigate()
@@ -80,9 +81,9 @@ function ResetPassword() {
                 />
               </label>
               {error && <div className="auth-dialog__error">{error}</div>}
-              <button type="submit" className="auth-dialog__submit" disabled={submitting}>
+              <Button type="submit" size="lg" shape="rect" tone="accent" appearance="solid" block disabled={submitting}>
                 {submitting ? 'Saving…' : 'Set new password'}
-              </button>
+              </Button>
             </form>
           </>
         )}

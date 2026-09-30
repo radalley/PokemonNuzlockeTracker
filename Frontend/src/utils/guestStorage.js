@@ -9,6 +9,7 @@ function defaultState() {
     encounters: {},
     party: {},
     trainers_defeated: {},
+    battle_records: {},
     badges: {},
     bonus_locations: {},
     counters: { run: 1, pokemon: 1, bonus: 1 },
@@ -185,6 +186,7 @@ export function deleteRun(runId) {
     delete state.encounters[key]
     delete state.party[key]
     delete state.trainers_defeated[key]
+    delete state.battle_records[key]
     delete state.badges[key]
     delete state.bonus_locations[key]
   })
@@ -394,7 +396,7 @@ export function deleteEncounter(runId, attemptNumber, pokemonId) {
     }
   }
   state.encounters[key] = encounters
-  state.party[key] = (state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId))
+  state.party[key] = compactParty((state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId)))
   _setState(state)
 }
 
@@ -443,6 +445,15 @@ export function getParty(runId, attemptNumber) {
   return syncedParty
 }
 
+// Close the gap a departing member leaves: the rest keep their order and
+// move up, so the free slots are always the last ones.
+function compactParty(party) {
+  return (party || [])
+    .slice()
+    .sort((a, b) => (Number(a.party_slot) || 0) - (Number(b.party_slot) || 0))
+    .map((member, index) => ({ ...member, party_slot: index + 1 }))
+}
+
 export function addToParty(runId, attemptNumber, pokemonId) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
@@ -476,7 +487,7 @@ export function addToParty(runId, attemptNumber, pokemonId) {
 export function removeFromParty(runId, attemptNumber, pokemonId) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
-  state.party[key] = (state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId))
+  state.party[key] = compactParty((state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId)))
   _setState(state)
 }
 
@@ -484,11 +495,42 @@ export function getTrainersDefeated(runId, attemptNumber) {
   return _getState().trainers_defeated[attemptKey(runId, attemptNumber)] || []
 }
 
-export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = null) {
+export function getBattleRecords(runId, attemptNumber) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
+  const ids = new Set(Object.values(state.encounters[key] || {}).map(p => Number(p.pokemon_id)))
+  return (state.battle_records[key] || []).map(record => ({ ...record,
+    party: record.party.map(p => ({ ...p, available: ids.has(Number(p.pokemon_id)) })),
+  }))
+}
+
+export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = null, eventId = null, battle = {}) {
+  const state = _getState()
+  const key = attemptKey(runId, attemptNumber)
+  const attempt = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!attempt || attempt.outcome) return { success: false, error: 'Attempt not found or already ended' }
   const defeated = new Set(state.trainers_defeated[key] || [])
   const isNewVictory = !defeated.has(Number(trainerId))
+  const participants = battle.participant_ids ?? (state.party[key] || []).slice().sort((a, b) => a.party_slot - b.party_slot).map(p => Number(p.pokemon_id))
+  const fainted = battle.fainted_ids ?? []
+  const encounters = Object.values(state.encounters[key] || {})
+  const byId = new Map(encounters.map(p => [Number(p.pokemon_id), p]))
+  if (isNewVictory) {
+    if (![participants, fainted].every(ids => Array.isArray(ids) && ids.length <= 6 && new Set(ids).size === ids.length && ids.every(Number.isInteger))
+      || fainted.some(id => !participants.includes(id))
+      || participants.some(id => !['Captured', 'Dead'].includes(byId.get(id)?.status))) {
+      return { success: false, error: 'Invalid battle party' }
+    }
+    const party = participants.map((id, index) => {
+      const p = byId.get(id)
+      return { pokemon_id: id, slot: index + 1, species_id: p.species_id, species_name: p.species_name,
+        nickname: p.nickname, shiny: p.shiny, gender: p.gender, died_in_battle: fainted.includes(id) }
+    })
+    state.battle_records[key] = [...(state.battle_records[key] || []), {
+      trainer_id: Number(trainerId), boss_event_id: eventId, recorded_at: new Date().toISOString(), party,
+      split_key: badgeId != null ? `badge:${badgeId}` : null,
+    }]
+  }
   defeated.add(Number(trainerId))
   state.trainers_defeated[key] = Array.from(defeated)
 
@@ -497,7 +539,7 @@ export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = nu
     badges.add(Number(badgeId))
     state.badges[key] = Array.from(badges)
 
-    const partyPokemonIds = new Set((state.party[key] || []).map(member => String(member.pokemon_id)))
+    const partyPokemonIds = new Set(participants.map(String))
     Object.values(state.encounters[key] || {}).forEach(encounter => {
       if (!partyPokemonIds.has(String(encounter.pokemon_id))) return
       const earned = Array.isArray(encounter.badges_earned)
@@ -507,6 +549,10 @@ export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = nu
     })
   }
 
+  if (isNewVictory) {
+    fainted.forEach(id => { byId.get(id).status = 'Dead' })
+    state.party[key] = compactParty((state.party[key] || []).filter(p => !fainted.includes(Number(p.pokemon_id))))
+  }
   _setState(state)
   return {
     success: true,
@@ -606,3 +652,4 @@ export function renameBonusLocation(runId, attemptNumber, canonicalLocationId, s
   _setState(state)
   return { success: true }
 }
+
