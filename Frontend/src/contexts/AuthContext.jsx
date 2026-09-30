@@ -47,7 +47,32 @@ export function AuthProvider({ children }) {
 
   // Listen for Supabase auth state changes (login, logout, token refresh, OAuth callback)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let active = true
+
+    async function restoreSession() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) throw error
+        if (!active) return
+
+        if (session) {
+          await refreshUser()
+        } else {
+          setUser(null)
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Failed to restore auth session:', error)
+        if (active) {
+          setUser(null)
+          setLoading(false)
+        }
+      }
+    }
+
+    restoreSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         refreshUser()
       } else {
@@ -56,15 +81,10 @@ export function AuthProvider({ children }) {
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        refreshUser()
-      } else {
-        setUser(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [refreshUser])
 
   const openAuthDialog = useCallback((mode = 'login') => {

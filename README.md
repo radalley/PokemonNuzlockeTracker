@@ -1,5 +1,7 @@
 # Lockley - Multi Game Pokemon Nuzlocke Tracker
 
+![CI](https://github.com/radalley/PokemonNuzlockeTracker/actions/workflows/ci.yml/badge.svg)
+
 Lockley is a Pokémon campaign Nuzlocke tracker designed to track runs and attempts across all generations of the core series games. Users can accurately track their encounters and trainer progress.
 
 **Link to application:** https://pokemon-nuzlocke-tracker-beta.vercel.app/

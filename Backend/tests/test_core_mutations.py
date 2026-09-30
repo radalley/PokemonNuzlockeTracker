@@ -80,16 +80,47 @@ def test_party_caps_at_six_pokemon(db_conn):
     assert seventh_slot is None, "a 7th pokemon must not fit in a 6-slot party"
 
 
-def test_remove_from_party_frees_the_slot_for_reuse(db_conn):
+def slots_of(db_conn, attempt_id):
+    return [(r["party_slot"], r["pokemon_id"]) for r in db_conn.execute(
+        "select party_slot, pokemon_id from party where attempt_id = %s order by party_slot",
+        (attempt_id,)).fetchall()]
+
+
+def test_removing_a_member_moves_the_rest_up(db_conn):
     run_id, attempt_id = seed_run_and_attempt(db_conn)
     pokemon_ids = [seed_pokemon(db_conn, run_id, attempt_id, species_id=i) for i in range(1, 8)]
     for pid in pokemon_ids[:6]:
         backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pid)
 
-    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[2])  # frees slot 3
-    new_slot = backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pokemon_ids[6])
+    # take the second member out of a full party
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[1])
 
-    assert new_slot == 3
+    # everyone below moves up one; slot 6 is the empty one
+    assert slots_of(db_conn, attempt_id) == [
+        (1, pokemon_ids[0]), (2, pokemon_ids[2]), (3, pokemon_ids[3]),
+        (4, pokemon_ids[4]), (5, pokemon_ids[5]),
+    ]
+    assert backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pokemon_ids[6]) == 6
+
+    # a member leaving the middle again closes that gap too
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[3])
+    assert [slot for slot, _ in slots_of(db_conn, attempt_id)] == [1, 2, 3, 4, 5]
+    assert [pid for _, pid in slots_of(db_conn, attempt_id)] == [
+        pokemon_ids[0], pokemon_ids[2], pokemon_ids[4], pokemon_ids[5], pokemon_ids[6]]
+
+
+def test_removing_the_last_member_and_unknown_members_leave_the_order_alone(db_conn):
+    run_id, attempt_id = seed_run_and_attempt(db_conn)
+    pokemon_ids = [seed_pokemon(db_conn, run_id, attempt_id, species_id=i) for i in range(1, 4)]
+    for pid in pokemon_ids:
+        backend_module.add_to_party_for_attempt(db_conn, run_id, 1, pid)
+
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, pokemon_ids[2])
+    assert slots_of(db_conn, attempt_id) == [(1, pokemon_ids[0]), (2, pokemon_ids[1])]
+
+    # removing someone who is not in the party changes nothing
+    backend_module.remove_from_party_for_attempt(db_conn, run_id, 1, 999999)
+    assert slots_of(db_conn, attempt_id) == [(1, pokemon_ids[0]), (2, pokemon_ids[1])]
 
 
 def test_add_to_party_unknown_attempt_returns_none(db_conn):
@@ -231,3 +262,27 @@ def test_delete_bonus_location_also_clears_party_and_pokebank(db_conn):
     assert result["success"] is True
     assert db_conn.execute("select * from pokebank where pokemon_id = %s", (pokemon_id,)).fetchone() is None
     assert db_conn.execute("select * from party where pokemon_id = %s", (pokemon_id,)).fetchone() is None
+
+
+def test_bonus_location_does_not_inherit_trainers(db_conn):
+    run_id, attempt_id = seed_run_and_attempt(db_conn, version_group_id=10)
+    seed_canon_and_event_location(db_conn, canonical_location_id=7, version_group_id=10)
+    for name in ("Youngster Joey", "Lass Dana"):
+        db_conn.execute(
+            "insert into trainer_pool (encounter_name, trainer_name, canonical_location_id, version_group_id) "
+            "values (%s, %s, %s, %s)",
+            (name, name, 7, 10),
+        )
+    db_conn.commit()
+    backend_module.create_bonus_location(db_conn, run_id, 1, canonical_location_id=7)
+
+    page = backend_module.get_attempt_page_data(db_conn, run_id, 1)
+
+    rows = [r for r in page["script"] if r["event_type"] == "Location" and int(r["event_id"]) == 7]
+    canonical = next(r for r in rows if not r["is_bonus_location"])
+    bonus = next(r for r in rows if r["is_bonus_location"])
+    assert canonical["trainer_count"] == 2
+    assert bonus["trainer_count"] == 0
+    assert bonus["available_trainer_count"] == 0
+    assert bonus["special_trainer_count"] == 0
+    assert bonus["has_available_trainers"] is False

@@ -1,0 +1,20 @@
+{
+    "key":  "goldsilver",
+    "label":  "Pokemon Gold / Silver",
+    "generation":  2,
+    "version_group_id":  3,
+    "load_build":  4,
+    "game_ids":  {
+                     "silver":  5,
+                     "gold":  4
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokegold"
+               },
+    "preview_dir":  "goldsilver_build4_preview",
+    "expected":  {
+                     "trainers":  495,
+                     "trainer_pokemon":  1149
+                 }
+}

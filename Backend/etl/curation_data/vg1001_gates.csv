@@ -1,0 +1,4 @@
+version_group_id,gate_key,label,opens_in,default_methods,sort_order,note,source
+1001,shaking-grass,Shaking grass,badge:34,"grass-spots,cave-spots",10,Rustling grass and dust clouds appear after the first badge.,Drayano 3.1 Wild Pokemon.txt preamble; encounter_methods.py
+1001,fishing,Super Rod,badge:34,"fish,fish-spots",20,"Blaze Black moves the Super Rod to Route 3, reached in Lenora's split.",docs/blaze-black-item-seed-analysis.md
+1001,surf,Surf,,"surf,surf-spots",30,Which split Surf opens in is not decided yet; set it from Game flags.,docs/blaze-black-item-seed-analysis.md (unavailable through Burgh)

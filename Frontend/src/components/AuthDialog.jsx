@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { Button } from './Button'
 
 function AuthDialog() {
   const {
@@ -11,7 +12,6 @@ function AuthDialog() {
     register,
     loginWithGoogle,
     forgotPassword,
-    loading,
   } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -34,7 +34,9 @@ function AuthDialog() {
     }
   }, [authDialogOpen])
 
-  if (!authDialogOpen || loading) return null
+  // Opening the form is a local UI action. Do not hide it behind session
+  // restoration, which may be slow or fail when the auth service is offline.
+  if (!authDialogOpen) return null
 
   const isRegister = authDialogMode === 'register'
 
@@ -91,7 +93,7 @@ function AuthDialog() {
               <h2 className="auth-dialog__title">Reset password</h2>
               <p className="auth-dialog__subtitle">We'll send a reset link to your email.</p>
             </div>
-            <button type="button" className="auth-dialog__close" onClick={closeAuthDialog}>Close</button>
+            <Button size="sm" onClick={closeAuthDialog}>Close</Button>
           </div>
           {forgotSent ? (
             <div className="auth-dialog__forgot-sent">
@@ -101,12 +103,12 @@ function AuthDialog() {
             <form className="auth-dialog__form" onSubmit={handleForgotSubmit}>
               <label className="auth-dialog__field">
                 <span>Email</span>
-                <input type="email" value={email} onChange={event => setEmail(event.target.value)} required />
+                <input type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} required />
               </label>
               {error && <div className="auth-dialog__error">{error}</div>}
-              <button type="submit" className="auth-dialog__submit" disabled={submitting}>
+              <Button type="submit" size="lg" shape="rect" tone="accent" appearance="solid" block disabled={submitting}>
                 {submitting ? 'Sending...' : 'Send reset link'}
-              </button>
+              </Button>
             </form>
           )}
           <div className="auth-dialog__footer">
@@ -127,7 +129,7 @@ function AuthDialog() {
             <h2 className="auth-dialog__title">{isRegister ? 'Create account' : 'Sign in'}</h2>
             <p className="auth-dialog__subtitle">Use one account across laptop and PC.</p>
           </div>
-          <button type="button" className="auth-dialog__close" onClick={closeAuthDialog}>Close</button>
+          <Button size="sm" onClick={closeAuthDialog}>Close</Button>
         </div>
 
         <button
@@ -144,13 +146,13 @@ function AuthDialog() {
         <form className="auth-dialog__form" onSubmit={handleSubmit}>
           <label className="auth-dialog__field">
             <span>Email</span>
-            <input type="email" value={email} onChange={event => setEmail(event.target.value)} required />
+            <input type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={event => setEmail(event.target.value)} required />
           </label>
 
           {isRegister && (
             <label className="auth-dialog__field">
               <span>Display Name</span>
-              <input type="text" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Optional" />
+              <input type="text" autoComplete="nickname" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Optional" />
             </label>
           )}
 
@@ -168,14 +170,14 @@ function AuthDialog() {
                 </button>
               )}
             </span>
-            <input type="password" value={password} onChange={event => setPassword(event.target.value)} minLength={8} required />
+            <input type="password" autoComplete={isRegister ? 'new-password' : 'current-password'} value={password} onChange={event => setPassword(event.target.value)} minLength={8} required />
           </label>
 
           {error && <div className="auth-dialog__error">{error}</div>}
 
-          <button type="submit" className="auth-dialog__submit" disabled={submitting}>
+          <Button type="submit" size="lg" shape="rect" tone="accent" appearance="solid" block disabled={submitting}>
             {submitting ? 'Working...' : isRegister ? 'Create account' : 'Sign in'}
-          </button>
+          </Button>
         </form>
 
         <div className="auth-dialog__footer">

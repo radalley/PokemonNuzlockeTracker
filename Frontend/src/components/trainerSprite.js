@@ -136,8 +136,11 @@ const CLASS_MAP = {
  * @param {string} trainerPic   - value of trainer_pool.trainer_pic
  * @param {string} trainerClass - e.g. 'TRAINER_CLASS_LEADER' (fallback)
  * @param {string} trainerName  - e.g. 'Brock' (fallback)
+ * @param {number} generation   - games.generation; the authoritative folder
+ *   pick. ROM hacks carry their base game's generation, so their sprites
+ *   resolve without extending the id ladders below.
  */
-export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '', gameId = null, versionGroupId = null) {
+export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '', gameId = null, versionGroupId = null, generation = null) {
   if (trainerPic) {
     if (trainerPic.startsWith('/')) return trainerPic
     if (trainerPic.includes('/')) {
@@ -145,16 +148,18 @@ export function getTrainerSpriteSrc(trainerPic, trainerClass, trainerName = '', 
         ? `/sprites/trainers/${trainerPic}`
         : `/sprites/trainers/${trainerPic}.png`
     }
+    const numericGeneration = Number(generation)
     const numericGameId = Number(gameId)
     const numericVersionGroupId = Number(versionGroupId)
     const generationFolder =
-      numericVersionGroupId >= 1 && numericVersionGroupId <= 2 ? 'gen1'
-        : numericVersionGroupId >= 3 && numericVersionGroupId <= 4 ? 'gen2'
-          : numericVersionGroupId >= 8 && numericVersionGroupId <= 10 ? 'gen4'
-            : numericVersionGroupId === 11 || numericVersionGroupId === 14 ? 'gen5'
-            : numericGameId >= 1 && numericGameId <= 3 ? 'gen1'
-              : numericGameId >= 4 && numericGameId <= 6 ? 'gen2'
-                : 'gen3'
+      numericGeneration >= 1 && numericGeneration <= 5 ? `gen${numericGeneration}`
+        : numericVersionGroupId >= 1 && numericVersionGroupId <= 2 ? 'gen1'
+          : numericVersionGroupId >= 3 && numericVersionGroupId <= 4 ? 'gen2'
+            : numericVersionGroupId >= 8 && numericVersionGroupId <= 10 ? 'gen4'
+              : numericVersionGroupId === 11 || numericVersionGroupId === 14 ? 'gen5'
+              : numericGameId >= 1 && numericGameId <= 3 ? 'gen1'
+                : numericGameId >= 4 && numericGameId <= 6 ? 'gen2'
+                  : 'gen3'
     return `/sprites/trainers/${generationFolder}/${trainerPic}.png`
   }
   // Fallback: named trainer

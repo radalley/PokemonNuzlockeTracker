@@ -1,0 +1,39 @@
+/* Only the main sheet lives inside #root's 1126px boundary. On desktop both
+   side panels occupy the outer gutters and move with the document. */
+.attempt-page__content.attempt-page__content--splits{display:block}
+.attempt-page__content--splits>.attempt-side-panel{position:absolute!important;top:0!important;left:-262px!important;width:250px!important;min-width:0;z-index:900!important}
+.attempt-page__content--splits>.attempt-page__body{min-width:0}
+.split-timeline{position:absolute;top:0;left:calc(100% + 12px);width:330px;text-align:left;font-size:14px;line-height:1.4;color:var(--text-primary);z-index:900}
+.split-timeline button:not(.btn),.split-timeline input,.split-timeline select{font:inherit;line-height:1.4;color:var(--text-primary);border:1px solid var(--border-strong);background:var(--surface-deep);border-radius:8px;padding:6px 9px;min-width:0;max-width:100%}
+.split-timeline button:not(.btn){cursor:pointer}.split-timeline button:not(.btn):disabled{opacity:.5;cursor:wait}.split-timeline button:not(.btn):hover{border-color:var(--accent)}
+.split-timeline__heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.split-timeline__heading>button{font-size:12px}
+.split-timeline .split-timeline__toggle,.split-timeline__title{font-size:18px;font-weight:600;background:transparent;border:0;padding:0;margin:0}.split-timeline__toggle span{font-size:14px;color:var(--text-secondary)}
+.split-timeline__filters{display:flex;gap:5px;margin:12px 0 15px}.split-timeline__filters .btn{flex:1}
+.split-timeline small{font-size:11px;color:var(--text-secondary);line-height:1.4}.split-timeline__entry{scroll-margin-top:140px}.split-timeline__league{font-size:14px;margin:22px 0 12px}
+.split-card{background:var(--surface);border:1px solid var(--border-strong);border-radius:9px;padding:11px;margin-bottom:12px}.split-card--next{border-color:var(--accent-border,var(--accent))}
+.split-timeline .split-card__head{display:flex;align-items:center;gap:8px;width:100%;padding:0;background:transparent;border:0;text-align:left;border-radius:0}.split-card__portrait{width:35px;height:44px;object-fit:contain;image-rendering:pixelated}
+.split-card__identity{flex:1;min-width:0;display:grid;gap:5px}.split-card__identity strong{font-size:14px;overflow-wrap:anywhere}.split-card__badge{width:23px;height:26px;object-fit:contain;image-rendering:pixelated}.split-card__status{font-size:11px;color:var(--text-secondary);white-space:nowrap}
+.split-card--defeated .split-card__portrait{filter:grayscale(1);opacity:.5}.split-card--defeated .split-card__identity strong{color:var(--text-secondary)}.split-card--next .split-card__status{color:var(--accent)}
+.split-card__party{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin:10px 0}.split-card__mon{display:flex;align-items:center;justify-content:center;position:relative;border:1px solid var(--border-strong);background:var(--surface-deep);border-radius:6px;min-width:0;height:42px}.split-card__mon img{max-width:100%;object-fit:contain}.split-card__mon--fallen img{filter:grayscale(1);opacity:.4}.split-card__mon>span{position:absolute;bottom:0;right:3px;color:var(--text-secondary);line-height:1}
+.split-card__items{margin-top:10px}.split-item-groups{display:grid;gap:7px;margin-top:5px}.split-item-group{border-top:1px solid var(--border-strong);font-size:12px}.split-item-group>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 2px;cursor:pointer;color:var(--text-secondary)}.split-item-group>summary span{font-weight:600;color:var(--text-primary)}.split-item-group__list{display:grid;gap:4px;padding-bottom:4px}.split-item-group--dust_cloud .split-item-group__list{grid-template-columns:repeat(2,minmax(0,1fr))}.split-item{min-width:0;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface-deep)}.split-item>summary{display:grid;grid-template-columns:25px minmax(0,1fr) auto;align-items:center;gap:5px;padding:5px;cursor:pointer;list-style:none}.split-item>summary::-webkit-details-marker{display:none}.split-item>summary img{width:22px;height:22px;object-fit:contain;image-rendering:pixelated}.split-item>summary span{min-width:0;overflow-wrap:anywhere}.split-item>summary small{white-space:nowrap}.split-item__sources{display:grid;gap:3px;padding:0 6px 6px}.split-item__source{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:5px;padding-top:5px;border-top:1px solid var(--border-strong)}.split-item__source img{image-rendering:pixelated}.split-item__source span{min-width:0;overflow-wrap:anywhere}.split-item__source strong{font-size:11px;font-weight:500}.split-item__source small{display:block}.split-item__source b{font-size:11px;color:var(--accent);font-weight:600}
+.split-card__empty,.split-timeline__notice{font-size:12px;color:var(--text-secondary);margin:8px 0}.split-timeline__editor{padding:12px;border:1px solid var(--accent-border,var(--accent));background:var(--surface);border-radius:8px;margin-bottom:14px}.split-timeline__editor label{display:grid;gap:4px;margin:10px 0;font-size:12px;color:var(--text-secondary)}.split-timeline__editor .split-timeline__heading:last-child{margin-top:14px;margin-bottom:0}.split-timeline [role=alert]{font-size:12px;color:var(--danger,#e05252)}
+.battle-casualties{border:1px solid var(--border-strong);border-radius:8px;margin-top:16px;font-size:13px;line-height:1.4}.battle-casualties>div{display:flex;flex-wrap:wrap;gap:8px}.battle-casualties label{display:flex;align-items:center;gap:4px}.battle-casualties small{display:block;margin-top:8px;color:var(--text-secondary)}
+.attempt-panel-flag{position:fixed;top:120px;z-index:1102;border:1px solid var(--border-strong);border-radius:0 8px 8px 0;background:var(--surface);color:var(--text-primary);font:inherit;font-size:13px;padding:7px 10px;cursor:pointer}
+.attempt-panel-flag--stats{left:8px}.attempt-panel-backdrop{position:fixed;inset:0;z-index:1099;background:rgba(0,0,0,.35);border:0;cursor:pointer}
+@media(max-width:1819.98px){
+  .attempt-page__content--splits>.attempt-side-panel{position:fixed!important;left:8px!important;top:162px!important;width:min(280px,calc(100vw - 32px))!important;z-index:1101!important;max-height:calc(100dvh - 232px);overflow-y:auto;overscroll-behavior:contain}
+  .attempt-page__content--splits .attempt-session-stats__grid{display:flex!important;flex-direction:column!important}
+  .split-timeline{position:fixed;left:auto;right:8px;top:120px;width:auto;max-width:calc(100vw - 24px);max-height:calc(100dvh - 190px);overflow-y:auto;overscroll-behavior:contain;z-index:1101;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px 0 0 8px;padding:7px 10px}
+  .split-timeline:not(.split-timeline--open) .split-timeline__heading{margin:0}.split-timeline .split-timeline__toggle{font-size:13px}
+  .split-timeline--open{width:330px;padding:12px}.split-timeline__entry{scroll-margin-top:16px}
+}
+/* Below 1150px the header is sticky and wraps to two or three rows, so
+   everything floating starts from its measured height (set by
+   AttemptHeader). The floating Stats tab would sit on the page's content
+   here, so it hides; the run menu's Stats item opens the panel instead. */
+@media(max-width:1149.98px){
+  .attempt-panel-flag--stats{display:none}
+  .split-timeline{top:calc(var(--attempt-header-h,84px) + 8px)}
+  .attempt-page__content--splits>.attempt-side-panel{top:calc(var(--attempt-header-h,84px) + 8px)!important;max-height:calc(100dvh - var(--attempt-header-h,84px) - 84px)}
+}
+@media(pointer:coarse){.split-timeline button:not(.btn),.split-card__mon{min-height:44px}.split-timeline input,.split-timeline select{font-size:16px}.split-timeline__toggle{min-width:80px}}

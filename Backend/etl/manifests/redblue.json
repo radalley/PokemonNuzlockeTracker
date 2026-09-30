@@ -1,0 +1,20 @@
+{
+    "key":  "redblue",
+    "label":  "Pokemon Red / Blue",
+    "generation":  1,
+    "version_group_id":  1,
+    "load_build":  4,
+    "game_ids":  {
+                     "red":  1,
+                     "blue":  2
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokered"
+               },
+    "preview_dir":  "redblue_build4_preview",
+    "expected":  {
+                     "trainers":  391,
+                     "trainer_pokemon":  994
+                 }
+}

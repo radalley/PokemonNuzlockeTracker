@@ -1,3 +1,5 @@
+import { normalizeIvs } from './pokemonFormat'
+
 const STORAGE_KEY = 'lockley_guest'
 
 function defaultState() {
@@ -7,6 +9,7 @@ function defaultState() {
     encounters: {},
     party: {},
     trainers_defeated: {},
+    battle_records: {},
     badges: {},
     bonus_locations: {},
     counters: { run: 1, pokemon: 1, bonus: 1 },
@@ -57,10 +60,17 @@ function nextPokemonId(state) {
   return id
 }
 
-function nextBonusSort(state, runId, attemptNumber) {
+function nextBonusSort(state, runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder) {
   const key = attemptKey(runId, attemptNumber)
-  const rows = state.bonus_locations[key] || []
-  const max = rows.reduce((acc, row) => Math.max(acc, Number(row.secondary_sort_order || 0)), 0)
+  const rows = (state.bonus_locations[key] || [])
+    .filter(row => Number(row.canonical_location_id) === Number(canonicalLocationId))
+  // Floor at the canonical row's own secondary sort: placement can give the
+  // base location a non-zero secondary (e.g. Dreamyard), and a bonus slot
+  // that reuses it collides on encounter_key. Mirrors create_bonus_location.
+  const max = rows.reduce(
+    (acc, row) => Math.max(acc, Number(row.secondary_sort_order || 0)),
+    Number(baseSecondarySortOrder || 0),
+  )
   return max + 1
 }
 
@@ -156,6 +166,17 @@ export function createRun(gameData, runName) {
   return { success: true, run_id, attempt_number: 1 }
 }
 
+export function renameRun(runId, runName) {
+  const cleaned = String(runName ?? '').trim().slice(0, 100)
+  if (!cleaned) return false
+  const state = _getState()
+  const run = (state.runs || []).find(r => String(r.run_id) === String(runId))
+  if (!run) return false
+  run.run_name = cleaned
+  _setState(state)
+  return true
+}
+
 export function deleteRun(runId) {
   const state = _getState()
   state.runs = (state.runs || []).filter(r => String(r.run_id) !== String(runId))
@@ -165,6 +186,7 @@ export function deleteRun(runId) {
     delete state.encounters[key]
     delete state.party[key]
     delete state.trainers_defeated[key]
+    delete state.battle_records[key]
     delete state.badges[key]
     delete state.bonus_locations[key]
   })
@@ -195,6 +217,115 @@ export function updateStarter(runId, attemptNumber, starter) {
   _setState(state)
 }
 
+export function endAttempt(runId, attemptNumber, { trainerId = null, trainerName = null, trainerClass = null, note = null } = {}) {
+  const state = _getState()
+  const row = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row) return { success: false, error: 'Attempt not found' }
+  if (row.outcome) return { success: false, error: `Attempt already ended (${row.outcome})` }
+  row.outcome = 'dead'
+  row.ended_at = new Date().toISOString()
+  row.ended_by_trainer_id = trainerId != null ? Number(trainerId) : null
+  row.ended_by_trainer_name = trainerName || null
+  row.ended_by_trainer_class = trainerClass || null
+  row.death_note = (note || '').trim().slice(0, 500) || null
+  // A wipe is the party dying: party mons fall and leave the party, as
+  // the Box's "Confirm fallen" does. Boxed mons are untouched.
+  const key = attemptKey(runId, attemptNumber)
+  const partyIds = new Set((state.party[key] || []).map(p => String(p.pokemon_id)))
+  let partyFallen = 0
+  for (const encounter of Object.values(state.encounters[key] || {})) {
+    if (partyIds.has(String(encounter.pokemon_id)) && encounter.status === 'Captured') {
+      encounter.status = 'Dead'
+      partyFallen += 1
+    }
+  }
+  state.party[key] = []
+  _setState(state)
+  return { success: true, outcome: 'dead', party_fallen: partyFallen }
+}
+
+export function reopenAttempt(runId, attemptNumber) {
+  const state = _getState()
+  const row = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row || !row.outcome) return { success: false, error: 'Attempt is not ended' }
+  delete row.outcome
+  delete row.ended_at
+  delete row.ended_by_trainer_id
+  delete row.ended_by_trainer_name
+  delete row.ended_by_trainer_class
+  delete row.death_note
+  _setState(state)
+  return { success: true }
+}
+
+export function getAttemptOutcome(runId, attemptNumber) {
+  const row = (_getState().attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!row) return null
+  return {
+    attempt_number: Number(row.attempt_number),
+    outcome: row.outcome || null,
+    ended_at: row.ended_at || null,
+    ended_by_trainer_id: row.ended_by_trainer_id ?? null,
+    death_note: row.death_note || null,
+  }
+}
+
+export function getAttemptSummary(runId, attemptNumber) {
+  const state = _getState()
+  const run = (state.runs || []).find(r => String(r.run_id) === String(runId))
+  const attempt = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!run || !attempt) return null
+  const encounters = Object.values(getEncounters(runId, attemptNumber) || {})
+  const byStatus = status => encounters.filter(e => e.status === status)
+  // state.badges[key] is the authoritative attempt-level award record;
+  // per-encounter badges_earned only tags party members at victory time.
+  const badgeIds = new Set((state.badges[attemptKey(runId, attemptNumber)] || []).map(Number).filter(Number.isFinite))
+  const partySlots = new Map(
+    (state.party[attemptKey(runId, attemptNumber)] || [])
+      .map(member => [String(member.pokemon_id), member.party_slot ?? null]))
+  const asMon = e => ({
+    pokemon_id: e.pokemon_id ?? null,
+    species_id: e.species_id ?? null,
+    species_name: e.species_name || null,
+    nickname: e.nickname || null,
+    level_met: e.level_met ?? null,
+    location_name: null,
+    party_slot: partySlots.get(String(e.pokemon_id)) ?? null,
+  })
+  return {
+    run: { run_id: run.run_id, name: run.run_name, game_id: run.game_id, game_name: run.game_name, generation: run.generation },
+    attempt: {
+      attempt_number: Number(attemptNumber),
+      starter: attempt.starter || 'Fire',
+      started_at: attempt.started_at || null,
+      outcome: attempt.outcome || null,
+      ended_at: attempt.ended_at || null,
+      ended_by_trainer_id: attempt.ended_by_trainer_id ?? null,
+      death_note: attempt.death_note || null,
+    },
+    killer: attempt.ended_by_trainer_id != null || attempt.ended_by_trainer_name
+      ? {
+          trainer_id: attempt.ended_by_trainer_id ?? null,
+          trainer_name: attempt.ended_by_trainer_name || null,
+          trainer_class: attempt.ended_by_trainer_class || null,
+          trainer_pic: null,
+          location_name: null,
+        }
+      : null,
+    badges: [...badgeIds].sort((a, b) => a - b).map(id => ({ badge_id: id, badge_name: null, earned_at: null })),
+    deaths: byStatus('Dead').map(asMon),
+    survivors: byStatus('Captured').map(asMon),
+    counts: {
+      captured: byStatus('Captured').length,
+      // Everything caught this attempt, alive or fallen.
+      obtained: byStatus('Captured').length + byStatus('Dead').length,
+      missed: byStatus('Missed').length,
+      dead: byStatus('Dead').length,
+      trainers_defeated: getTrainersDefeated(runId, attemptNumber).length,
+    },
+  }
+}
+
 export function getRunDetails(runId, attemptNumber) {
   const state = _getState()
   const run = (state.runs || []).find(r => String(r.run_id) === String(runId))
@@ -213,7 +344,7 @@ export function getEncounters(runId, attemptNumber) {
   return _getState().encounters[attemptKey(runId, attemptNumber)] || {}
 }
 
-export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId, gender) {
+export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation, speciesId, speciesName, nickname, nature, status, shiny, existingPokemonId, gender, ability, ivs = null) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const encounterKey = `${locationId}:${Number(bonusLocation || 0)}`
@@ -235,6 +366,8 @@ export function upsertEncounter(runId, attemptNumber, locationId, bonusLocation,
     status: status || null,
     shiny: Boolean(shiny),
     gender: gender || null,
+    ability: ability || null,
+    ivs: normalizeIvs(ivs),
   }
 
   // Keep party display data in sync when an encounter evolves or is edited.
@@ -263,7 +396,7 @@ export function deleteEncounter(runId, attemptNumber, pokemonId) {
     }
   }
   state.encounters[key] = encounters
-  state.party[key] = (state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId))
+  state.party[key] = compactParty((state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId)))
   _setState(state)
 }
 
@@ -285,6 +418,11 @@ export function getParty(runId, attemptNumber) {
       species_name: current.species_name,
       nickname: current.nickname || null,
       shiny: Boolean(current.shiny),
+      // Calc-export facts mirror the authenticated party endpoint.
+      nature: current.nature || null,
+      gender: current.gender || null,
+      chosen_ability: current.ability || null,
+      ivs: current.ivs || null,
     }
 
     if (
@@ -305,6 +443,15 @@ export function getParty(runId, attemptNumber) {
   }
 
   return syncedParty
+}
+
+// Close the gap a departing member leaves: the rest keep their order and
+// move up, so the free slots are always the last ones.
+function compactParty(party) {
+  return (party || [])
+    .slice()
+    .sort((a, b) => (Number(a.party_slot) || 0) - (Number(b.party_slot) || 0))
+    .map((member, index) => ({ ...member, party_slot: index + 1 }))
 }
 
 export function addToParty(runId, attemptNumber, pokemonId) {
@@ -340,7 +487,7 @@ export function addToParty(runId, attemptNumber, pokemonId) {
 export function removeFromParty(runId, attemptNumber, pokemonId) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
-  state.party[key] = (state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId))
+  state.party[key] = compactParty((state.party[key] || []).filter(p => String(p.pokemon_id) !== String(pokemonId)))
   _setState(state)
 }
 
@@ -348,11 +495,42 @@ export function getTrainersDefeated(runId, attemptNumber) {
   return _getState().trainers_defeated[attemptKey(runId, attemptNumber)] || []
 }
 
-export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = null) {
+export function getBattleRecords(runId, attemptNumber) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
+  const ids = new Set(Object.values(state.encounters[key] || {}).map(p => Number(p.pokemon_id)))
+  return (state.battle_records[key] || []).map(record => ({ ...record,
+    party: record.party.map(p => ({ ...p, available: ids.has(Number(p.pokemon_id)) })),
+  }))
+}
+
+export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = null, eventId = null, battle = {}) {
+  const state = _getState()
+  const key = attemptKey(runId, attemptNumber)
+  const attempt = (state.attempts[runId] || []).find(a => Number(a.attempt_number) === Number(attemptNumber))
+  if (!attempt || attempt.outcome) return { success: false, error: 'Attempt not found or already ended' }
   const defeated = new Set(state.trainers_defeated[key] || [])
   const isNewVictory = !defeated.has(Number(trainerId))
+  const participants = battle.participant_ids ?? (state.party[key] || []).slice().sort((a, b) => a.party_slot - b.party_slot).map(p => Number(p.pokemon_id))
+  const fainted = battle.fainted_ids ?? []
+  const encounters = Object.values(state.encounters[key] || {})
+  const byId = new Map(encounters.map(p => [Number(p.pokemon_id), p]))
+  if (isNewVictory) {
+    if (![participants, fainted].every(ids => Array.isArray(ids) && ids.length <= 6 && new Set(ids).size === ids.length && ids.every(Number.isInteger))
+      || fainted.some(id => !participants.includes(id))
+      || participants.some(id => !['Captured', 'Dead'].includes(byId.get(id)?.status))) {
+      return { success: false, error: 'Invalid battle party' }
+    }
+    const party = participants.map((id, index) => {
+      const p = byId.get(id)
+      return { pokemon_id: id, slot: index + 1, species_id: p.species_id, species_name: p.species_name,
+        nickname: p.nickname, shiny: p.shiny, gender: p.gender, died_in_battle: fainted.includes(id) }
+    })
+    state.battle_records[key] = [...(state.battle_records[key] || []), {
+      trainer_id: Number(trainerId), boss_event_id: eventId, recorded_at: new Date().toISOString(), party,
+      split_key: badgeId != null ? `badge:${badgeId}` : null,
+    }]
+  }
   defeated.add(Number(trainerId))
   state.trainers_defeated[key] = Array.from(defeated)
 
@@ -361,7 +539,7 @@ export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = nu
     badges.add(Number(badgeId))
     state.badges[key] = Array.from(badges)
 
-    const partyPokemonIds = new Set((state.party[key] || []).map(member => String(member.pokemon_id)))
+    const partyPokemonIds = new Set(participants.map(String))
     Object.values(state.encounters[key] || {}).forEach(encounter => {
       if (!partyPokemonIds.has(String(encounter.pokemon_id))) return
       const earned = Array.isArray(encounter.badges_earned)
@@ -371,6 +549,10 @@ export function markTrainerVictory(runId, attemptNumber, trainerId, badgeId = nu
     })
   }
 
+  if (isNewVictory) {
+    fainted.forEach(id => { byId.get(id).status = 'Dead' })
+    state.party[key] = compactParty((state.party[key] || []).filter(p => !fainted.includes(Number(p.pokemon_id))))
+  }
   _setState(state)
   return {
     success: true,
@@ -435,11 +617,11 @@ export function getLocalFeedPokemon() {
   return result
 }
 
-export function addBonusLocation(runId, attemptNumber, canonicalLocationId) {
+export function addBonusLocation(runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder = 0) {
   const state = _getState()
   const key = attemptKey(runId, attemptNumber)
   const rows = state.bonus_locations[key] || []
-  const secondary_sort_order = nextBonusSort(state, runId, attemptNumber)
+  const secondary_sort_order = nextBonusSort(state, runId, attemptNumber, canonicalLocationId, baseSecondarySortOrder)
   rows.push({
     canonical_location_id: Number(canonicalLocationId),
     secondary_sort_order,
@@ -470,3 +652,4 @@ export function renameBonusLocation(runId, attemptNumber, canonicalLocationId, s
   _setState(state)
   return { success: true }
 }
+

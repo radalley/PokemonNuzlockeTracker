@@ -1,4 +1,5 @@
 import os
+import threading
 import jwt
 from jwt import PyJWKClient
 from flask import Flask, jsonify, request, g
@@ -8,9 +9,11 @@ import psycopg2.extras
 import psycopg2.pool
 from dotenv import load_dotenv
 import time
+import split_timeline
+import split_availability
 from backend import (get_games, create_run, get_runs, get_script,
                      get_encounter_pool, get_run_by_id, get_trainers_by_location,
-                     get_trainer_parties_by_encounter, get_species_search, update_starter, delete_run,
+                     get_trainer_parties_by_encounter, get_trainer_party_by_id, get_species_search, update_starter, delete_run, rename_run,
                      get_pokebank_for_attempt, upsert_encounter, delete_encounter, get_evolutions,
                      get_evolution_families, get_attempt_page_data, get_attempts_for_run, create_attempt_for_run,
                      get_party_for_attempt, add_to_party_for_attempt, remove_from_party_for_attempt,
@@ -20,12 +23,25 @@ from backend import (get_games, create_run, get_runs, get_script,
                      get_or_create_user_by_supabase_id, get_pokebank_feed_for_user,
                      run_belongs_to_user, pokemon_belongs_to_user, wrap_conn,
                      create_contact_report, get_contact_reports, update_contact_report,
-                     get_contact_report_stats, get_run_menu_summary, mark_run_opened)
+                     get_contact_report_stats, get_run_menu_summary, mark_run_opened,
+                     get_placement_summary, get_unplaced_trainers, apply_trainer_placements,
+                     add_observed_move, delete_observed_move, search_move_names, set_trainer_order,
+                     end_attempt, reopen_attempt, get_attempt_summary, get_species_abilities,
+                     get_species_learnset, get_calc_dex_patch,
+                     load_encounter_rows, pools_from_rows, tables_from_rows, get_encounter_methods)
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+
+# Lock CORS to known frontend origins via CORS_ORIGINS (comma-separated).
+# Falls back to allow-all so a deploy without the env var doesn't break the
+# frontend; set CORS_ORIGINS on Render to close it.
+_cors_origins = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+if _cors_origins:
+    CORS(app, supports_credentials=True, origins=_cors_origins)
+else:
+    CORS(app, supports_credentials=True)
 
 # JWKS client for asymmetric JWT verification (cached at module level)
 _jwks_client = None
@@ -56,22 +72,53 @@ def _decode_supabase_jwt(token):
 # Connection pool, created lazily and shared for the lifetime of this process
 # (i.e. once per gunicorn worker). Requests borrow a connection from the pool
 # instead of opening a fresh Postgres connection on every request.
+#
+# The lock matters: without it, concurrent first requests could each build a
+# pool, and connections handed out by a discarded pool then failed putconn on
+# the surviving one with "trying to put unkeyed connection", leaking the
+# connection.
+_DB_POOL_MAXCONN = 10
+_DB_POOL_WAIT_SECONDS = 30
+
 _db_pool = None
+_db_pool_lock = threading.Lock()
+# psycopg2 pools raise rather than wait once maxconn is reached. The attempt
+# page opens with a burst of parallel party requests, so gate borrowers on a
+# semaphore: over-cap requests queue for a connection instead of 500ing.
+_db_pool_slots = threading.Semaphore(_DB_POOL_MAXCONN)
 
 def _get_db_pool():
     global _db_pool
     if _db_pool is None:
-        database_url = os.environ.get('DATABASE_URL')
-        if not database_url:
-            raise RuntimeError('DATABASE_URL environment variable is not set')
-        _db_pool = psycopg2.pool.ThreadedConnectionPool(1, 10, database_url)
+        with _db_pool_lock:
+            if _db_pool is None:
+                database_url = os.environ.get('DATABASE_URL')
+                if not database_url:
+                    raise RuntimeError('DATABASE_URL environment variable is not set')
+                _db_pool = psycopg2.pool.ThreadedConnectionPool(1, _DB_POOL_MAXCONN, database_url)
     return _db_pool
 
 def get_db():
     if 'db' not in g:
-        raw = _get_db_pool().getconn()
-        raw.cursor().execute("SET search_path TO public")
-        raw.commit()
+        pool = _get_db_pool()
+        if not _db_pool_slots.acquire(timeout=_DB_POOL_WAIT_SECONDS):
+            raise RuntimeError('Timed out waiting for a database connection')
+        raw = None
+        try:
+            raw = pool.getconn()
+            raw.cursor().execute("SET search_path TO public")
+            raw.commit()
+        except Exception:
+            # A borrowed connection that fails setup (severed by a server
+            # restart or idle timeout) must go back via putconn(close=True),
+            # or it occupies one of the pool's maxconn slots forever.
+            if raw is not None:
+                try:
+                    pool.putconn(raw, close=True)
+                except Exception:
+                    pass
+            _db_pool_slots.release()
+            raise
         g.db_raw = raw
         g.db = wrap_conn(raw)
     return g.db
@@ -131,8 +178,12 @@ def close_db(error):
         db.rollback()
     if raw is not None:
         # Return the connection to the pool instead of closing it, so the
-        # next request on this worker can reuse it.
-        _get_db_pool().putconn(raw)
+        # next request on this worker can reuse it. The slot is released even
+        # if putconn fails, so one bad connection can't shrink the pool.
+        try:
+            _get_db_pool().putconn(raw)
+        finally:
+            _db_pool_slots.release()
 
 @app.route('/api/auth/me', methods=['GET'])
 def auth_me_route():
@@ -183,6 +234,21 @@ def mark_run_opened_route(run_id):
         return jsonify({'error': 'Run or attempt not found'}), 404
     return jsonify({'success': True})
 
+@app.route('/api/runs/<int:run_id>', methods=['PATCH'])
+def rename_run_route(run_id):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    data = request.get_json() or {}
+    try:
+        run_name = rename_run(conn, run_id, data.get('run_name'))
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 400
+    if run_name is None:
+        return jsonify({'error': 'Run not found'}), 404
+    return jsonify({'success': True, 'run_name': run_name})
+
 @app.route('/api/runs/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def get_run_route(run_id, attempt_number):
     conn = get_db()
@@ -201,10 +267,9 @@ def runs_route():
     if error:
         return error
     data = request.get_json() or {}
-    # set state before calling create_run
-    from backend import state, set_active_game
-    set_active_game(conn, data['game_id'])
-    run_id = create_run(conn, data['run_name'], user_id=user['user_id'])
+    if data.get('game_id') is None:
+        return jsonify({'error': 'game_id is required'}), 400
+    run_id = create_run(conn, data['run_name'], data['game_id'], user_id=user['user_id'])
     return jsonify({'success': True, 'run_id': run_id})
 
 @app.route('/api/script', methods=['GET'])
@@ -230,18 +295,42 @@ def trainer_list_route(location_id):
     run_id = request.args.get('run_id', type=int)
     attempt_number = request.args.get('attempt_number', type=int)
     game_id = request.args.get('game_id', type=int)
+    version_group_id = request.args.get('version_group_id', type=int)
+    include_rematches = request.args.get('include_rematches', default=0, type=int) == 1
+    include_events = request.args.get('include_events', default=0, type=int) == 1
     if run_id is not None:
         _, error = require_run_access(conn, run_id)
         if error:
             return error
-    trainers = get_trainers_by_location(conn, location_id, run_id=run_id, attempt_number=attempt_number, game_id=game_id)
-    return jsonify([dict(t) for t in trainers])
+    trainers = get_trainers_by_location(
+        conn, location_id, run_id=run_id, attempt_number=attempt_number,
+        version_group_id=version_group_id, game_id=game_id,
+        include_rematches=include_rematches, include_events=include_events,
+    )
+    # A split-layout run also learns which split each trainer opens in.
+    starter = None
+    if run_id is not None:
+        run = get_run_by_id(conn, run_id, attempt_number) if attempt_number is not None else None
+        if run:
+            game_id = game_id if game_id is not None else run['game_id']
+            version_group_id = version_group_id if version_group_id is not None else run['version_group_id']
+            starter = run['starter']
+    return jsonify(split_availability.annotate_trainers(conn, trainers, location_id, game_id, version_group_id, starter))
 
 @app.route('/api/trainer-party/<trainer_name>', methods=['GET'])
 def trainer_party_route(trainer_name):
     conn = get_db()
     game_id = request.args.get('game_id', type=int)
     party = get_trainer_parties_by_encounter(conn, trainer_name, game_id)
+    return jsonify(party)
+
+@app.route('/api/trainers/<int:trainer_id>/party', methods=['GET'])
+def trainer_party_by_id_route(trainer_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    party = get_trainer_party_by_id(conn, trainer_id, game_id)
+    if party is None:
+        return jsonify({'error': 'Trainer not found'}), 404
     return jsonify(party)
 
 @app.route('/api/species/search', methods=['GET'])
@@ -251,8 +340,123 @@ def species_search_route():
     species = get_species_search(conn, query)
     return jsonify([dict(s) for s in species])
 
+@app.route('/api/admin/placement/summary', methods=['GET'])
+def admin_placement_summary_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    return jsonify([dict(r) for r in get_placement_summary(conn)])
+
+@app.route('/api/admin/placement/unplaced', methods=['GET'])
+def admin_placement_unplaced_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    version_group_id = request.args.get('version_group_id', type=int)
+    if version_group_id is None:
+        return jsonify({'error': 'version_group_id is required'}), 400
+    limit = min(request.args.get('limit', default=100, type=int), 500)
+    offset = max(request.args.get('offset', default=0, type=int), 0)
+    only_suggested = request.args.get('only_suggested', default=0, type=int) == 1
+    trainers = get_unplaced_trainers(
+        conn, version_group_id, limit=limit, offset=offset, only_suggested=only_suggested
+    )
+    return jsonify(trainers)
+
+@app.route('/api/admin/placement', methods=['POST'])
+def admin_placement_apply_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json() or {}
+    version_group_id = data.get('version_group_id')
+    placements = data.get('placements')
+    if version_group_id is None or not isinstance(placements, list) or not placements:
+        return jsonify({'error': 'version_group_id and a non-empty placements list are required'}), 400
+    if len(placements) > 200:
+        return jsonify({'error': 'At most 200 placements per request'}), 400
+    try:
+        results = apply_trainer_placements(conn, int(version_group_id), placements)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify({'success': True, 'applied': results})
+
+@app.route('/api/admin/trainer-moves', methods=['POST', 'DELETE'])
+def admin_trainer_moves_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json() or {}
+    trainer_id = data.get('trainer_id')
+    slot = data.get('slot')
+    move_name = data.get('move_name')
+    if trainer_id is None or slot is None or not move_name:
+        return jsonify({'error': 'trainer_id, slot and move_name are required'}), 400
+    try:
+        if request.method == 'POST':
+            details = add_observed_move(conn, int(trainer_id), int(slot), str(move_name))
+            return jsonify({'success': True, 'move': details})
+        removed = delete_observed_move(conn, int(trainer_id), int(slot), str(move_name))
+        return jsonify({'success': True, 'removed': removed})
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+
+@app.route('/api/admin/trainer-order', methods=['POST'])
+def admin_trainer_order_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'A JSON object body is required'}), 400
+    trainer_ids = data.get('trainer_ids')
+    if not isinstance(trainer_ids, list) or not trainer_ids:
+        return jsonify({'error': 'trainer_ids (a non-empty list) is required'}), 400
+    try:
+        result = set_trainer_order(conn, trainer_ids)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify({'success': True, **result})
+
+@app.route('/api/species/<int:species_id>/abilities', methods=['GET'])
+def species_abilities_route(species_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    return jsonify(get_species_abilities(conn, species_id, game_id=game_id))
+
+@app.route('/api/species/<int:species_id>/learnset', methods=['GET'])
+def species_learnset_route(species_id):
+    conn = get_db()
+    game_id = request.args.get('game_id', type=int)
+    return jsonify(get_species_learnset(conn, species_id, game_id=game_id))
+
+@app.route('/api/games/<int:game_id>/calc-dex-patch', methods=['GET'])
+def calc_dex_patch_route(game_id):
+    conn = get_db()
+    patch = get_calc_dex_patch(conn, game_id)
+    if patch is None:
+        return jsonify({'error': 'Game not found'}), 404
+    return jsonify(patch)
+
+@app.route('/api/moves/search', methods=['GET'])
+def moves_search_route():
+    conn = get_db()
+    q = request.args.get('q', default='', type=str)
+    return jsonify(search_move_names(conn, q))
+
 @app.route('/api/debug/trainer-pics', methods=['GET'])
 def debug_trainer_pics_route():
+    _, error = require_admin()
+    if error:
+        return error
     conn = get_db()
     rows = conn.execute(
         'select distinct trainer_pic from trainer_pool where trainer_pic is not null and trainer_pic <> \'\' order by trainer_pic asc'
@@ -464,6 +668,8 @@ def save_encounter_route():
         int(data['pokemon_id']) if data.get('pokemon_id') else None,
         int(data.get('bonus_location') or 0),
         data.get('gender') or None,
+        (str(data.get('ability')).strip()[:80] or None) if data.get('ability') else None,
+        ivs=data.get('ivs'),
     )
     return jsonify({'success': True, 'pokemon_id': pokemon_id})
 
@@ -543,15 +749,6 @@ def pokebank_route(run_id, attempt_id):
     data = get_pokebank_for_attempt(conn, run_id, attempt_id)
     return jsonify(data)
 
-@app.route('/api/debug/trainer-items', methods=['GET'])
-def debug_trainer_items_route():
-    conn = get_db()
-    rows = conn.execute(
-        "SELECT trainer_id, encounter_name, trainer_name, trainer_items "
-        "FROM trainer_pool WHERE trainer_items IS NOT NULL AND trainer_items != '' LIMIT 50"
-    ).fetchall()
-    return jsonify([dict(r) for r in rows])
-
 @app.route('/api/attempt-page/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def attempt_page_route(run_id, attempt_number):
     conn = get_db()
@@ -591,6 +788,52 @@ def create_attempt_route(run_id):
         return error
     new_num = create_attempt_for_run(conn, run_id)
     return jsonify({'attempt_number': new_num})
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/end', methods=['POST'])
+def end_attempt_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    data = request.get_json() or {}
+    trainer_id = data.get('trainer_id')
+    note = data.get('note')
+    try:
+        result = end_attempt(
+            conn, run_id, attempt_number, outcome='dead',
+            trainer_id=int(trainer_id) if trainer_id is not None else None,
+            note=note,
+        )
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    return jsonify(result)
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/reopen', methods=['POST'])
+def reopen_attempt_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    try:
+        reopened = reopen_attempt(conn, run_id, attempt_number)
+    except ValueError as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 404
+    if not reopened:
+        return jsonify({'error': 'Attempt is not ended'}), 400
+    return jsonify({'success': True})
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/summary', methods=['GET'])
+def attempt_summary_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    summary = get_attempt_summary(conn, run_id, attempt_number)
+    if summary is None:
+        return jsonify({'error': 'Attempt not found'}), 404
+    return jsonify(summary)
 
 @app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/party', methods=['GET'])
 def get_party_route(run_id, attempt_number):
@@ -653,10 +896,63 @@ def trainer_victory_route(run_id, attempt_number):
         attempt_number,
         trainer_id,
         event_id,
+        participant_ids=data.get('participant_ids'),
+        fainted_ids=data.get('fainted_ids'),
     )
     if not result.get('success'):
+        conn.rollback()
         return jsonify(result), 400
     return jsonify(result)
+
+
+@app.route('/api/games/<int:game_id>/splits', methods=['GET'])
+def split_catalogue_route(game_id):
+    conn = get_db()
+    try:
+        return jsonify({'splits': split_timeline.catalogue(conn, game_id, request.args.get('starter') or None),
+                        'items': split_timeline.get_items(conn, game_id)})
+    except ValueError as exc:
+        return jsonify({'error': str(exc)}), 404
+
+
+@app.route('/api/runs/<int:run_id>/attempts/<int:attempt_number>/battle-records', methods=['GET'])
+def battle_records_route(run_id, attempt_number):
+    conn = get_db()
+    _, error = require_run_access(conn, run_id)
+    if error:
+        return error
+    attempt = conn.execute('select attempt_id from attempts where run_id = %s and attempt_number = %s',
+                           (run_id, attempt_number)).fetchone()
+    if not attempt:
+        return jsonify({'error': 'Attempt not found'}), 404
+    return jsonify(split_timeline.get_records(conn, attempt['attempt_id']))
+
+
+@app.route('/api/admin/split-items', methods=['POST', 'PATCH', 'DELETE'])
+def split_items_admin_route():
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        game_id = int(data['game_id'])
+        record_id = int(data['item_record_id']) if request.method != 'POST' else None
+        if request.method == 'DELETE':
+            result = conn.execute('delete from curated_split_items where item_record_id = %s and game_id = %s returning item_record_id',
+                                  (record_id, game_id)).fetchone()
+            if not result:
+                raise ValueError('Item record not found')
+            conn.commit()
+            return jsonify({'success': True})
+        result = split_timeline.save_item(conn, game_id, data.get('split_key'), data.get('item_name'), data.get('method'), record_id)
+        return jsonify(result)
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        return jsonify({'error': 'An identical item and method already exist in this split'}), 409
 
 @app.route('/api/box/<int:run_id>/<int:attempt_number>', methods=['GET'])
 def box_route(run_id, attempt_number):
@@ -729,23 +1025,68 @@ def guest_script_route():
         # Recompute from trainer_pool so Postgres/text source data doesn't disable UI.
         if data.get('event_type') == 'Location':
             location_id = int(data['event_id'])
-            trainer_rows = get_trainers_by_location(conn, location_id, version_group_id=version_group_id, game_id=game_id)
-            non_event_count = sum(1 for t in trainer_rows if not bool(t.get('is_event')))
-            data['trainer_count'] = non_event_count
-            data['available_trainer_count'] = non_event_count
+            trainer_rows = get_trainers_by_location(
+                conn, location_id, version_group_id=version_group_id, game_id=game_id,
+                include_rematches=True, include_events=True)
+            special_count = sum(
+                1 for t in trainer_rows
+                if int(t.get('is_event') or 0) or int(t.get('is_rematch') or 0))
+            regular_count = len(trainer_rows) - special_count
+            data['trainer_count'] = regular_count
+            data['available_trainer_count'] = regular_count
+            data['special_trainer_count'] = special_count
         script.append(data)
 
-    pools = {}
-    for row in script:
-        if row.get('event_type') != 'Location':
-            continue
-        location_id = int(row['event_id'])
-        if location_id in pools:
-            continue
-        pools[location_id] = get_encounter_pool(conn, location_id, game_id)
+    location_ids = sorted({int(row['event_id']) for row in script if row.get('event_type') == 'Location'})
+    rows_by_location = load_encounter_rows(conn, location_ids, game_id) if location_ids else {}
 
-    return jsonify({'script': script, 'pools': pools})
+    payload = {
+        'script': script,
+        'pools': pools_from_rows(rows_by_location),
+        'pool_tables': tables_from_rows(rows_by_location),
+        'encounter_methods': get_encounter_methods(),
+    }
+    return jsonify(split_availability.decorate_page(conn, payload, game_id, version_group_id, starter))
+
+
+@app.route('/api/admin/availability', methods=['POST', 'DELETE'])
+def availability_admin_route():
+    """One curated availability rule: set (POST) or revert to inherit (DELETE)."""
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        game_id = int(data['game_id'])
+        if request.method == 'DELETE':
+            split_availability.delete_rule(conn, game_id, data.get('subject_kind'), data.get('subject_key'))
+            return jsonify({'success': True})
+        return jsonify(split_availability.save_rule(
+            conn, game_id, data.get('subject_kind'), data.get('subject_key'),
+            opens_in=data.get('opens_in'), gate_key=data.get('gate_key'), note=data.get('note'),
+        ))
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
+
+
+@app.route('/api/admin/gates', methods=['PATCH'])
+def gates_admin_route():
+    """A gate's split (Surf opens in ...), from the Game flags panel."""
+    _, error = require_admin()
+    if error:
+        return error
+    conn = get_db()
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(split_availability.save_gate(conn, int(data['game_id']), data.get('gate_key'), data.get('opens_in'), data.get('note')))
+    except (KeyError, TypeError, ValueError) as exc:
+        conn.rollback()
+        return jsonify({'error': str(exc)}), 400
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Local development entry point only — production runs via gunicorn (see
+    # Procfile). The Werkzeug debugger is opt-in so it can never ship enabled.
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')

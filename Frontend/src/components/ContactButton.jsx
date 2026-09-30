@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { submitContactReport } from '../utils/dataLayer'
+import { Button } from './Button'
 
 const REPORT_TYPES = [
   { value: 'bug', label: 'Bug reporting' },
@@ -14,7 +15,7 @@ const TOPICS = [
   { value: 'other', label: 'Other' },
 ]
 
-function ContactButton({ context = {}, className = 'page-action-button', buttonLabel = 'Contact' }) {
+function ContactButton({ context = {}, className = '', size = 'md', buttonLabel = 'Contact' }) {
   const [open, setOpen] = useState(false)
   const [reportType, setReportType] = useState('bug')
   const [topic, setTopic] = useState('pokemon')
@@ -72,9 +73,9 @@ function ContactButton({ context = {}, className = 'page-action-button', buttonL
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
+      <Button size={size} className={className} onClick={() => setOpen(true)}>
         {buttonLabel}
-      </button>
+      </Button>
 
       {open && (
         <div className="contact-panel__backdrop" onClick={handleClose}>
@@ -84,7 +85,7 @@ function ContactButton({ context = {}, className = 'page-action-button', buttonL
                 <h2 className="contact-panel__title">Contact</h2>
                 <p className="contact-panel__subtitle">Send a report with the current page context attached.</p>
               </div>
-              <button type="button" className="contact-panel__close" onClick={handleClose}>Close</button>
+              <Button size="sm" onClick={handleClose}>Close</Button>
             </div>
 
             <label className="contact-panel__field">
@@ -131,10 +132,10 @@ function ContactButton({ context = {}, className = 'page-action-button', buttonL
             )}
 
             <div className="contact-panel__actions">
-              <button type="button" className="page-action-button" onClick={handleClose}>Cancel</button>
-              <button type="submit" className="page-action-button page-action-button--success" disabled={status.state === 'submitting'}>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button type="submit" tone="success" appearance="solid" disabled={status.state === 'submitting'}>
                 {status.state === 'submitting' ? 'Sending...' : 'Submit'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

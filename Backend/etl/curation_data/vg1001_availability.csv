@@ -1,0 +1,9 @@
+version_group_id,subject_kind,subject_key,opens_in,gate_key,note,source
+1001,area,235|B1F,,surf,Wellspring Cave B1F needs Surf.,docs/blaze-black-item-seed-analysis.md
+1001,location,234,badge:33,,"Dreamyard (gift monkey, first trainers) is open before the Striaton Gym.","user, 2026-09-24"
+1001,location,237,badge:34,,The outer road is reachable before Lenora.,docs/blaze-black-item-seed-analysis.md
+1001,location,504,badge:35,,"The interior opens after Lenora, in Burgh's split.","user, 2026-09-25"
+1001,location,9,badge:35,,Route 4 can be done before Burgh.,"user, 2026-09-24"
+1001,table,3||dark-grass|,,surf,Route 1 dark grass is behind water.,docs/blaze-black-item-seed-analysis.md
+1001,trainer,TRAINER_BB_PLASMA_GRUNT_PLASMA_GRUNT,badge:34,,Dreamyard Plasma Grunts arrive after the first gym.,"user, 2026-09-24"
+1001,trainer,TRAINER_BB_PLASMA_GRUNT_PLASMA_GRUNT_2,badge:34,,Dreamyard Plasma Grunts arrive after the first gym.,"user, 2026-09-24"

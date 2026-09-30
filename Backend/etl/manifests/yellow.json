@@ -1,0 +1,19 @@
+{
+    "key":  "yellow",
+    "label":  "Pokemon Yellow",
+    "generation":  1,
+    "version_group_id":  2,
+    "load_build":  4,
+    "game_ids":  {
+                     "yellow":  3
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokeyellow"
+               },
+    "preview_dir":  "yellow_build4_preview",
+    "expected":  {
+                     "trainers":  396,
+                     "trainer_pokemon":  990
+                 }
+}

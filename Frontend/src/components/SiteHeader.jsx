@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import HeaderAuthMenu from './HeaderAuthMenu'
 import ContactButton from './ContactButton'
+import { Button } from './Button'
 
 function SiteHeader({ showHomeButton = false, logoClickable = true }) {
   const navigate = useNavigate()
@@ -18,14 +19,14 @@ function SiteHeader({ showHomeButton = false, logoClickable = true }) {
           </div>
         )}
         {showHomeButton && (
-          <button type="button" className="site-header__nav-button" onClick={() => navigate('/')}>
+          <Button onClick={() => navigate('/')}>
             Home
-          </button>
+          </Button>
         )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <ContactButton className="site-header__auth-button" />
+        <ContactButton />
         <HeaderAuthMenu />
       </div>
     </header>

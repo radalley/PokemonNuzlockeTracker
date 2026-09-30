@@ -4,6 +4,7 @@ import SiteHeader from '../components/SiteHeader'
 import { useAuth } from '../contexts/AuthContext'
 import PokemonFeed from '../components/PokemonFeed'
 import ContinueRunButton from '../components/ContinueRunButton'
+import { Button } from '../components/Button'
 import { getRunMenuSummary } from '../utils/dataLayer'
 import { apiFetch } from '../utils/api'
 
@@ -84,27 +85,34 @@ function Home() {
                 onContinue={() => navigate(`/attempt/${latestRun.run_id}/${latestRun.attempt_number}`)}
               />
             )}
-            <button
-              className={`home-action-button${actionsDisabled ? ' is-disabled' : ''}`}
+            <Button
+              size="lg"
+              shape="rect"
+              className="home-action-button"
               onClick={() => !actionsDisabled && navigate('/new-run')}
               disabled={actionsDisabled}
               aria-disabled={actionsDisabled}
               title={actionsDisabled ? 'Waiting for server…' : 'Start a new run'}
             >
               {actionsDisabled ? 'Loading…' : 'New Game'}
-            </button>
-            <button
-              className={`home-action-button${actionsDisabled || loadDisabled ? ' is-disabled' : ''}`}
+            </Button>
+            <Button
+              size="lg"
+              shape="rect"
+              className="home-action-button"
               onClick={() => !actionsDisabled && !loadDisabled && navigate('/load-run')}
               disabled={actionsDisabled || loadDisabled}
               aria-disabled={actionsDisabled || loadDisabled}
               title={actionsDisabled ? 'Waiting for server…' : loadDisabled ? 'No runs available yet' : 'Load an existing run'}
             >
               Load Game
-            </button>
-            <button className="home-action-button" onClick={() => navigate('/guides')}>Guides</button>
+            </Button>
+            <Button size="lg" shape="rect" className="home-action-button" onClick={() => navigate('/guides')}>Guides</Button>
             {user?.account_type === 'admin' && (
-              <button className="home-action-button" onClick={() => navigate('/admin/reports')}>Reports</button>
+              <Button size="lg" shape="rect" className="home-action-button" onClick={() => navigate('/admin/reports')}>Reports</Button>
+            )}
+            {user?.account_type === 'admin' && (
+              <Button size="lg" shape="rect" className="home-action-button" onClick={() => navigate('/admin/placement')}>Placement</Button>
             )}
           </div>
         </div>

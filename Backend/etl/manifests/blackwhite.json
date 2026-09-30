@@ -1,0 +1,36 @@
+{
+  "key": "blackwhite",
+  "label": "Pokemon Black / White",
+  "generation": 5,
+  "version_group_id": 11,
+  "load_build": 6,
+  "game_ids": {
+    "black": 17,
+    "white": 18
+  },
+  "source": {
+    "type": "nds_rom",
+    "roms": {
+      "black": {
+        "path": "Pokemon - Black Version (DSi Enhanced)(USA) (E)/5585 - Pokemon - Black Version (DSi Enhanced)(USA) (E)(SweeTnDs).nds",
+        "game_code": "IRBO",
+        "sha256": "2e40416b8e8183d936084c7be0adeaab4fa3f786a68f90d7291ab77d340f0c1d"
+      },
+      "white": {
+        "path": "Pokemon - White Version (USA, Europe) (NDSi Enhanced)/Pokemon - White Version (USA, Europe) (NDSi Enhanced).nds",
+        "game_code": "IRAO",
+        "sha256": "b288bb061fd646894f5059f55cd0a1efb13b4f0cfd3d9e06e9e42a5bd9431ac6"
+      }
+    }
+  },
+  "preview_dir": "blackwhite_build6_preview",
+  "expected": {
+    "trainers": 615,
+    "trainer_pokemon": 1304,
+    "event_bosses": 61,
+    "game_specific_bosses": 4,
+    "game_specific_trainers": 0,
+    "located_trainers": 239
+  },
+  "allowed_boss_game_ids": ["", "17", "18"]
+}

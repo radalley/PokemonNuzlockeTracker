@@ -7,15 +7,18 @@ import {
   deleteBonusLocation,
   deleteEncounter,
   deleteRun,
+  endAttempt,
   getBonusLocations,
   getEncounters,
   getParty,
+  getBattleRecords,
   getRuns,
   getSessionStats,
   hasLocalData,
   markTrainerVictory,
   removeFromParty,
   renameBonusLocation,
+  renameRun,
   upsertEncounter,
   _getState,
 } from './guestStorage.js'
@@ -79,6 +82,43 @@ describe('createRun / deleteRun', () => {
 
     expect(getRuns()).toHaveLength(0)
     expect(getEncounters(run_id, 1)).toEqual({})
+  })
+})
+
+describe('renameRun', () => {
+  it('renames an existing run and trims the name', () => {
+    const { run_id } = createRun({ game_id: 3, game_name: 'Emerald' }, 'Solo Run')
+    expect(renameRun(run_id, '  Monotype  ')).toBe(true)
+    expect(getRuns()[0].run_name).toBe('Monotype')
+  })
+
+  it('rejects blank names and unknown runs', () => {
+    const { run_id } = createRun({ game_id: 3, game_name: 'Emerald' }, 'Solo Run')
+    expect(renameRun(run_id, '   ')).toBe(false)
+    expect(renameRun('local_999', 'Nope')).toBe(false)
+    expect(getRuns()[0].run_name).toBe('Solo Run')
+  })
+})
+
+describe('upsertEncounter IVs', () => {
+  it('stores normalized IVs and keeps them across a status re-save', () => {
+    const { run_id } = createRun({ game_id: 1, name: 'Black' }, 'IV run')
+    const pokemonId = upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Captured', false, null, 'male', null,
+      { hp: 31, atk: '7', def: 0, spa: 40, spd: '', spe: 31 })
+    let row = Object.values(getEncounters(run_id, 1))[0]
+    // 0 is a real IV; 40 is out of range and 'null' means not recorded.
+    expect(row.ivs).toEqual({ hp: 31, atk: 7, def: 0, spa: null, spd: null, spe: 31 })
+
+    // Re-saving with the stored IVs (what a Box status flip does) keeps them.
+    upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Dead', false, pokemonId, 'male', null, row.ivs)
+    row = Object.values(getEncounters(run_id, 1))[0]
+    expect(row.status).toBe('Dead')
+    expect(row.ivs.hp).toBe(31)
+
+    // Omitting them clears them (explicit save semantics).
+    upsertEncounter(run_id, 1, 10, 0, 25, 'Pikachu', null, null, 'Captured', false, pokemonId, 'male', null)
+    row = Object.values(getEncounters(run_id, 1))[0]
+    expect(row.ivs).toEqual({ hp: null, atk: null, def: null, spa: null, spd: null, spe: null })
   })
 })
 
@@ -148,15 +188,23 @@ describe('party management (6-slot cap)', () => {
     expect(seventh).toBeNull()
   })
 
-  it('removeFromParty frees the slot for reuse', () => {
+  it('removing a member moves the rest up, leaving the last slot free', () => {
     const { run_id } = createRun({ game_id: 1 }, 'Run')
     const ids = Array.from({ length: 7 }, (_, i) => seedEncounter(run_id, 1, i + 1))
     ids.slice(0, 6).forEach(id => addToParty(run_id, 1, id))
 
-    removeFromParty(run_id, 1, ids[2]) // frees slot 3
-    const newSlot = addToParty(run_id, 1, ids[6])
+    removeFromParty(run_id, 1, ids[1]) // the second member leaves
 
-    expect(newSlot).toBe(3)
+    expect(getParty(run_id, 1).map(p => [p.party_slot, p.pokemon_id])).toEqual([
+      [1, ids[0]], [2, ids[2]], [3, ids[3]], [4, ids[4]], [5, ids[5]],
+    ])
+    // the next addition takes the free last slot
+    expect(addToParty(run_id, 1, ids[6])).toBe(6)
+
+    // clearing an encounter takes its pokemon out and closes that gap too
+    deleteEncounter(run_id, 1, ids[0])
+    expect(getParty(run_id, 1).map(p => p.party_slot)).toEqual([1, 2, 3, 4, 5])
+    expect(getParty(run_id, 1)[0].pokemon_id).toBe(ids[2])
   })
 
   it('refuses to add a pokemon that has no recorded encounter', () => {
@@ -167,6 +215,24 @@ describe('party management (6-slot cap)', () => {
 })
 
 describe('markTrainerVictory + getSessionStats', () => {
+  it('freezes guest appearance, attributes deaths to one battle, and keeps replay idempotent', () => {
+    const { run_id } = createRun({ game_id: 1001 }, 'Run')
+    const id = upsertEncounter(run_id, 1, 1, 0, 495, 'Snivy', 'Leaf', 'Quiet', 'Captured', true, null, 'female')
+    addToParty(run_id, 1, id)
+    markTrainerVictory(run_id, 1, 5, 33, 582, { participant_ids: [id], fainted_ids: [] })
+    upsertEncounter(run_id, 1, 1, 0, 496, 'Servine', 'Leaf', 'Quiet', 'Captured', true, id, 'female')
+    removeFromParty(run_id, 1, id)
+    markTrainerVictory(run_id, 1, 6, 34, 588, { participant_ids: [id], fainted_ids: [id] })
+    markTrainerVictory(run_id, 1, 5, 33, 582, { participant_ids: [], fainted_ids: [] })
+    const records = getBattleRecords(run_id, 1)
+    expect(records).toHaveLength(2)
+    expect(records[0].party[0]).toMatchObject({ species_id: 495, shiny: true, gender: 'female', died_in_battle: false })
+    expect(records[1].party[0]).toMatchObject({ species_id: 496, died_in_battle: true })
+    expect(getParty(run_id, 1)).toHaveLength(0)
+    deleteEncounter(run_id, 1, id)
+    expect(getBattleRecords(run_id, 1)[0].party[0].available).toBe(false)
+  })
+
   it('marking the same trainer twice does not double-count', () => {
     const { run_id } = createRun({ game_id: 1 }, 'Run')
     markTrainerVictory(run_id, 1, 5, 12)
@@ -187,6 +253,34 @@ describe('markTrainerVictory + getSessionStats', () => {
     expect(stats.pokemon_caught).toBe(1)
     expect(stats.pokemon_dead).toBe(1)
     expect(stats.pokemon_missed).toBe(1)
+  })
+})
+
+describe('endAttempt (declare defeat)', () => {
+  it('marks the party fallen, empties the party, and leaves boxed mons alive', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    const smug = upsertEncounter(run_id, 1, 1, 0, 495, 'SNIVY', 'Smug', 'Quiet', 'Captured', false, null, 'male', null)
+    const boxed = upsertEncounter(run_id, 1, 3, 0, 504, 'PATRAT', 'Boxed', 'Hardy', 'Captured', false, null, 'male', null)
+    const gone = upsertEncounter(run_id, 1, 6, 0, 506, 'LILLIPUP', 'Gone', 'Jolly', 'Dead', false, null, 'female', null)
+    addToParty(run_id, 1, smug)
+
+    const result = endAttempt(run_id, 1, { note: 'wiped' })
+
+    expect(result).toEqual({ success: true, outcome: 'dead', party_fallen: 1 })
+    const byId = Object.fromEntries(Object.values(getEncounters(run_id, 1)).map(e => [e.pokemon_id, e.status]))
+    expect(byId[smug]).toBe('Dead')
+    expect(byId[boxed]).toBe('Captured')
+    expect(byId[gone]).toBe('Dead')
+    expect(getParty(run_id, 1)).toEqual([])
+  })
+
+  it('refuses to end an already-ended attempt without touching anything', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    const smug = upsertEncounter(run_id, 1, 1, 0, 495, 'SNIVY', 'Smug', 'Quiet', 'Captured', false, null, 'male', null)
+    addToParty(run_id, 1, smug)
+    endAttempt(run_id, 1, {})
+    // the second declaration must not error or double-count
+    expect(endAttempt(run_id, 1, {}).success).toBe(false)
   })
 })
 
@@ -217,4 +311,12 @@ describe('bonus locations', () => {
     const second = addBonusLocation(run_id, 1, 42)
     expect(second.secondary_sort_order).toBeGreaterThan(first.secondary_sort_order)
   })
+
+  it('starts above the base row secondary sort so keys never collide with the canonical row', () => {
+    const { run_id } = createRun({ game_id: 1 }, 'Run')
+    // Dreamyard-style placement: the canonical row itself sits at secondary 1.
+    const added = addBonusLocation(run_id, 1, 234, 1)
+    expect(added.secondary_sort_order).toBe(2)
+  })
 })
+

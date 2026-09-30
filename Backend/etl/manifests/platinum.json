@@ -1,0 +1,19 @@
+{
+    "key":  "platinum",
+    "label":  "Pokemon Platinum",
+    "generation":  4,
+    "version_group_id":  9,
+    "load_build":  5,
+    "game_ids":  {
+                     "platinum":  14
+                 },
+    "source":  {
+                   "type":  "decomp",
+                   "path":  "pokeplatinum"
+               },
+    "preview_dir":  "platinum_build5_preview",
+    "expected":  {
+                     "trainers":  927,
+                     "trainer_pokemon":  1878
+                 }
+}
