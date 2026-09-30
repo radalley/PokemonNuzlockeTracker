@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+// api.js builds the Supabase client, which needs env CI does not have.
+vi.mock('./api', () => ({ apiFetch: vi.fn() }))
 import { evolvedAbility } from './evolveAbility'
 
 const tepig = [{ name: 'Blaze', slot: 1 }, { name: 'Thick Fat', slot: 3 }]

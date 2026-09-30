@@ -21,6 +21,10 @@ vi.mock('./Sprite', () => ({
   default: () => <span />,
 }))
 
+// EditModeContext reads AuthContext, which builds the Supabase client; CI
+// has no Supabase env, so stub the context here.
+vi.mock('../contexts/EditModeContext', () => ({ useEditMode: () => ({ editMode: false, canEdit: false, toggleEditMode: () => {} }) }))
+
 vi.mock('./HeaderAuthMenu', () => ({
   default: () => null,
 }))
